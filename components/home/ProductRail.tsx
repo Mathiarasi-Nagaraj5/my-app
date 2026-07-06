@@ -1,0 +1,42 @@
+import Link from "next/link";
+import { Product } from "@/lib/types";
+import ProductCard from "../ui/ProductCard";
+
+interface ProductRailProps {
+  title: string;
+  products: Product[];
+  viewAllHref?: string;
+  /** alternate background so consecutive rails read as distinct sections */
+  tone?: "ivory" | "charcoal-tint";
+}
+
+export default function ProductRail({
+  title,
+  products,
+  viewAllHref = "/shop",
+  tone = "ivory",
+}: ProductRailProps) {
+  return (
+    <section
+      className={`px-6 py-12 ${
+        tone === "charcoal-tint" ? "bg-charcoal/[0.03]" : "bg-ivory"
+      }`}
+    >
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-6 flex items-baseline justify-between">
+          <h2 className="font-serif text-xl font-medium text-charcoal">
+            {title}
+          </h2>
+          <Link href={viewAllHref} className="text-sm text-brass hover:underline">
+            view all
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          {products.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
