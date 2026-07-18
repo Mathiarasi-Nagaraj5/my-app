@@ -11,7 +11,7 @@ const config: Config = {
         // Elite Soul brand palette — use only these three across the site
         charcoal: "#1C1B19", // primary dark surface / text
         ivory: "#F3EFE7",    // primary light surface / background
-        brass: "#A8823D",    // single accent — CTAs, prices, highlights
+        pink: "#e0629b",    // single accent — CTAs, prices, highlights
       },
       fontFamily: {
         // Swap these for the actual fonts you load (e.g. next/font)

@@ -1,15 +1,15 @@
 @import "tailwindcss";
  
 /* Tailwind v4 reads theme tokens from CSS, not tailwind.config.ts.
-   Defining --color-* here auto-generates bg-charcoal, text-brass,
+   Defining --color-* here auto-generates bg-charcoal, text-pink,
    border-ivory, etc. as real utility classes. */
 @theme {
   --color-charcoal: #1c1b19;
   --color-ivory: #f3efe7;
-  --color-brass: #a8823d;
+  --color-pink: #e0629b;
  
   --font-sans: var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);
-  --font-serif: "Fraunces", Georgia, serif;
+  --font-serif: "Cormorant Garamond", serif;
  
   --radius-DEFAULT: 4px;
   --radius-card: 8px;
@@ -19,6 +19,5 @@
    utilities (bg-ivory, text-charcoal on <body> in layout.tsx) would always
    lose to plain CSS outside a layer, no matter how "late" this file loads. */
 body {
-  font-family: var(--font-sans);
+  font-family: var(--font-serif);
 }
- 

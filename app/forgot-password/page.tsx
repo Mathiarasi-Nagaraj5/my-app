@@ -34,7 +34,7 @@ export default function ForgotPasswordPage() {
             if an account exists for <strong>{identifier}</strong>, a reset
             link has been sent.
           </p>
-          <Link href="/login" className="mt-5 inline-block text-sm font-medium text-brass hover:underline">
+          <Link href="/login" className="mt-5 inline-block text-sm font-medium text-pink hover:underline">
             back to login
           </Link>
         </div>
@@ -52,7 +52,7 @@ export default function ForgotPasswordPage() {
           </Button>
           <p className="mt-2 text-center text-sm text-charcoal/70">
             remembered it?{" "}
-            <Link href="/login" className="font-medium text-brass hover:underline">
+            <Link href="/login" className="font-medium text-pink hover:underline">
               login
             </Link>
           </p>

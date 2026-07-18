@@ -23,7 +23,7 @@ export default function PaymentMethodSelector({
           <label
             key={opt.value}
             className={`flex cursor-pointer items-center gap-3 rounded-card px-4 py-3 text-sm text-charcoal ${
-              value === opt.value ? "border-2 border-brass" : "border border-charcoal/30"
+              value === opt.value ? "border-2 border-pink" : "border border-charcoal/30"
             }`}
           >
             <input
@@ -31,7 +31,7 @@ export default function PaymentMethodSelector({
               name="payment"
               checked={value === opt.value}
               onChange={() => onChange(opt.value)}
-              className="accent-brass"
+              className="accent-pink"
             />
             {opt.label}
           </label>

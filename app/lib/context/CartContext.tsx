@@ -7,7 +7,7 @@ import {
   useState,
   ReactNode,
 } from "react";
-import { CartItem } from "@/lib/types";
+import { CartItem } from "@/app/lib/types";
 
 interface CartContextValue {
   items: CartItem[];

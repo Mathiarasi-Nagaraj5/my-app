@@ -5,8 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { Search as SearchIcon } from "lucide-react";
 import ProductCard from "@/components/ui/ProductCard";
 import SortSelect from "@/components/shop/Sortselect";
-import { SortOption } from "@/lib/types";
-import { products as allProducts } from "@/lib/data";
+import { SortOption } from "@/app/lib/types";
+import { products as allProducts } from "@/app/lib/data";
 
 export default function SearchContent() {
   const searchParams = useSearchParams();

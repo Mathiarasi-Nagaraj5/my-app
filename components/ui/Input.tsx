@@ -31,7 +31,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             id={inputId}
             className={[
               "h-[42px] w-full rounded border bg-ivory px-3 text-sm text-charcoal placeholder:text-charcoal/40",
-              "focus:outline-none focus:ring-1 focus:ring-brass focus:border-brass",
+              "focus:outline-none focus:ring-1 focus:ring-pink focus:border-pink",
               icon ? "pl-9" : "",
               error ? "border-red-500" : "border-charcoal",
               className,

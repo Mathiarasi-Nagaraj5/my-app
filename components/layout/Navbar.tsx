@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Search, User, ShoppingBag, Heart, Menu, X } from "lucide-react";
-import { useCart } from "@/lib/context/CartContext";
-import { useWishlist } from "@/lib/context/WishlistContext";
+import { useCart } from "@/app/lib/context/CartContext";
+import { useWishlist } from "@/app/lib/context/WishlistContext";
 
 const NAV_LINKS = [
-  { label: "t-shirts", href: "/shop?category=t-shirts" },
-  { label: "hoodies", href: "/shop?category=hoodies" },
-  { label: "pyjamas", href: "/shop?category=pyjamas" },
-  { label: "new arrivals", href: "/shop?sort=newest" },
+  { label: "T-Shirts", href: "/shop?category=t-shirts" },
+  { label: "Hoodies", href: "/shop?category=hoodies" },
+  { label: "Pyjamas", href: "/shop?category=pyjamas" },
+  { label: "New Arrivals", href: "/shop?sort=newest" },
 ];
 
 export default function Navbar() {
@@ -19,23 +19,23 @@ export default function Navbar() {
   const { count: wishlistCount } = useWishlist();
 
   return (
-    <header className="bg-charcoal">
+    <header className="bg-ivory">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
-        <Link href="/" className="text-lg font-medium tracking-wide text-ivory">
+        <Link href="/" className="text-3xl font-stretch-50% tracking-wide text-charcoal">
           ELITE SOUL
         </Link>
 
         {/* desktop links */}
-        <nav className="hidden gap-7 text-sm text-ivory/85 md:flex">
+        <nav className="hidden gap-7 text-lg text-charcoal/85 md:flex">
           {NAV_LINKS.map((link) => (
-            <Link key={link.href} href={link.href} className="hover:text-brass">
+            <Link key={link.href} href={link.href} className="hover:text-pink">
               {link.label}
             </Link>
           ))}
         </nav>
 
         {/* icons */}
-        <div className="flex items-center gap-5 text-ivory">
+        <div className="flex items-center gap-5 text-charcoal/85">
           <Link href="/search" aria-label="Search">
             <Search size={19} />
           </Link>
@@ -45,7 +45,7 @@ export default function Navbar() {
           <Link href="/wishlist" aria-label="Wishlist" className="relative">
             <Heart size={19} />
             {wishlistCount > 0 && (
-              <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-brass text-[10px] font-medium text-charcoal">
+              <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-pink text-[10px] font-medium text-charcoal">
                 {wishlistCount}
               </span>
             )}
@@ -53,7 +53,7 @@ export default function Navbar() {
           <Link href="/cart" aria-label="Cart" className="relative">
             <ShoppingBag size={19} />
             {cartCount > 0 && (
-              <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-brass text-[10px] font-medium text-charcoal">
+              <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-pink text-[10px] font-medium text-charcoal">
                 {cartCount}
               </span>
             )}
@@ -72,13 +72,13 @@ export default function Navbar() {
 
       {/* mobile dropdown */}
       {menuOpen && (
-        <nav className="flex flex-col gap-4 border-t border-ivory/10 px-6 py-5 text-sm text-ivory/85 md:hidden">
+        <nav className="flex flex-col gap-4 border-t border-charcoal/10 px-6 py-5 text-sm text-charcoal/85 md:hidden">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               onClick={() => setMenuOpen(false)}
-              className="hover:text-brass"
+              className="hover:text-pink"
             >
               {link.label}
             </Link>

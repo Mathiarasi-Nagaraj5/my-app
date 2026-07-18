@@ -1,7 +1,7 @@
 const messages = [
-  "free delivery above ₹999",
-  "cash on delivery available",
-  "easy 7-day returns",
+  "Free delivery above ₹999",
+  "Cash on delivery available",
+  "Easy 7-day returns",
 ];
 
 export default function AnnouncementBar() {

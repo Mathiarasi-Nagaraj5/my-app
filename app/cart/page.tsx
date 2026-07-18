@@ -4,7 +4,7 @@ import Link from "next/link";
 import CartItemRow from "@/components/cart/CartItemRow";
 import OrderSummary from "@/components/cart/OrderSummary";
 import Button from "@/components/ui/Button";
-import { useCart } from "@/lib/context/CartContext";
+import { useCart } from "@/app/lib/context/CartContext";
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, subtotal } = useCart();
@@ -28,7 +28,7 @@ export default function CartPage() {
   return (
     <div className="mx-auto max-w-5xl px-6 py-8">
       <h1 className="mb-6 font-serif text-2xl font-medium text-charcoal">
-        your bag ({items.length} {items.length === 1 ? "item" : "items"})
+        Your bag ({items.length} {items.length === 1 ? "item" : "items"})
       </h1>
 
       <div className="grid grid-cols-1 gap-8 md:grid-cols-[1.6fr_1fr]">

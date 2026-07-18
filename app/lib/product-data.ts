@@ -1,10 +1,5 @@
-import { Product } from "./types";
-
-// Replace with a real DB/CMS fetch later (e.g. getProducts() from Prisma, Sanity, Shopify, etc).
-// Image URLs are placeholders — swap with your actual product photography.
-export const products: Product[] = [
+export const products = [
   {
-    id: "1",
     slug: "black-oversized-tee",
     name: "black oversized tee",
     category: "t-shirts",
@@ -16,9 +11,9 @@ export const products: Product[] = [
     isBestseller: true,
     colors: ["#1C1B19", "#F3EFE7"],
     sizes: ["S", "M", "L", "XL", "XXL"],
+    stock: 100,
   },
   {
-    id: "2",
     slug: "olive-oversized-tee",
     name: "olive oversized tee",
     category: "t-shirts",
@@ -28,9 +23,9 @@ export const products: Product[] = [
     imageUrl: "https://picsum.photos/seed/olive-tee/600/800",
     colors: ["#6B5B45"],
     sizes: ["S", "M", "L", "XL"],
+    stock: 100,
   },
   {
-    id: "3",
     slug: "printed-graphic-tee",
     name: "printed graphic tee",
     category: "t-shirts",
@@ -39,9 +34,9 @@ export const products: Product[] = [
     reviewCount: 610,
     imageUrl: "https://picsum.photos/seed/graphic-tee/600/800",
     sizes: ["S", "M", "L", "XL"],
+    stock: 100,
   },
   {
-    id: "4",
     slug: "fleece-hoodie",
     name: "fleece hoodie",
     category: "hoodies",
@@ -51,9 +46,9 @@ export const products: Product[] = [
     imageUrl: "https://picsum.photos/seed/fleece-hoodie/600/800",
     isBestseller: true,
     sizes: ["M", "L", "XL", "XXL"],
+    stock: 100,
   },
   {
-    id: "5",
     slug: "zip-up-hoodie",
     name: "zip-up hoodie",
     category: "hoodies",
@@ -62,9 +57,9 @@ export const products: Product[] = [
     reviewCount: 410,
     imageUrl: "https://picsum.photos/seed/zip-hoodie/600/800",
     sizes: ["S", "M", "L", "XL"],
+    stock: 100,
   },
   {
-    id: "6",
     slug: "pullover-hoodie",
     name: "pullover hoodie",
     category: "hoodies",
@@ -73,9 +68,9 @@ export const products: Product[] = [
     reviewCount: 305,
     imageUrl: "https://picsum.photos/seed/pullover-hoodie/600/800",
     sizes: ["S", "M", "L", "XL", "XXL"],
+    stock: 100,
   },
   {
-    id: "7",
     slug: "co-ord-pyjama-set",
     name: "co-ord pyjama set",
     category: "pyjamas",
@@ -84,9 +79,9 @@ export const products: Product[] = [
     reviewCount: 275,
     imageUrl: "https://picsum.photos/seed/pyjama-set/600/800",
     sizes: ["S", "M", "L", "XL"],
+    stock: 100,
   },
   {
-    id: "8",
     slug: "striped-pyjama-set",
     name: "striped pyjama set",
     category: "pyjamas",
@@ -95,10 +90,6 @@ export const products: Product[] = [
     reviewCount: 140,
     imageUrl: "https://picsum.photos/seed/striped-pyjama/600/800",
     sizes: ["M", "L", "XL"],
+    stock: 100,
   },
 ];
-
-export const getBestsellers = () => products.filter((p) => p.isBestseller);
-export const getNewArrivals = () => products.slice(0, 4);
-export const getFeatured = () => products.slice(2, 6);
-export const getTrending = () => products.slice(4, 8);

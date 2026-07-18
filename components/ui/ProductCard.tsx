@@ -2,9 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Product } from "@/lib/types";
+import { Product } from "@/app/lib/types";
 import Badge from "./Badge";
-import { useWishlist } from "@/lib/context/WishlistContext";
+import { useWishlist } from "@/app/lib/context/WishlistContext";
 
 interface ProductCardProps {
   product: Product;
@@ -37,7 +37,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           {/* top-left tag: only one of these should show at a time */}
           {product.isBestseller && (
             <div className="absolute left-2 top-2">
-              <Badge variant="neutral">bestseller</Badge>
+              <Badge variant="brand">bestseller</Badge>
             </div>
           )}
           {discountPercent && !product.isBestseller && (
@@ -59,14 +59,14 @@ export default function ProductCard({ product }: ProductCardProps) {
           </button>
         </div>
 
-        <p className="mt-2 truncate text-sm text-charcoal">{product.name}</p>
+        <p className="mt-2 truncate text-lg text-charcoal capitalize">{product.name}</p>
 
         <div className="mt-1 flex items-baseline gap-2">
-          <span className="text-sm font-medium text-brass">
+          <span className="text-lg font-medium capitalize text-pink">
             {formatINR(product.price)}
           </span>
           {product.originalPrice && (
-            <span className="text-xs text-charcoal/40 line-through">
+            <span className="text-sm text-charcoal/40 line-through">
               {formatINR(product.originalPrice)}
             </span>
           )}

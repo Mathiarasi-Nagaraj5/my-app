@@ -17,7 +17,7 @@ export default function StarRating({
 
   return (
     <div className={`flex items-center gap-1.5 ${fontSize}`}>
-      <span className="text-brass tracking-tight">{stars}</span>
+      <span className="text-pink tracking-tight">{stars}</span>
       {reviewCount !== undefined ? (
         <span className="text-charcoal/50">
           {rating.toFixed(1)} ({reviewCount.toLocaleString("en-IN")})

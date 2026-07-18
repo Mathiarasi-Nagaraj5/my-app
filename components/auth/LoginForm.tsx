@@ -45,7 +45,7 @@ console.log("hi")
           onChange={(e) => setPassword(e.target.value)}
         />
         <div className="mt-1.5 text-right">
-          <Link href="/forgot-password" className="text-xs text-brass hover:underline">
+          <Link href="/forgot-password" className="text-xs text-pink hover:underline">
             forgot password?
           </Link>
         </div>
@@ -74,7 +74,7 @@ console.log("hi")
 
       <p className="mt-3 text-center text-sm text-charcoal/70">
         new here?{" "}
-        <Link href="/register" className="font-medium text-brass hover:underline">
+        <Link href="/register" className="font-medium text-pink hover:underline">
           create an account
         </Link>
       </p>

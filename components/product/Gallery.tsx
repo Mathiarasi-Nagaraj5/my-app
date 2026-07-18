@@ -40,7 +40,7 @@ export default function Gallery({ slug, productName }: GalleryProps) {
             aria-label={`View image ${i + 1}`}
             onClick={() => setActiveIndex(i)}
             className={`relative aspect-square overflow-hidden rounded ${
-              activeIndex === i ? "ring-2 ring-brass" : "opacity-70"
+              activeIndex === i ? "ring-2 ring-pink" : "opacity-70"
             }`}
           >
             <Image

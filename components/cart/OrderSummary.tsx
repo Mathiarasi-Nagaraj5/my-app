@@ -34,52 +34,52 @@ export default function OrderSummary({ subtotal, itemCount }: OrderSummaryProps)
 
   return (
     <div className="rounded-card bg-charcoal p-6">
-      <p className="mb-3.5 text-sm font-medium text-ivory">have a coupon?</p>
+      <p className="mb-3.5 text-sm font-medium text-ivory">Have a coupon?</p>
       <div className="mb-5 flex gap-2">
         <input
           type="text"
           value={coupon}
           onChange={(e) => setCoupon(e.target.value)}
-          placeholder="enter code"
-          className="h-9 flex-1 rounded border border-brass bg-transparent px-3 text-sm text-ivory placeholder:text-ivory/40 focus:outline-none"
+          placeholder="Enter code"
+          className="h-9 flex-1 rounded border border-pink bg-transparent px-3 text-sm text-ivory placeholder:text-ivory/40 focus:outline-none"
         />
-        <Button variant="outline" size="sm" onClick={applyCoupon} className="border-brass text-brass">
-          apply
+        <Button variant="outline" size="sm" onClick={applyCoupon} className="border-pink text-pink">
+          Apply
         </Button>
       </div>
       {couponMessage && (
-        <p className={`-mt-3 mb-4 text-xs ${discount > 0 ? "text-brass" : "text-red-400"}`}>
+        <p className={`-mt-3 mb-4 text-xs ${discount > 0 ? "text-pink" : "text-red-400"}`}>
           {couponMessage}
         </p>
       )}
 
       <div className="space-y-2 border-t border-ivory/15 pt-4 text-sm text-ivory/75">
         <div className="flex justify-between">
-          <span>subtotal ({itemCount} items)</span>
+          <span>Subtotal ({itemCount} items)</span>
           <span>{formatINR(subtotal)}</span>
         </div>
         <div className="flex justify-between">
-          <span>delivery</span>
-          <span className={delivery === 0 ? "text-brass" : ""}>
-            {delivery === 0 ? "free" : formatINR(delivery)}
+          <span>Delivery</span>
+          <span className={delivery === 0 ? "text-pink" : ""}>
+            {delivery === 0 ? "Free" : formatINR(delivery)}
           </span>
         </div>
         {discount > 0 && (
           <div className="flex justify-between">
-            <span>discount</span>
+            <span>Discount</span>
             <span>−{formatINR(discount)}</span>
           </div>
         )}
       </div>
 
       <div className="mt-4 flex justify-between border-t border-ivory/15 pt-4 text-base font-medium text-ivory">
-        <span>total</span>
+        <span>Total</span>
         <span>{formatINR(Math.max(total, 0))}</span>
       </div>
 
       <Link href="/checkout" className="mt-5 block">
         <Button variant="primary" fullWidth disabled={itemCount === 0}>
-          proceed to checkout
+          Proceed to Checkout
         </Button>
       </Link>
     </div>

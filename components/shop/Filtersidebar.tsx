@@ -1,6 +1,6 @@
 "use client";
 
-import { ShopFilters } from "../../lib/types";
+import { ShopFilters } from "../../app/lib/types";
 
 const ALL_CATEGORIES = ["t-shirts", "hoodies", "pyjamas"];
 const ALL_SIZES = ["S", "M", "L", "XL", "XXL"];
@@ -37,7 +37,7 @@ export default function FilterSidebar({ filters, onChange }: FilterSidebarProps)
     <aside className="w-full text-sm">
       {/* category */}
       <div className="border-b border-charcoal/15 pb-5">
-        <p className="mb-3 font-medium text-charcoal">category</p>
+        <p className="mb-3 font-medium text-charcoal">Category</p>
         <div className="flex flex-col gap-2">
           {ALL_CATEGORIES.map((cat) => (
             <label
@@ -48,7 +48,7 @@ export default function FilterSidebar({ filters, onChange }: FilterSidebarProps)
                 type="checkbox"
                 checked={filters.categories.includes(cat)}
                 onChange={() => toggleCategory(cat)}
-                className="accent-brass"
+                className="accent-pink"
               />
               {cat}
             </label>
@@ -58,7 +58,7 @@ export default function FilterSidebar({ filters, onChange }: FilterSidebarProps)
 
       {/* price */}
       <div className="border-b border-charcoal/15 py-5">
-        <p className="mb-3 font-medium text-charcoal">price</p>
+        <p className="mb-3 font-medium text-charcoal">Price</p>
         <input
           type="range"
           min={500}
@@ -68,7 +68,7 @@ export default function FilterSidebar({ filters, onChange }: FilterSidebarProps)
           onChange={(e) =>
             onChange({ ...filters, maxPrice: Number(e.target.value) })
           }
-          className="w-full accent-brass"
+          className="w-full accent-pink"
         />
         <div className="flex justify-between text-xs text-charcoal/55">
           <span>₹500</span>
@@ -78,7 +78,7 @@ export default function FilterSidebar({ filters, onChange }: FilterSidebarProps)
 
       {/* size */}
       <div className="border-b border-charcoal/15 py-5">
-        <p className="mb-3 font-medium text-charcoal">size</p>
+        <p className="mb-3 font-medium text-charcoal">Size</p>
         <div className="flex flex-wrap gap-2">
           {ALL_SIZES.map((size) => {
             const active = filters.sizes.includes(size);
@@ -89,7 +89,7 @@ export default function FilterSidebar({ filters, onChange }: FilterSidebarProps)
                 onClick={() => toggleSize(size)}
                 className={`flex h-8 w-8 items-center justify-center rounded border text-xs ${
                   active
-                    ? "border-brass text-brass font-medium"
+                    ? "border-pink text-pink font-medium"
                     : "border-charcoal/40 text-charcoal/70"
                 }`}
               >
@@ -102,7 +102,7 @@ export default function FilterSidebar({ filters, onChange }: FilterSidebarProps)
 
       {/* color */}
       <div className="pt-5">
-        <p className="mb-3 font-medium text-charcoal">color</p>
+        <p className="mb-3 font-medium text-charcoal">Color</p>
         <div className="flex gap-2">
           {ALL_COLORS.map((color) => {
             const active = filters.colors.includes(color);
@@ -114,7 +114,7 @@ export default function FilterSidebar({ filters, onChange }: FilterSidebarProps)
                 onClick={() => toggleColor(color)}
                 style={{ backgroundColor: color }}
                 className={`h-6 w-6 rounded-full border-2 ${
-                  active ? "border-brass" : "border-charcoal/20"
+                  active ? "border-pink" : "border-charcoal/20"
                 }`}
               />
             );

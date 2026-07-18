@@ -73,7 +73,7 @@ export default function RegisterForm() {
           type="checkbox"
           checked={agreed}
           onChange={(e) => setAgreed(e.target.checked)}
-          className="mt-0.5 accent-brass"
+          className="mt-0.5 accent-pink"
         />
         i agree to the terms of service and privacy policy
       </label>
@@ -86,7 +86,7 @@ export default function RegisterForm() {
 
       <p className="mt-2 text-center text-sm text-charcoal/70">
         already have an account?{" "}
-        <Link href="/login" className="font-medium text-brass hover:underline">
+        <Link href="/login" className="font-medium text-pink hover:underline">
           login
         </Link>
       </p>

@@ -36,7 +36,7 @@ export default function OrderCard({ order }: { order: Order }) {
           {order.itemCount === 1 ? "item" : "items"} · {order.total}
         </p>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="border-brass text-brass">
+          <Button variant="outline" size="sm" className="border-pink text-pink">
             {order.status === "in transit" ? "track order" : "view details"}
           </Button>
           {order.status === "delivered" && (

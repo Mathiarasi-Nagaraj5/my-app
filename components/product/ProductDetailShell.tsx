@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Product } from "@/lib/types";
+import { Product } from "@/app/lib/types";
 import Gallery from "./Gallery";
 import ProductInfo from "./ProductInfo";
 import SizeGuideModal from "./SizeGuideModal";

@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { CartItem } from "../../lib/types";
+import { CartItem } from "../../app/lib/types";
 import QuantityStepper from "@/components/ui/QuantityStepper";
 
 const formatINR = (v: number) => `₹${v.toLocaleString("en-IN")}`;

@@ -1,6 +1,6 @@
 import { Lock } from "lucide-react";
 import Button from "@/components/ui/Button";
-import { CartItem } from "@/lib/types";
+import { CartItem } from "@/app/lib/types";
 
 const formatINR = (v: number) => `₹${v.toLocaleString("en-IN")}`;
 
@@ -41,7 +41,7 @@ export default function CheckoutSummary({
         </div>
         <div className="flex justify-between">
           <span>delivery</span>
-          <span className={delivery === 0 ? "text-brass" : ""}>
+          <span className={delivery === 0 ? "text-pink" : ""}>
             {delivery === 0 ? "free" : formatINR(delivery)}
           </span>
         </div>

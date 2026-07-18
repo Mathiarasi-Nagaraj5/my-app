@@ -11,9 +11,9 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantStyles: Record<ButtonVariant, string> = {
-  // brass fill — reserve for the ONE primary action on a page (add to bag, place order)
+  // pink fill — reserve for the ONE primary action on a page (add to bag, place order)
   primary:
-    "bg-brass text-charcoal hover:bg-brass/90 active:scale-[0.98] border border-transparent",
+    "bg-pink text-charcoal hover:bg-pink/90 active:scale-[0.98] border border-transparent",
   // charcoal fill — secondary strong action (buy now, save changes)
   secondary:
     "bg-charcoal text-ivory hover:bg-charcoal/90 active:scale-[0.98] border border-transparent",

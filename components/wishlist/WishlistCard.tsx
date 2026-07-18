@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { X } from "lucide-react";
-import { Product } from "@/lib/types";
+import { Product } from "@/app/lib/types";
 import Button from "@/components/ui/Button";
 
 const formatINR = (v: number) => `₹${v.toLocaleString("en-IN")}`;
@@ -40,7 +40,7 @@ export default function WishlistCard({
       </div>
       <div className="p-3">
         <p className="truncate text-sm text-charcoal">{product.name}</p>
-        <p className="mt-0.5 mb-2.5 text-sm font-medium text-brass">
+        <p className="mt-0.5 mb-2.5 text-sm font-medium text-pink">
           {formatINR(product.price)}
         </p>
         <Button variant="primary" size="sm" fullWidth onClick={() => onMoveToCart(product.id)}>

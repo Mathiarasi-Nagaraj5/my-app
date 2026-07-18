@@ -151,7 +151,7 @@ function ToggleRow({
   return (
     <label className="flex items-center justify-between text-sm text-charcoal">
       {label}
-      <input type="checkbox" checked={checked} onChange={onChange} className="h-4 w-4 accent-brass" />
+      <input type="checkbox" checked={checked} onChange={onChange} className="h-4 w-4 accent-pink" />
     </label>
   );
 }

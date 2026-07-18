@@ -13,12 +13,12 @@ export default function ProductDescription() {
     <section className="bg-charcoal px-6 py-10">
       <div className="mx-auto max-w-4xl">
         <h2 className="mb-5 font-serif text-lg font-medium text-ivory">
-          product details
+          Product Details
         </h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {DETAILS.map(({ icon: Icon, text }) => (
             <p key={text} className="flex items-center gap-2 text-sm text-ivory/75">
-              <Icon size={16} className="text-brass" />
+              <Icon size={16} className="text-pink" />
               {text}
             </p>
           ))}

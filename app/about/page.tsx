@@ -5,7 +5,7 @@ export default function AboutPage() {
     <>
       {/* brand story hero */}
       <section className="bg-charcoal px-6 py-16 text-center">
-        <p className="mb-3 text-xs tracking-wide text-brass">our story</p>
+        <p className="mb-3 text-xs tracking-wide text-pink">our story</p>
         <h1 className="mx-auto max-w-xl font-serif text-3xl font-medium leading-snug text-ivory">
           clothes built for real Indian streets, real Indian weather, real
           everyday wear
@@ -37,7 +37,7 @@ export default function AboutPage() {
       </section>
 
       {/* stats — why our brand */}
-      <section className="grid grid-cols-1 gap-6 bg-brass px-6 py-12 text-center sm:grid-cols-3">
+      <section className="grid grid-cols-1 gap-6 bg-pink px-6 py-12 text-center sm:grid-cols-3">
         <Stat value="50,000+" label="happy customers" />
         <Stat value="100+" label="styles designed" />
         <Stat value="4.6★" label="average rating" />

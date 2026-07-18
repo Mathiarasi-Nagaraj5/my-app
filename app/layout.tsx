@@ -3,8 +3,8 @@ import "./globals.css";
 import AnnouncementBar from "@/components/layout/AnnouncementBar";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { CartProvider } from "@/lib/context/CartContext";
-import { WishlistProvider } from "@/lib/context/WishlistContext";
+import { CartProvider } from "@/app/lib/context/CartContext";
+import { WishlistProvider } from "@/app/lib/context/WishlistContext";
 
 export const metadata: Metadata = {
   title: "Elite Soul — Oversized T-Shirts, Hoodies & Pyjamas",

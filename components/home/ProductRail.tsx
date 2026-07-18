@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Product } from "@/lib/types";
+import { Product } from "@/app/lib/types";
 import ProductCard from "../ui/ProductCard";
 
 interface ProductRailProps {
@@ -19,16 +19,16 @@ export default function ProductRail({
   return (
     <section
       className={`px-6 py-12 ${
-        tone === "charcoal-tint" ? "bg-charcoal/[0.03]" : "bg-ivory"
+        tone === "charcoal-tint" ? "bg-[#FFFDFC]" : "bg-[#FDF5F8]"
       }`}
     >
       <div className="mx-auto max-w-7xl">
         <div className="mb-6 flex items-baseline justify-between">
-          <h2 className="font-serif text-xl font-medium text-charcoal">
+          <h2 className="font-serif text-3xl font-medium text-charcoal">
             {title}
           </h2>
-          <Link href={viewAllHref} className="text-sm text-brass hover:underline">
-            view all
+          <Link href={viewAllHref} className="text-lg italic text-black hover:underline">
+            View all
           </Link>
         </div>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">

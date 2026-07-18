@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Product } from "@/lib/types";
+import { Product } from "@/app/lib/types";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import StarRating from "@/components/ui/StarRating";
 import QuantityStepper from "@/components/ui/QuantityStepper";
-import { useCart } from "@/lib/context/CartContext";
+import { useCart } from "@/app/lib/context/CartContext";
 import { Truck, Wallet } from "lucide-react";
 
 const formatINR = (value: number) => `₹${value.toLocaleString("en-IN")}`;
@@ -79,7 +79,7 @@ export default function ProductInfo({ product, onSizeGuideClick }: ProductInfoPr
     <div>
       {product.isBestseller && <Badge variant="neutral">bestseller</Badge>}
 
-      <h1 className="mt-2 font-serif text-2xl font-medium text-charcoal">
+      <h1 className="mt-2 font-serif text-2xl font-medium text-charcoal capitalize">
         {product.name}
       </h1>
 
@@ -118,7 +118,7 @@ export default function ProductInfo({ product, onSizeGuideClick }: ProductInfoPr
                 onClick={() => setSelectedColor(color)}
                 style={{ backgroundColor: color }}
                 className={`h-8 w-8 rounded-full border-2 ${
-                  selectedColor === color ? "border-brass" : "border-charcoal/20"
+                  selectedColor === color ? "border-pink" : "border-charcoal/20"
                 }`}
               />
             ))}
@@ -130,13 +130,13 @@ export default function ProductInfo({ product, onSizeGuideClick }: ProductInfoPr
       {product.sizes && product.sizes.length > 0 && (
         <div className="mt-6">
           <div className="mb-2 flex items-center justify-between">
-            <p className="text-sm font-medium text-charcoal">select size</p>
+            <p className="text-sm font-medium text-charcoal">Select size</p>
             <button
               type="button"
               onClick={onSizeGuideClick}
-              className="text-xs text-brass hover:underline"
+              className="text-md text-pink hover:underline"
             >
-              size chart
+                Size chart
             </button>
           </div>
           <div className="flex gap-2">
@@ -150,7 +150,7 @@ export default function ProductInfo({ product, onSizeGuideClick }: ProductInfoPr
                 }}
                 className={`flex h-10 w-11 items-center justify-center rounded border text-sm ${
                   selectedSize === size
-                    ? "border-brass bg-charcoal text-brass font-medium"
+                    ? "border-pink bg-charcoal text-pink font-medium"
                     : "border-charcoal text-charcoal"
                 }`}
               >
@@ -160,7 +160,7 @@ export default function ProductInfo({ product, onSizeGuideClick }: ProductInfoPr
           </div>
           {sizeError && (
             <p className="mt-1.5 text-xs text-red-600">
-              please select a size before continuing
+              Please select a size before continuing
             </p>
           )}
         </div>
@@ -168,49 +168,49 @@ export default function ProductInfo({ product, onSizeGuideClick }: ProductInfoPr
 
       {/* quantity */}
       <div className="mt-6">
-        <p className="mb-2 text-sm font-medium text-charcoal">quantity</p>
+        <p className="mb-2 text-sm font-medium text-charcoal">Quantity</p>
         <QuantityStepper quantity={quantity} onChange={setQuantity} />
       </div>
 
       {/* CTAs */}
       <div className="mt-6 flex gap-3">
         <Button variant="primary" fullWidth onClick={handleAddToCart}>
-          {added ? "added to bag ✓" : "add to bag"}
+          {added ? "Added to bag ✓" : "Add to bag"}
         </Button>
       </div>
       <Button variant="secondary" fullWidth className="mt-3" onClick={handleBuyNow}>
-        buy now
+        Buy now
       </Button>
 
       {/* delivery check */}
       <div className="mt-6 border-t border-charcoal/15 pt-5">
-        <p className="mb-2 text-sm font-medium text-charcoal">check delivery</p>
+        <p className="mb-2 text-sm font-medium text-charcoal">Check delivery</p>
         <div className="flex max-w-xs gap-2">
           <input
             type="text"
             value={pincode}
             onChange={(e) => setPincode(e.target.value)}
-            placeholder="enter pincode"
+            placeholder="Enter pincode"
             maxLength={6}
-            className="h-10 flex-1 rounded border border-charcoal bg-ivory px-3 text-sm text-charcoal focus:outline-none focus:ring-1 focus:ring-brass"
+            className="h-10 flex-1 rounded border border-charcoal bg-ivory px-3 text-sm text-charcoal focus:outline-none focus:ring-1 focus:ring-pink"
           />
           <Button
             variant="outline"
             size="sm"
             onClick={() => setDeliveryChecked(pincode.length === 6)}
           >
-            check
+            Check
           </Button>
         </div>
         {deliveryChecked && (
           <div className="mt-3 space-y-1.5 text-xs text-charcoal/60">
             <p className="flex items-center gap-1.5">
-              <Truck size={14} className="text-brass" />
-              free delivery · usually arrives in 4-6 days
+              <Truck size={14} className="text-pink" />
+              Free delivery · Usually arrives in 4-6 days
             </p>
             <p className="flex items-center gap-1.5">
-              <Wallet size={14} className="text-brass" />
-              cash on delivery available
+              <Wallet size={14} className="text-pink" />
+              Cash on delivery available
             </p>
           </div>
         )}

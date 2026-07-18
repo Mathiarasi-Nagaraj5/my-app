@@ -8,7 +8,7 @@ import Button from "@/components/ui/Button";
 import ShippingForm, { ShippingAddress } from "@/components/checkout/ShippingForm";
 import PaymentMethodSelector, { PaymentMethod } from "@/components/checkout/PaymentMethodSelector";
 import CheckoutSummary from "@/components/checkout/CheckoutSummary";
-import { useCart } from "@/lib/context/CartContext";
+import { useCart } from "@/app/lib/context/CartContext";
 
 const EMPTY_ADDRESS: ShippingAddress = {
   fullName: "",
@@ -112,7 +112,7 @@ export default function CheckoutPage() {
           name: address.fullName,
           contact: address.phone,
         },
-        theme: { color: "#A8823D" }, // brass, matches the site theme
+        theme: { color: "#e0629b" }, // pink, matches the site theme
 
         handler: async (response: any) => {
           try {
@@ -170,8 +170,8 @@ export default function CheckoutPage() {
       <div className="mx-auto max-w-5xl px-6 py-8">
         {/* step indicator */}
         <div className="mb-7 flex justify-center gap-6 text-xs">
-          <span className="font-medium text-brass">1. bag</span>
-          <span className="font-medium text-brass">2. checkout</span>
+          <span className="font-medium text-pink">1. bag</span>
+          <span className="font-medium text-pink">2. checkout</span>
           <span className="text-charcoal/40">3. done</span>
         </div>
 

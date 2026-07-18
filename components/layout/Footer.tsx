@@ -4,27 +4,27 @@ import Input from "../ui/Input";
 import Button from "../ui/Button";
 
 const FOOTER_LINKS = {
-  shop: [
-    { label: "t-shirts", href: "/shop?category=t-shirts" },
-    { label: "hoodies", href: "/shop?category=hoodies" },
-    { label: "pyjamas", href: "/shop?category=pyjamas" },
+  Shop: [
+    { label: "T-shirts", href: "/shop?category=t-shirts" },
+    { label: "Hoodies", href: "/shop?category=hoodies" },
+    { label: "Pyjamas", href: "/shop?category=pyjamas" },
   ],
-  company: [
-    { label: "about us", href: "/about" },
-    { label: "contact", href: "/contact" },
+  Company: [
+    { label: "About us", href: "/about" },
+    { label: "Contact", href: "/contact" },
   ],
-  account: [
-    { label: "your orders", href: "/orders" },
-    { label: "wishlist", href: "/wishlist" },
-    { label: "login", href: "/login" },
+  Account: [
+    { label: "Your orders", href: "/orders" },
+    { label: "Wishlist", href: "/wishlist" },
+    { label: "Login", href: "/login" },
   ],
 };
 
 const TRUST_ITEMS = [
-  { icon: Truck, label: "free delivery" },
-  { icon: RotateCcw, label: "easy returns" },
-  { icon: Wallet, label: "cash on delivery" },
-  { icon: Shirt, label: "premium cotton" },
+  { icon: Truck, label: "Free delivery" },
+  { icon: RotateCcw, label: "Easy returns" },
+  { icon: Wallet, label: "Cash on delivery" },
+  { icon: Shirt, label: "Premium cotton" },
 ];
 
 export default function Footer() {
@@ -34,26 +34,26 @@ export default function Footer() {
       <div className="grid grid-cols-2 gap-6 border-b border-ivory/10 px-6 py-8 text-center md:grid-cols-4">
         {TRUST_ITEMS.map(({ icon: Icon, label }) => (
           <div key={label} className="flex flex-col items-center gap-2">
-            <Icon size={20} className="text-brass" />
-            <span className="text-xs">{label}</span>
+            <Icon size={20} className="text-pink" />
+            <span className="text-md">{label}</span>
           </div>
         ))}
       </div>
 
       {/* newsletter */}
       <div className="border-b border-ivory/10 px-6 py-10 text-center">
-        <p className="mb-1 font-serif text-lg">get updates on new arrivals</p>
+        <p className="mb-1 font-serif text-lg">Get updates on new arrivals</p>
         <p className="mb-4 text-xs text-ivory/55">
-          be the first to know when we launch new styles.
+          Be the first to know when we launch new styles.
         </p>
-        <form className="mx-auto flex max-w-sm gap-0 overflow-hidden rounded border border-brass">
+        <form className="mx-auto flex max-w-sm gap-0 overflow-hidden rounded border border-pink">
           <input
             type="email"
             placeholder="your email"
-            className="h-10 flex-1 bg-transparent px-3 text-sm text-ivory placeholder:text-ivory/40 focus:outline-none"
+            className="h-10 flex-1 bg-transparent px-3 text-lg text-ivory placeholder:text-ivory/40 focus:outline-none"
           />
-          <Button variant="primary" size="sm" className="rounded-none h-10">
-            subscribe
+          <Button variant="primary" size="lg" className="rounded-none h-10">
+            Subscribe
           </Button>
         </form>
       </div>
@@ -63,13 +63,13 @@ export default function Footer() {
         <div>
           <p className="mb-3 font-medium">ELITE SOUL</p>
           <p className="text-xs text-ivory/55 leading-relaxed">
-            oversized t-shirts, hoodies and pyjama sets made for everyday
+            Oversized t-shirts, hoodies and pyjama sets made for everyday
             comfort.
           </p>
         </div>
-        <FooterColumn title="shop" links={FOOTER_LINKS.shop} />
-        <FooterColumn title="company" links={FOOTER_LINKS.company} />
-        <FooterColumn title="account" links={FOOTER_LINKS.account} />
+        <FooterColumn title="Shop" links={FOOTER_LINKS.Shop} />
+        <FooterColumn title="Company" links={FOOTER_LINKS.Company} />
+        <FooterColumn title="Account" links={FOOTER_LINKS.Account} />
       </div>
 
       <div className="border-t border-ivory/10 px-6 py-4 text-center text-xs text-ivory/40">
@@ -92,7 +92,7 @@ function FooterColumn({
       <ul className="flex flex-col gap-2 text-xs text-ivory/70">
         {links.map((link) => (
           <li key={link.href}>
-            <Link href={link.href} className="hover:text-brass">
+            <Link href={link.href} className="hover:text-pink">
               {link.label}
             </Link>
           </li>

@@ -2,9 +2,9 @@
 
 import AccountSidebar from "@/components/account/Accountsidebar";
 import WishlistCard from "@/components/wishlist/WishlistCard";
-import { products } from "@/lib/data";
-import { useWishlist } from "@/lib/context/WishlistContext";
-import { useCart } from "@/lib/context/CartContext";
+import { products } from "@/app/lib/data";
+import { useWishlist } from "@/app/lib/context/WishlistContext";
+import { useCart } from "@/app/lib/context/CartContext";
 
 export default function WishlistPage() {
   const { productIds, toggle } = useWishlist();

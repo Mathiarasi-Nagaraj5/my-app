@@ -145,7 +145,7 @@ export default function AddressesPage() {
                   className="flex items-start justify-between rounded-card border border-charcoal/15 p-4"
                 >
                   <div className="flex gap-3">
-                    <MapPin size={16} className="mt-0.5 text-brass" />
+                    <MapPin size={16} className="mt-0.5 text-pink" />
                     <div>
                       <p className="text-sm font-medium capitalize text-charcoal">
                         {address.label || "address"}
@@ -161,7 +161,7 @@ export default function AddressesPage() {
                   </div>
                   <div className="flex gap-3">
                     <button aria-label="Edit address" onClick={() => startEdit(address)}>
-                      <Pencil size={15} className="text-charcoal/50 hover:text-brass" />
+                      <Pencil size={15} className="text-charcoal/50 hover:text-pink" />
                     </button>
                     <button aria-label="Delete address" onClick={() => handleDelete(address.id)}>
                       <Trash2 size={15} className="text-charcoal/50 hover:text-red-600" />

@@ -21,8 +21,8 @@ const REVIEWS = [
 export default function Testimonials() {
   return (
     <section className="bg-ivory px-6 py-14">
-      <h2 className="mb-8 text-center font-serif text-2xl font-medium text-charcoal">
-        what customers are saying
+      <h2 className="mb-8 text-center font-serif text-3xl font-medium text-charcoal">
+        What Our Customers Are Saying
       </h2>
       <div className="mx-auto grid max-w-6xl grid-cols-1 gap-5 md:grid-cols-3">
         {REVIEWS.map((review) => (

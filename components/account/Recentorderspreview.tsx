@@ -16,8 +16,8 @@ export default function RecentOrdersPreview() {
     <div className="mt-10">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-medium text-charcoal">recent orders</h2>
-        <Link href="/orders" className="text-xs text-brass hover:underline">
-          view all
+        <Link href="/orders" className="text-xs text-black hover:underline">
+          View all
         </Link>
       </div>
       <div className="flex flex-col gap-2.5">
