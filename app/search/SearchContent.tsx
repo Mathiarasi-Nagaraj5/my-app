@@ -6,13 +6,14 @@ import { Search as SearchIcon } from "lucide-react";
 import ProductCard from "@/components/ui/ProductCard";
 import SortSelect from "@/components/shop/Sortselect";
 import { SortOption } from "@/app/lib/types";
-import { products as allProducts } from "@/app/lib/data";
-
-export default function SearchContent() {
+import {
+  getProducts,
+} from "@/services/product.service";
+export default async function SearchContent() {
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(searchParams.get("q") ?? "");
   const [sort, setSort] = useState<SortOption>("featured");
-
+  const allProducts = await getProducts(); // Fetch all products (you may want to filter this based on the search query)
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
     let filtered = q

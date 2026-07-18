@@ -2,11 +2,13 @@
 
 import AccountSidebar from "@/components/account/Accountsidebar";
 import WishlistCard from "@/components/wishlist/WishlistCard";
-import { products } from "@/app/lib/data";
 import { useWishlist } from "@/app/lib/context/WishlistContext";
 import { useCart } from "@/app/lib/context/CartContext";
-
-export default function WishlistPage() {
+import {
+  getProducts,
+} from "@/services/product.service";
+export default async function WishlistPage() {
+  const products = await getProducts(); // Fetch all products (you may want to filter this based on the wishlist)
   const { productIds, toggle } = useWishlist();
   const { addItem } = useCart();
   const wishlistProducts = products.filter((p) => productIds.includes(p.id));
