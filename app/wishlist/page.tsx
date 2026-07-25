@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import AccountSidebar from "@/components/account/AccountSidebar";
-import WishlistCard from "@/components/wishlist/WishlistCard";
-import { useWishlist } from "@/app/lib/context/WishlistContext";
-import { useCart } from "@/app/lib/context/CartContext";
-import { getProducts } from "@/services/product.service";
+import AccountSidebar from "../../components/account/AccountSidebar";
+import WishlistCard from "../../components/wishlist/WishlistCard";
+import { useWishlist } from "../../app/lib/context/WishlistContext";
+import { useCart } from "../../app/lib/context/CartContext";
+import { getProducts } from "../../services/product.service";
 import RequireAuth from "../../components/auth/RequireAuth";
 
 export default function WishlistPage() {
