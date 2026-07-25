@@ -44,9 +44,10 @@ export default function ProductInfo({ product, onSizeGuideClick }: ProductInfoPr
 
   const handleAddToCart = () => {
     if (!requireSize()) return;
+    console.log(product);
     addItem({
-      id: `${product.id}-${selectedSize}-${selectedColor ?? "default"}`,
-      productId: product.id,
+      id: `${product._id}-${selectedSize}-${selectedColor ?? "default"}`,
+      productId: product._id,
       slug: product.slug,
       name: product.name,
       imageUrl: product.imageUrl,
@@ -62,8 +63,8 @@ export default function ProductInfo({ product, onSizeGuideClick }: ProductInfoPr
   const handleBuyNow = () => {
     if (!requireSize()) return;
     addItem({
-      id: `${product.id}-${selectedSize}-${selectedColor ?? "default"}`,
-      productId: product.id,
+      id: `${product._id}-${selectedSize}-${selectedColor ?? "default"}`,
+      productId: product._id,
       slug: product.slug,
       name: product.name,
       imageUrl: product.imageUrl,
@@ -174,7 +175,8 @@ export default function ProductInfo({ product, onSizeGuideClick }: ProductInfoPr
 
       {/* CTAs */}
       <div className="mt-6 flex gap-3">
-        <Button variant="primary" fullWidth onClick={handleAddToCart}>
+        <Button variant="primary" fullWidth onClick={
+          handleAddToCart}>
           {added ? "Added to bag ✓" : "Add to bag"}
         </Button>
       </div>

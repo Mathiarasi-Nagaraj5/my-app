@@ -1,12 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Smartphone } from "lucide-react";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
+import { useAuth } from "../../app/lib/context/AuthContext";
 
 export default function LoginForm() {
+  const router = useRouter();
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -15,22 +19,29 @@ export default function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-console.log("hi")
+
     if (!email || !password) {
-      setError("please enter both email/phone and password");
+      setError("please enter both email and password");
       return;
     }
 
     setLoading(true);
-    // TODO: replace with your real auth call (NextAuth, custom API, etc.)
-    console.log("login attempt", { email, password });
+    const result = await login(email, password);
     setLoading(false);
+
+    if (!result.success) {
+      setError(result.error ?? "login failed");
+      return;
+    }
+
+    router.push("/profile");
+    router.refresh();
   };
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <Input
-        label="email or phone number"
+        label="email address"
         type="text"
         placeholder="you@email.com"
         value={email}
@@ -45,7 +56,7 @@ console.log("hi")
           onChange={(e) => setPassword(e.target.value)}
         />
         <div className="mt-1.5 text-right">
-          <Link href="/forgot-password" className="text-xs text-pink hover:underline">
+          <Link href="/forgot-password" className="text-xs text-brass hover:underline">
             forgot password?
           </Link>
         </div>
@@ -74,7 +85,7 @@ console.log("hi")
 
       <p className="mt-3 text-center text-sm text-charcoal/70">
         new here?{" "}
-        <Link href="/register" className="font-medium text-pink hover:underline">
+        <Link href="/register" className="font-medium text-brass hover:underline">
           create an account
         </Link>
       </p>

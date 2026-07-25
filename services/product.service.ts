@@ -24,7 +24,7 @@ export async function getProducts(
   }
 
   const result: ApiResponse<Product[]> = await res.json();
-
+  console.log("Fetched products:", result.data); // Log the fetched products
   return result.data;
 }
 

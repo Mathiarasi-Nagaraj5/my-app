@@ -37,12 +37,12 @@ export default function FilterSidebar({ filters, onChange }: FilterSidebarProps)
     <aside className="w-full text-sm">
       {/* category */}
       <div className="border-b border-charcoal/15 pb-5">
-        <p className="mb-3 font-medium text-charcoal">Category</p>
+        <p className="mb-3 font-medium text-charcoal text-xl">Category</p>
         <div className="flex flex-col gap-2">
           {ALL_CATEGORIES.map((cat) => (
             <label
               key={cat}
-              className="flex items-center gap-2 text-charcoal/75"
+              className="flex items-center gap-2 text-charcoal/75 text-lg"
             >
               <input
                 type="checkbox"
@@ -58,7 +58,7 @@ export default function FilterSidebar({ filters, onChange }: FilterSidebarProps)
 
       {/* price */}
       <div className="border-b border-charcoal/15 py-5">
-        <p className="mb-3 font-medium text-charcoal">Price</p>
+        <p className="mb-3 font-medium text-charcoal text-xl">Price</p>
         <input
           type="range"
           min={500}
@@ -70,7 +70,7 @@ export default function FilterSidebar({ filters, onChange }: FilterSidebarProps)
           }
           className="w-full accent-pink"
         />
-        <div className="flex justify-between text-xs text-charcoal/55">
+        <div className="flex justify-between text-md text-charcoal/55">
           <span>₹500</span>
           <span>up to ₹{filters.maxPrice.toLocaleString("en-IN")}</span>
         </div>
@@ -78,7 +78,7 @@ export default function FilterSidebar({ filters, onChange }: FilterSidebarProps)
 
       {/* size */}
       <div className="border-b border-charcoal/15 py-5">
-        <p className="mb-3 font-medium text-charcoal">Size</p>
+        <p className="mb-3 font-medium text-charcoal text-xl">Size</p>
         <div className="flex flex-wrap gap-2">
           {ALL_SIZES.map((size) => {
             const active = filters.sizes.includes(size);
@@ -102,7 +102,7 @@ export default function FilterSidebar({ filters, onChange }: FilterSidebarProps)
 
       {/* color */}
       <div className="pt-5">
-        <p className="mb-3 font-medium text-charcoal">Color</p>
+        <p className="mb-3 font-medium text-charcoal text-xl">Color</p>
         <div className="flex gap-2">
           {ALL_COLORS.map((color) => {
             const active = filters.colors.includes(color);

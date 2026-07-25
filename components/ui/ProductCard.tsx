@@ -15,7 +15,9 @@ const formatINR = (value: number) =>
 
 export default function ProductCard({ product }: ProductCardProps) {
   const { toggle, isWishlisted } = useWishlist();
-  const wishlisted = isWishlisted(product.id);
+  const wishlisted = isWishlisted(product._id);
+  console.log("wishlisted", wishlisted);
+  console.log(product.name, product._id);
   const discountPercent = product.originalPrice
     ? Math.round(
         ((product.originalPrice - product.price) / product.originalPrice) * 100
@@ -37,7 +39,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           {/* top-left tag: only one of these should show at a time */}
           {product.isBestseller && (
             <div className="absolute left-2 top-2">
-              <Badge variant="brand">bestseller</Badge>
+              <Badge variant="brand">Bestseller</Badge>
             </div>
           )}
           {discountPercent && !product.isBestseller && (
@@ -51,11 +53,11 @@ export default function ProductCard({ product }: ProductCardProps) {
             aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
             onClick={(e) => {
               e.preventDefault();
-              toggle(product.id);
+              toggle(product._id);
             }}
-            className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-ivory/90 text-charcoal"
+            className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-ivory/90"
           >
-            {wishlisted ? "♥" : "♡"}
+            <span className={wishlisted ? "text-pink" : "text-charcoal"}>{wishlisted ? "♥" : "♡"}</span>
           </button>
         </div>
 

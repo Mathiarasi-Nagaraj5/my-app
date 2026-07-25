@@ -1,6 +1,6 @@
 import StarRating from "@/components/ui/StarRating";
 
-// Replace with real reviews for this product (filtered by product.id) once you have a reviews table.
+// Replace with real reviews for this product (filtered by product._id) once you have a reviews table.
 const REVIEWS = [
   {
     name: "Rohit S.",

@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import AccountSidebar from "@/components/account/Accountsidebar";
+import AccountSidebar from "@/components/account/AccountSidebar";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
+import RequireAuth from "../../../components/auth/RequireAuth";
 
 export default function SettingsPage() {
   const [passwords, setPasswords] = useState({ current: "", next: "", confirm: "" });
@@ -38,6 +39,7 @@ export default function SettingsPage() {
     setNotifications((prev) => ({ ...prev, [key]: !prev[key] }));
 
   return (
+    <RequireAuth>
     <div className="mx-auto max-w-5xl px-6 py-10">
       <div className="grid grid-cols-1 gap-10 md:grid-cols-[220px_1fr]">
         <AccountSidebar />
@@ -136,6 +138,7 @@ export default function SettingsPage() {
         </div>
       </div>
     </div>
+    </RequireAuth>
   );
 }
 

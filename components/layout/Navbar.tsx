@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Search, User, ShoppingBag, Heart, Menu, X } from "lucide-react";
 import { useCart } from "@/app/lib/context/CartContext";
 import { useWishlist } from "@/app/lib/context/WishlistContext";
+import { useAuth } from "../../app/lib/context/AuthContext";
 
 const NAV_LINKS = [
   { label: "T-Shirts", href: "/shop?category=t-shirts" },
@@ -17,6 +18,12 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { itemCount: cartCount } = useCart();
   const { count: wishlistCount } = useWishlist();
+  const { user } = useAuth();
+
+  // logged in → account icon goes to the profile page
+  // logged out → goes to login
+  const accountHref = user ? "/profile" : "/login";
+  const accountLabel = user ? `Account — ${user.name}` : "Login";
 
   return (
     <header className="bg-ivory">
@@ -39,13 +46,13 @@ export default function Navbar() {
           <Link href="/search" aria-label="Search">
             <Search size={19} />
           </Link>
-          <Link href="/login" aria-label="Account">
+          <Link href={accountHref} aria-label={accountLabel}>
             <User size={19} />
           </Link>
           <Link href="/wishlist" aria-label="Wishlist" className="relative">
             <Heart size={19} />
             {wishlistCount > 0 && (
-              <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-pink text-[10px] font-medium text-charcoal">
+              <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-pink text-[10px] font-medium text-ivory">
                 {wishlistCount}
               </span>
             )}
@@ -53,7 +60,7 @@ export default function Navbar() {
           <Link href="/cart" aria-label="Cart" className="relative">
             <ShoppingBag size={19} />
             {cartCount > 0 && (
-              <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-pink text-[10px] font-medium text-charcoal">
+              <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-pink text-[10px] font-medium text-ivory">
                 {cartCount}
               </span>
             )}

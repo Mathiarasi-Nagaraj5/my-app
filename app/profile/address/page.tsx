@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MapPin, Pencil, Trash2, Plus } from "lucide-react";
-import AccountSidebar from "@/components/account/Accountsidebar";
+import AccountSidebar from "@/components/account/AccountSidebar";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import RequireAuth from "../../../components/auth/RequireAuth";
+import { useAuth } from "../../lib/context/AuthContext";
 
 interface Address {
-  id: string;
+  _id: string;
   label: string;
   fullName: string;
   phone: string;
@@ -16,20 +18,6 @@ interface Address {
   state: string;
   pincode: string;
 }
-
-// TODO: replace with the logged-in user's real saved addresses from your backend.
-const INITIAL_ADDRESSES: Address[] = [
-  {
-    id: "a1",
-    label: "home",
-    fullName: "Rohit Sharma",
-    phone: "+91 98765 43210",
-    addressLine: "12, MG Road, Indiranagar",
-    city: "Bengaluru",
-    state: "Karnataka",
-    pincode: "560038",
-  },
-];
 
 const EMPTY_FORM = {
   label: "",
@@ -41,38 +29,99 @@ const EMPTY_FORM = {
   pincode: "",
 };
 
-export default function AddressesPage() {
-  const [addresses, setAddresses] = useState<Address[]>(INITIAL_ADDRESSES);
+function AddressesContent() {
+  const { user } = useAuth();
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const loadAddresses = () => {
+    if (!user) return;
+    setLoading(true);
+    fetch(`/api/addresses?userId=${user.id}`)
+      .then((res) => res.json())
+      .then((result) => setAddresses(result.data ?? []))
+      .catch(() => setError("failed to load addresses"))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadAddresses();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const startAdd = () => {
     setForm(EMPTY_FORM);
     setEditingId(null);
     setShowForm(true);
+    setError("");
   };
 
   const startEdit = (address: Address) => {
-    setForm(address);
-    setEditingId(address.id);
+    setForm({
+      label: address.label,
+      fullName: address.fullName,
+      phone: address.phone,
+      addressLine: address.addressLine,
+      city: address.city,
+      state: address.state,
+      pincode: address.pincode,
+    });
+    setEditingId(address._id);
     setShowForm(true);
+    setError("");
   };
 
-  const handleSave = () => {
-    if (!form.fullName || !form.addressLine || !form.pincode) return;
-    if (editingId) {
-      setAddresses((prev) =>
-        prev.map((a) => (a.id === editingId ? { ...form, id: editingId } : a))
-      );
-    } else {
-      setAddresses((prev) => [...prev, { ...form, id: `a${Date.now()}` }]);
+  const handleSave = async () => {
+    if (!user) return;
+    if (!form.fullName || !form.addressLine || !form.pincode) {
+      setError("please fill in full name, address, and pincode");
+      return;
     }
-    setShowForm(false);
+
+    setSaving(true);
+    setError("");
+
+    try {
+      if (editingId) {
+        const res = await fetch(`/api/addresses/${editingId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+        });
+        if (!res.ok) throw new Error("failed to update address");
+      } else {
+        const res = await fetch("/api/addresses", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...form, userId: user.id }),
+        });
+        if (!res.ok) throw new Error("failed to save address");
+      }
+
+      setShowForm(false);
+      loadAddresses();
+    } catch {
+      setError("something went wrong while saving. please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleDelete = (id: string) =>
-    setAddresses((prev) => prev.filter((a) => a.id !== id));
+  const handleDelete = async (id: string) => {
+    if (!confirm("delete this address?")) return;
+
+    const res = await fetch(`/api/addresses/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      setAddresses((prev) => prev.filter((a) => a._id !== id));
+    } else {
+      alert("failed to delete address");
+    }
+  };
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-10">
@@ -82,10 +131,10 @@ export default function AddressesPage() {
         <div>
           <div className="mb-6 flex items-center justify-between">
             <h1 className="font-serif text-2xl font-medium text-charcoal">
-              saved addresses
+              Saved Addresses
             </h1>
             <Button variant="outline" size="sm" icon={<Plus size={14} />} onClick={startAdd}>
-              add new
+                Add new
             </Button>
           </div>
 
@@ -122,9 +171,12 @@ export default function AddressesPage() {
                 <Input placeholder="state" value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} />
                 <Input placeholder="pincode" maxLength={6} value={form.pincode} onChange={(e) => setForm({ ...form, pincode: e.target.value })} />
               </div>
+
+              {error && <p className="mb-3 text-xs text-red-600">{error}</p>}
+
               <div className="flex gap-2">
-                <Button variant="primary" size="sm" onClick={handleSave}>
-                  save address
+                <Button variant="primary" size="sm" onClick={handleSave} disabled={saving}>
+                  {saving ? "saving..." : "save address"}
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => setShowForm(false)}>
                   cancel
@@ -133,7 +185,9 @@ export default function AddressesPage() {
             </div>
           )}
 
-          {addresses.length === 0 ? (
+          {loading ? (
+            <p className="text-sm text-charcoal/55">loading addresses...</p>
+          ) : addresses.length === 0 ? (
             <p className="text-sm text-charcoal/55">
               you haven&apos;t saved any addresses yet.
             </p>
@@ -141,7 +195,7 @@ export default function AddressesPage() {
             <div className="flex flex-col gap-3">
               {addresses.map((address) => (
                 <div
-                  key={address.id}
+                  key={address._id}
                   className="flex items-start justify-between rounded-card border border-charcoal/15 p-4"
                 >
                   <div className="flex gap-3">
@@ -163,7 +217,7 @@ export default function AddressesPage() {
                     <button aria-label="Edit address" onClick={() => startEdit(address)}>
                       <Pencil size={15} className="text-charcoal/50 hover:text-pink" />
                     </button>
-                    <button aria-label="Delete address" onClick={() => handleDelete(address.id)}>
+                    <button aria-label="Delete address" onClick={() => handleDelete(address._id)}>
                       <Trash2 size={15} className="text-charcoal/50 hover:text-red-600" />
                     </button>
                   </div>
@@ -174,5 +228,13 @@ export default function AddressesPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AddressesPage() {
+  return (
+    <RequireAuth>
+      <AddressesContent />
+    </RequireAuth>
   );
 }

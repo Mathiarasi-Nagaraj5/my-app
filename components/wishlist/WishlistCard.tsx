@@ -32,19 +32,19 @@ export default function WishlistCard({
         <button
           type="button"
           aria-label="Remove from wishlist"
-          onClick={() => onRemove(product.id)}
+          onClick={() => onRemove(product._id)}
           className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-ivory/90 text-charcoal"
         >
           <X size={14} />
         </button>
       </div>
       <div className="p-3">
-        <p className="truncate text-sm text-charcoal">{product.name}</p>
-        <p className="mt-0.5 mb-2.5 text-sm font-medium text-pink">
+        <p className="truncate text-md text-charcoal">{product.name}</p>
+        <p className="mt-0.5 mb-2.5 text-lg font-medium text-pink">
           {formatINR(product.price)}
         </p>
-        <Button variant="primary" size="sm" fullWidth onClick={() => onMoveToCart(product.id)}>
-          move to bag
+        <Button variant="primary" size="md" fullWidth onClick={() => onMoveToCart(product._id)}>
+          Move to bag
         </Button>
       </div>
     </div>

@@ -43,7 +43,7 @@ export default function Footer() {
       {/* newsletter */}
       <div className="border-b border-ivory/10 px-6 py-10 text-center">
         <p className="mb-1 font-serif text-lg">Get updates on new arrivals</p>
-        <p className="mb-4 text-xs text-ivory/55">
+        <p className="mb-4 text-md text-ivory/55">
           Be the first to know when we launch new styles.
         </p>
         <form className="mx-auto flex max-w-sm gap-0 overflow-hidden rounded border border-pink">
@@ -62,7 +62,7 @@ export default function Footer() {
       <div className="mx-auto grid max-w-7xl grid-cols-2 gap-8 px-6 py-10 text-sm md:grid-cols-4">
         <div>
           <p className="mb-3 font-medium">ELITE SOUL</p>
-          <p className="text-xs text-ivory/55 leading-relaxed">
+          <p className="text-sm text-ivory/55 leading-relaxed">
             Oversized t-shirts, hoodies and pyjama sets made for everyday
             comfort.
           </p>
@@ -72,7 +72,7 @@ export default function Footer() {
         <FooterColumn title="Account" links={FOOTER_LINKS.Account} />
       </div>
 
-      <div className="border-t border-ivory/10 px-6 py-4 text-center text-xs text-ivory/40">
+      <div className="border-t border-ivory/10 px-6 py-4 text-center text-sm text-ivory/40">
         © {new Date().getFullYear()} Elite Soul. All rights reserved.
       </div>
     </footer>
@@ -89,7 +89,7 @@ function FooterColumn({
   return (
     <div>
       <p className="mb-3 font-medium">{title}</p>
-      <ul className="flex flex-col gap-2 text-xs text-ivory/70">
+      <ul className="flex flex-col gap-2 text-sm text-ivory/70">
         {links.map((link) => (
           <li key={link.href}>
             <Link href={link.href} className="hover:text-pink">

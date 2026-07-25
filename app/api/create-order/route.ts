@@ -1,39 +1,49 @@
-import crypto from "crypto";
+import Razorpay from "razorpay";
 import { NextResponse } from "next/server";
+
+const razorpay = new Razorpay({
+  key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID!,
+  key_secret: process.env.RAZORPAY_KEY_SECRET!,
+});
 
 export async function POST(req: Request) {
   try {
-    const { order_id, payment_id, signature } = await req.json();
+    const body = await req.json();
+    const { amount } = body;
 
-    if (!order_id || !payment_id || !signature) {
+    // Validate amount
+    if (!amount || isNaN(amount) || Number(amount) <= 0) {
       return NextResponse.json(
-        { verified: false, error: "missing required fields" },
+        {
+          success: false,
+          message: "Invalid amount",
+        },
         { status: 400 }
       );
     }
 
-    const expected = crypto
-      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
-      .update(`${order_id}|${payment_id}`)
-      .digest("hex");
+    const options = {
+      amount: Math.round(Number(amount) * 100), // Convert ₹ to paise
+      currency: "INR",
+      receipt: `receipt_${Date.now()}`,
+      payment_capture: true,
+    };
 
-    const verified = expected === signature;
-
-    if (verified) {
-      // TODO: mark the order as "paid" in your database here, using
-      // order_id / payment_id to look it up. Only trust payment as
-      // genuine once this signature check passes.
-      return NextResponse.json({ verified: true });
-    }
-
-    return NextResponse.json(
-      { verified: false, error: "signature mismatch" },
-      { status: 400 }
-    );
+    const order = await razorpay.orders.create(options);
+console.log("Razorpay Order Created:", order);
+    return NextResponse.json({
+      success: true,
+      order,
+      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+    });
   } catch (error) {
-    console.error("verify-payment error:", error);
+    console.error("Create Order Error:", error);
+
     return NextResponse.json(
-      { verified: false, error: "verification failed" },
+      {
+        success: false,
+        message: "Failed to create order",
+      },
       { status: 500 }
     );
   }

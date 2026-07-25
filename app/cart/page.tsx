@@ -13,13 +13,13 @@ export default function CartPage() {
     return (
       <div className="flex flex-col items-center px-6 py-24 text-center">
         <p className="font-serif text-xl font-medium text-charcoal">
-          your bag is empty
+          Your bag is empty
         </p>
         <p className="mt-2 text-sm text-charcoal/60">
-          looks like you haven&apos;t added anything yet.
+          Looks like you haven&apos;t added anything yet.
         </p>
         <Link href="/shop" className="mt-6">
-          <Button variant="primary">start shopping</Button>
+          <Button variant="primary">Start Shopping !</Button>
         </Link>
       </div>
     );

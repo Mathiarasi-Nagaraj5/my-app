@@ -20,22 +20,47 @@ import { getProducts } from "@/services/product.service";
 
 const PAGE_SIZE = 6;
 
+const URL_SORT_MAP: Record<string, SortOption> = {
+  newest: "newest",
+  "price-low": "price-low-high",
+  "price-high": "price-high-low",
+  featured: "featured",
+};
+
 export default function ShopContent() {
   const searchParams = useSearchParams();
-
-  const initialCategory = searchParams.get("category");
 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [filters, setFilters] = useState<ShopFilters>({
     ...DEFAULT_FILTERS,
-    categories: initialCategory ? [initialCategory] : [],
+    categories: searchParams.get("category") ? [searchParams.get("category")!] : [],
   });
 
-  const [sort, setSort] = useState<SortOption>("featured");
+  const [sort, setSort] = useState<SortOption>(
+    URL_SORT_MAP[searchParams.get("sort") ?? ""] ?? "featured"
+  );
 
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  // Re-sync category + sort from the URL whenever it changes. Without this,
+  // clicking a Navbar link while already on /shop does nothing — Next.js
+  // reuses this same component instance instead of remounting it, so the
+  // useState initializers above only ever run once.
+  useEffect(() => {
+    const categoryFromUrl = searchParams.get("category");
+    const sortFromUrl = searchParams.get("sort");
+
+    setFilters((prev) => ({
+      ...prev,
+      categories: categoryFromUrl ? [categoryFromUrl] : [],
+    }));
+
+    if (sortFromUrl) {
+      setSort(URL_SORT_MAP[sortFromUrl] ?? "featured");
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     async function fetchProducts() {
@@ -52,43 +77,34 @@ export default function ShopContent() {
           case "price-low-high":
             params.append("sort", "price-low");
             break;
-
           case "price-high-low":
             params.append("sort", "price-high");
             break;
-
           case "newest":
             params.append("sort", "newest");
             break;
-
           case "featured":
             params.append("sort", "rating");
             break;
-
           default:
             break;
         }
 
         const data = await getProducts(params);
 
-        // Client-side filters
         const filtered = data.filter((product) => {
           if (product.price > filters.maxPrice) return false;
 
           if (
             filters.sizes.length &&
-            !product.sizes?.some((size) =>
-              filters.sizes.includes(size)
-            )
+            !product.sizes?.some((size) => filters.sizes.includes(size))
           ) {
             return false;
           }
 
           if (
             filters.colors.length &&
-            !product.colors?.some((color) =>
-              filters.colors.includes(color)
-            )
+            !product.colors?.some((color) => filters.colors.includes(color))
           ) {
             return false;
           }
@@ -109,17 +125,11 @@ export default function ShopContent() {
   }, [filters, sort]);
 
   const visibleProducts = products.slice(0, visibleCount);
-
   const hasMore = visibleCount < products.length;
 
   return (
     <>
-      <Breadcrumb
-        items={[
-          { label: "home", href: "/" },
-          { label: "shop" },
-        ]}
-      />
+      <Breadcrumb items={[{ label: "home", href: "/" }, { label: "shop" }]} />
 
       <div className="mx-auto max-w-7xl px-6 py-6">
         <div className="mb-6 flex items-baseline justify-between">
@@ -127,23 +137,15 @@ export default function ShopContent() {
             All Products
           </h1>
 
-          <SortSelect
-            value={sort}
-            onChange={setSort}
-          />
+          <SortSelect value={sort} onChange={setSort} />
         </div>
 
         <div className="grid grid-cols-1 gap-8 md:grid-cols-[200px_1fr]">
-          <FilterSidebar
-            filters={filters}
-            onChange={setFilters}
-          />
+          <FilterSidebar filters={filters} onChange={setFilters} />
 
           <div>
             {loading ? (
-              <div className="py-16 text-center">
-                Loading products...
-              </div>
+              <div className="py-16 text-center">Loading products...</div>
             ) : products.length === 0 ? (
               <p className="py-16 text-center text-sm text-charcoal/55">
                 No products found.
@@ -152,10 +154,7 @@ export default function ShopContent() {
               <>
                 <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
                   {visibleProducts.map((product) => (
-                    <ProductCard
-                      key={product.id ?? product.id}
-                      product={product}
-                    />
+                    <ProductCard key={product._id} product={product} />
                   ))}
                 </div>
 
@@ -163,9 +162,7 @@ export default function ShopContent() {
                   <div className="mt-8 text-center">
                     <Button
                       variant="outline"
-                      onClick={() =>
-                        setVisibleCount((count) => count + PAGE_SIZE)
-                      }
+                      onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
                     >
                       Load More
                     </Button>

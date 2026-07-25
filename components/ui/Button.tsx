@@ -13,7 +13,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 const variantStyles: Record<ButtonVariant, string> = {
   // pink fill — reserve for the ONE primary action on a page (add to bag, place order)
   primary:
-    "bg-pink text-charcoal hover:bg-pink/90 active:scale-[0.98] border border-transparent",
+    "bg-pink text-ivory hover:bg-pink/90 active:scale-[0.98] border border-transparent",
   // charcoal fill — secondary strong action (buy now, save changes)
   secondary:
     "bg-charcoal text-ivory hover:bg-charcoal/90 active:scale-[0.98] border border-transparent",
@@ -26,9 +26,9 @@ const variantStyles: Record<ButtonVariant, string> = {
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
-  sm: "h-9 px-4 text-xs",
-  md: "h-11 px-6 text-sm",
-  lg: "h-[52px] px-8 text-sm",
+  sm: "h-9 px-4 text-sm",
+  md: "h-11 px-6 text-md",
+  lg: "h-[52px] px-8 text-lg",
 };
 
 export default function Button({

@@ -17,7 +17,7 @@ export default function CheckoutSummary({
   onPlaceOrder,
   placing,
 }: CheckoutSummaryProps) {
-  const delivery = subtotal >= 999 ? 0 : 79;
+  const delivery = subtotal >= 999 ? 0 : 0;
   const total = subtotal + delivery;
 
   return (

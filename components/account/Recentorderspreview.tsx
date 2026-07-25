@@ -1,41 +1,88 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Badge from "@/components/ui/Badge";
+import { useAuth } from "../../app/lib/context/AuthContext";
 
-const RECENT_ORDERS = [
-  { id: "ES2381", items: "2 items", total: "₹2,698", status: "delivered" as const },
-  { id: "ES2405", items: "1 item", total: "₹1,499", status: "in transit" as const },
-];
+type OrderStatus = "confirmed" | "in transit" | "delivered" | "cancelled";
 
-const STATUS_VARIANT = {
-  delivered: "success",
+interface RecentOrder {
+  id: string;
+  orderNumber: string;
+  itemCount: number;
+  total: string;
+  status: OrderStatus;
+}
+
+const STATUS_VARIANT: Record<OrderStatus, "success" | "info" | "danger" | "neutral"> = {
+  confirmed: "neutral",
   "in transit": "info",
-} as const;
+  delivered: "success",
+  cancelled: "danger",
+};
+
+const RECENT_ORDERS_LIMIT = 2;
 
 export default function RecentOrdersPreview() {
+  const { user } = useAuth();
+  const [orders, setOrders] = useState<RecentOrder[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+
+    fetch(`/api/orders?userId=${user.id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        const mapped: RecentOrder[] = data
+          .slice(0, RECENT_ORDERS_LIMIT)
+          .map((o: any) => ({
+            id: o._id,
+            orderNumber: o.orderNumber,
+            itemCount: o.items.reduce((sum: number, i: any) => sum + i.quantity, 0),
+            total: `₹${o.total.toLocaleString("en-IN")}`,
+            status: o.status,
+          }));
+        setOrders(mapped);
+      })
+      .catch(() => setOrders([]))
+      .finally(() => setLoading(false));
+  }, [user]);
+
   return (
     <div className="mt-10">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-medium text-charcoal">recent orders</h2>
-        <Link href="/orders" className="text-xs text-black hover:underline">
+        <h2 className="text-xl font-medium text-charcoal">Recent Orders</h2>
+        <Link href="/orders" className="text-xs text-brass hover:underline">
           View all
         </Link>
       </div>
-      <div className="flex flex-col gap-2.5">
-        {RECENT_ORDERS.map((order) => (
-          <div
-            key={order.id}
-            className="flex items-center justify-between rounded border border-charcoal/15 px-4 py-3"
-          >
-            <div>
-              <p className="text-sm font-medium text-charcoal">order #{order.id}</p>
-              <p className="text-xs text-charcoal/55">
-                {order.items} · {order.total}
-              </p>
+
+      {loading ? (
+        <p className="text-lg text-charcoal/55">loading orders...</p>
+      ) : orders.length === 0 ? (
+        <p className="text-lg text-charcoal/55">you haven&apos;t placed any orders yet.</p>
+      ) : (
+        <div className="flex flex-col gap-2.5">
+          {orders.map((order) => (
+            <div
+              key={order.id}
+              className="flex items-center justify-between rounded border border-charcoal/15 px-4 py-3"
+            >
+              <div>
+                <p className="text-lg font-medium text-charcoal">
+                  order #{order.orderNumber}
+                </p>
+                <p className="text-md text-charcoal/55">
+                  {order.itemCount} {order.itemCount === 1 ? "item" : "items"} · {order.total}
+                </p>
+              </div>
+              <Badge variant={STATUS_VARIANT[order.status]}>{order.status}</Badge>
             </div>
-            <Badge variant={STATUS_VARIANT[order.status]}>{order.status}</Badge>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
