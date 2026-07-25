@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import connectDB from "@/app/lib/mongodb";
 import Order from "@/app/models/Order";
-import { getShiprocketToken, SHIPROCKET_BASE_URL } from "../../../../../lib/shiprocket/route";
+import { getShiprocketToken, SHIPROCKET_BASE_URL } from "../../../../../lib/shiprocket/auth";
 
 export async function POST(
   req: Request,

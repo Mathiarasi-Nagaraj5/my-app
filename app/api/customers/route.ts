@@ -1,22 +1,22 @@
 import { NextResponse } from "next/server";
 import connectDB from "../../lib/mongodb";
-import Customer from "../../models/Customer";
+import User from "../../models/User";
 
 export async function GET() {
   try {
     await connectDB();
 
-    const customers = await Customer.find().sort({ createdAt: -1 });
+    const users = await User.find().sort({ createdAt: -1 });
 
     return NextResponse.json({
       success: true,
-      data: customers,
+      data: users,
     });
   } catch {
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to fetch customers",
+        message: "Failed to fetch Users",
       },
       { status: 500 }
     );
@@ -29,12 +29,12 @@ export async function POST(req: Request) {
 
     const body = await req.json();
 
-    const customer = await Customer.create(body);
+    const user = await User.create(body);
 
     return NextResponse.json(
       {
         success: true,
-        data: customer,
+        data: user,
       },
       { status: 201 }
     );
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to create customer",
+        message: "Failed to create User",
       },
       { status: 500 }
     );

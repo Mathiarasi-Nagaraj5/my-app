@@ -44,7 +44,10 @@ export default function TopCategoriesChart({ data }: { data: CategorySlice[] }) 
                   <Cell key={i} fill={COLORS[i % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value: number) => `${value.toFixed(1)}%`} />
+              <Tooltip formatter={(value) => [
+  `₹${(typeof value === "number" ? value : 0).toLocaleString("en-IN")}`,
+  "Revenue",
+]} />
             </PieChart>
           </ResponsiveContainer>
 

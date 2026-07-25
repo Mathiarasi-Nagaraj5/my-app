@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import connectDB from "../../../lib/mongodb";
-import Customer from "../../../models/Customer";
+import User from "../../../models/User";
 
 export async function GET(
   req: Request,
@@ -11,13 +11,13 @@ export async function GET(
 
     const { id } = await params;
 
-    const customer = await Customer.findById(id);
+    const user = await User.findById(id);
 
-    if (!customer) {
+    if (!user) {
       return NextResponse.json(
         {
           success: false,
-          message: "Customer not found",
+          message: "User not found",
         },
         { status: 404 }
       );
@@ -25,13 +25,13 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      data: customer,
+      data: user,
     });
   } catch {
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to fetch customer",
+        message: "Failed to fetch User",
       },
       { status: 500 }
     );
@@ -48,16 +48,16 @@ export async function PATCH(
     const { id } = await params;
     const body = await req.json();
 
-    const customer = await Customer.findByIdAndUpdate(id, body, {
+    const user = await User.findByIdAndUpdate(id, body, {
       new: true,
       runValidators: true,
     });
 
-    if (!customer) {
+    if (!user) {
       return NextResponse.json(
         {
           success: false,
-          message: "Customer not found",
+          message: "User not found",
         },
         { status: 404 }
       );
@@ -65,13 +65,13 @@ export async function PATCH(
 
     return NextResponse.json({
       success: true,
-      data: customer,
+      data: user,
     });
   } catch {
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to update customer",
+        message: "Failed to update User",
       },
       { status: 500 }
     );
@@ -87,13 +87,13 @@ export async function DELETE(
 
     const { id } = await params;
 
-    const customer = await Customer.findByIdAndDelete(id);
+    const user = await User.findByIdAndDelete(id);
 
-    if (!customer) {
+    if (!user) {
       return NextResponse.json(
         {
           success: false,
-          message: "Customer not found",
+          message: "User not found",
         },
         { status: 404 }
       );
@@ -101,13 +101,13 @@ export async function DELETE(
 
     return NextResponse.json({
       success: true,
-      message: "Customer deleted successfully",
+      message: "User deleted successfully",
     });
   } catch {
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to delete customer",
+        message: "Failed to delete User",
       },
       { status: 500 }
     );

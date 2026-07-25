@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import  connectDB  from "../../../lib/mongodb";
-import { verifyAdminToken } from "@/lib/adminAuth";
+import { verifyAdminToken } from "../../../lib/adminAuth";
 import Product from "../../../models/Product";
 
 function getToken(req: Request) {

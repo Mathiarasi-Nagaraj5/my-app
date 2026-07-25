@@ -36,10 +36,13 @@ export default function SalesOverviewChart({ data }: { data: SalesPoint[] }) {
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e0d8" />
           <XAxis dataKey="date" tick={{ fontSize: 12, fill: "#5c554c" }} axisLine={false} tickLine={false} />
           <YAxis tick={{ fontSize: 12, fill: "#5c554c" }} axisLine={false} tickLine={false} width={48} />
-          <Tooltip
-            formatter={(value: number) => [`₹${value.toLocaleString("en-IN")}`, "Revenue"]}
-            contentStyle={{ borderRadius: 8, borderColor: "#e5e0d8", fontSize: 12 }}
-          />
+        <Tooltip
+ formatter={(value) => [
+  `₹${(typeof value === "number" ? value : 0).toLocaleString("en-IN")}`,
+  "Revenue",
+]}
+  contentStyle={{ borderRadius: 8, borderColor: "#e5e0d8", fontSize: 12 }}
+/>
           <Area type="monotone" dataKey="revenue" stroke={PINK} strokeWidth={2} fill="url(#revenueFill)" />
         </AreaChart>
       </ResponsiveContainer>
