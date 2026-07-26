@@ -24,7 +24,7 @@ export async function GET(
       return ApiResponse.error("Product slug is required", 400);
     }
 
-    const product = await Product.findOne({ slug }).lean();
+    const product = await Product.findOne({ slug }).lean() as any;
 
     if (!product) {
       return ApiResponse.error("Product not found", 404);
