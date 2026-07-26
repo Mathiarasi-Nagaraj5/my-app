@@ -20,6 +20,7 @@ export async function getProducts(
   });
 
   if (!res.ok) {
+    console.error("Failed to fetch products:", res.status, res.statusText,res);
     throw new Error("Failed to fetch products");
   }
 
