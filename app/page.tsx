@@ -8,12 +8,12 @@ import {
   getProducts,
   getBestsellers,
 } from "@/services/product.service";
+import Marquee from "@/components/ui/Marquee";
 
 export default async function HomePage() {
   const [
     newArrivals,
     bestSellers,
-    featured,
     trending,
   ] = await Promise.all([
     getProducts(new URLSearchParams({ sort: "newest" })),
@@ -25,27 +25,30 @@ export default async function HomePage() {
   return (
     <>
       <Hero />
-
+<Marquee className="bg-pink py-2 text-white">
+  <>
+    <span>✨ Free Shipping Above ₹999</span>
+    <span>💖 Premium Quality</span>
+    <span>🚚 Fast Delivery</span>
+    <span>🎁 New Collection Available</span>
+  </>
+</Marquee>
       <CategoryGrid />
 
       <ProductRail
         title="New Arrivals"
         products={newArrivals.at(0) ? newArrivals.slice(0, 3) : []}
         viewAllHref="/shop?sort=newest"
+           tone="charcoal-tint"
       />
 
       <ProductRail
         title="Best Sellers"
         products={bestSellers.at(0) ? bestSellers.slice(0, 3) : []}
         viewAllHref="/shop?bestseller=true"
-        tone="charcoal-tint"
+     
       />
 
-      <ProductRail
-        title="Featured Collection"
-        products={featured.at(0) ? featured.slice(0, 3) : []}
-        viewAllHref="/shop?sort=rating"
-      />
 
       <ProductRail
         title="Trending Now"

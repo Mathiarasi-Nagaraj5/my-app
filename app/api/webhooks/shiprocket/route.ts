@@ -4,9 +4,9 @@ import Order from "@/app/models/Order";
 
 const STATUS_MAP: Record<string, string> = {
   "OUT FOR DELIVERY": "in transit",
-  DELIVERED: "delivered",
-  CANCELLED: "cancelled",
-  RTO: "cancelled",
+  DELIVERED: "Delivered",
+  CANCELLED: "Cancelled",
+  RTO: "Cancelled",
 };
 
 export async function POST(req: Request) {

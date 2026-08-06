@@ -3,18 +3,11 @@ import connectDB from "@/app/lib/mongodb";
 import Order from "@/app/models/Order";
 import Product from "@/app/models/Product";
 
-// This route was previously computing "today" using the server's UTC clock,
-// which drifts a full calendar day behind IST during early morning hours
-// (e.g. 1am IST = 7:30pm the PREVIOUS day in UTC). Since the store operates
-// in India, every date boundary below is computed in IST instead.
-export const dynamic = "force-dynamic"; // never let Next.js cache this route
+export const dynamic = "force-dynamic";
 
 const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
 const IST_TIMEZONE = "+05:30";
 
-// Returns the UTC instant corresponding to IST midnight, for the IST
-// calendar day that `date` falls on. This is what you compare createdAt
-// (stored in UTC) against with $gte to correctly bucket "today" in IST.
 function startOfDayIST(date: Date) {
   const shifted = new Date(date.getTime() + IST_OFFSET_MS);
   shifted.setUTCHours(0, 0, 0, 0);
@@ -26,16 +19,84 @@ function percentChange(current: number, previous: number) {
   return Math.round(((current - previous) / previous) * 100);
 }
 
-export async function GET() {
+type SalesRange = "week" | "month" | "year" | "custom";
+type BucketUnit = "day" | "month";
+
+interface RangeConfig {
+  start: Date;
+  end: Date;
+  groupFormat: string;
+  unit: BucketUnit;
+  points: number;
+}
+
+function monthsBetweenInclusive(start: Date, end: Date) {
+  const endInclusive = new Date(end.getTime() - 1);
+  return (
+    (endInclusive.getUTCFullYear() - start.getUTCFullYear()) * 12 +
+    (endInclusive.getUTCMonth() - start.getUTCMonth()) +
+    1
+  );
+}
+
+function getRangeConfig(
+  range: SalesRange,
+  today: Date,
+  customFrom: string | null,
+  customTo: string | null
+): RangeConfig {
+  const todayEnd = new Date(today);
+  todayEnd.setDate(todayEnd.getDate() + 1);
+
+  if (range === "year") {
+    const start = new Date(today);
+    start.setDate(1);
+    start.setMonth(start.getMonth() - 11);
+    return { start, end: todayEnd, groupFormat: "%Y-%m", unit: "month", points: 12 };
+  }
+
+  if (range === "month") {
+    const start = new Date(today);
+    start.setDate(start.getDate() - 29);
+    return { start, end: todayEnd, groupFormat: "%Y-%m-%d", unit: "day", points: 30 };
+  }
+
+  if (range === "custom" && customFrom && customTo) {
+    const start = startOfDayIST(new Date(customFrom));
+    const rawEnd = startOfDayIST(new Date(customTo));
+    const end = new Date(rawEnd);
+    end.setDate(end.getDate() + 1);
+
+    const spanDays = Math.max(1, Math.round((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000)));
+
+    if (spanDays > 62) {
+      const points = monthsBetweenInclusive(start, end);
+      return { start, end, groupFormat: "%Y-%m", unit: "month", points };
+    }
+    return { start, end, groupFormat: "%Y-%m-%d", unit: "day", points: spanDays };
+  }
+
+  const start = new Date(today);
+  start.setDate(start.getDate() - 6);
+  return { start, end: todayEnd, groupFormat: "%Y-%m-%d", unit: "day", points: 7 };
+}
+
+export async function GET(req: Request) {
   try {
     await connectDB();
+
+    const { searchParams } = new URL(req.url);
+    const rangeParam = searchParams.get("range");
+    const range: SalesRange =
+      rangeParam === "month" || rangeParam === "year" || rangeParam === "custom"
+        ? rangeParam
+        : "week";
+    const customFrom = searchParams.get("from");
+    const customTo = searchParams.get("to");
 
     const today = startOfDayIST(new Date());
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
-
-    const sevenDaysAgo = new Date(today);
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
 
     const [todayOrders, yesterdayOrders, totalProducts, pendingOrders] = await Promise.all([
       Order.countDocuments({ createdAt: { $gte: today } }),
@@ -58,36 +119,37 @@ export async function GET() {
     const todayRevenue = todayRevenueAgg[0]?.total ?? 0;
     const yesterdayRevenue = yesterdayRevenueAgg[0]?.total ?? 0;
 
-    // group by IST calendar day, not UTC — the `timezone` option is the fix
+    const { start, end, groupFormat, points, unit } = getRangeConfig(range, today, customFrom, customTo);
+
     const salesAgg = await Order.aggregate([
-      { $match: { createdAt: { $gte: sevenDaysAgo }, paymentStatus: "PAID" } },
+      { $match: { createdAt: { $gte: start, $lt: end }, paymentStatus: "PAID" } },
       {
         $group: {
-          _id: {
-            $dateToString: {
-              format: "%Y-%m-%d",
-              date: "$createdAt",
-              timezone: IST_TIMEZONE,
-            },
-          },
+          _id: { $dateToString: { format: groupFormat, date: "$createdAt", timezone: IST_TIMEZONE } },
           revenue: { $sum: "$total" },
         },
       },
       { $sort: { _id: 1 } },
     ]);
 
-    const salesByDate = new Map(salesAgg.map((d) => [d._id, d.revenue]));
-    const salesOverview = Array.from({ length: 7 }, (_, i) => {
-      const date = new Date(sevenDaysAgo);
-      date.setDate(date.getDate() + i);
-      // format this date the same IST-shifted way the aggregation grouped it
+    const salesByKey = new Map(salesAgg.map((d) => [d._id, d.revenue]));
+    const salesOverview = Array.from({ length: points }, (_, i) => {
+      const date = new Date(start);
+      if (unit === "month") date.setMonth(date.getMonth() + i);
+      else date.setDate(date.getDate() + i);
+
       const istShifted = new Date(date.getTime() + IST_OFFSET_MS);
-      const key = istShifted.toISOString().slice(0, 10);
-      return { date: key, revenue: salesByDate.get(key) ?? 0 };
+      const key = unit === "month" ? istShifted.toISOString().slice(0, 7) : istShifted.toISOString().slice(0, 10);
+      const label =
+        unit === "month"
+          ? istShifted.toLocaleDateString("en-IN", { month: "short", year: "2-digit" })
+          : istShifted.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+
+      return { date: label, revenue: salesByKey.get(key) ?? 0 };
     });
 
     const categoryAgg = await Order.aggregate([
-      { $match: { paymentStatus: "PAID" } },
+      { $match: { createdAt: { $gte: start, $lt: end }, paymentStatus: "PAID" } },
       { $unwind: "$items" },
       {
         $group: {
@@ -153,8 +215,8 @@ export async function GET() {
         id: o._id.toString(),
         type: isPaid ? ("payment" as const) : ("order" as const),
         message: isPaid
-          ? `Payment received for order #${o.orderNumber}`
-          : `New order #${o.orderNumber} placed`,
+          ? `Payment received for Order Number : ${o.orderNumber}`
+          : `New Order Number : ${o.orderNumber} placed`,
         meta: `${itemCount} ${itemCount === 1 ? "item" : "items"} · ₹${o.total.toLocaleString("en-IN")}`,
         timeAgo: timeAgo(o.createdAt),
       };
@@ -174,9 +236,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error("GET /api/admin/stats error:", error);
-    return NextResponse.json(
-      { error: "failed to fetch stats" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "failed to fetch stats" }, { status: 500 });
   }
 }

@@ -8,7 +8,7 @@ import { useCart } from "@/app/lib/context/CartContext";
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, subtotal } = useCart();
-
+console.log("Rendering CartPage with items:", items); // Debugging line
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center px-6 py-24 text-center">

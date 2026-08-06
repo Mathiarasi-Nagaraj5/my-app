@@ -64,7 +64,7 @@ export default function AdminProductsPage() {
   return (
     <div>
       <div className="mb-5 flex items-center justify-between">
-        <h1 className="text-2xl font-medium text-charcoal">Current Products</h1>
+        <h1 className="text-2xl font-medium text-charcoal">Products</h1>
         <Link href="/admin/products/new">
           <Button variant="primary" size="lg" icon={<Plus size={14} />}>
             Add product
@@ -80,14 +80,14 @@ export default function AdminProductsPage() {
             placeholder="Search Products..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-transparent text-sm text-charcoal placeholder:text-charcoal/40 focus:outline-none"
+            className="w-full bg-transparent text-xl text-charcoal placeholder:text-charcoal/70 focus:outline-none"
           />
         </div>
 
         <select
           value={pageSize}
           onChange={(e) => setPageSize(Number(e.target.value))}
-          className="h-9 rounded border border-charcoal/15 px-2 text-xs text-charcoal"
+          className="h-9 rounded border border-charcoal/15 px-2 text-sm text-charcoal"
         >
           {PAGE_SIZE_OPTIONS.map((size) => (
             <option key={size} value={size}>

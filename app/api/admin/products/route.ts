@@ -16,13 +16,17 @@ export async function POST(req: Request) {
     await connectDB();
     const body = await req.json();
 
+    if (!Array.isArray(body.imageUrls) || body.imageUrls.length === 0) {
+      return NextResponse.json({ error: "at least one image is required" }, { status: 400 });
+    }
+
     const product = await Product.create({
       name: body.name,
       slug: body.slug,
       category: body.category,
       price: body.price,
       originalPrice: body.originalPrice || undefined,
-      imageUrl: body.imageUrl,
+      imageUrls: body.imageUrls,
       isBestseller: body.isBestseller,
       sizes: body.sizes ? body.sizes.split(",").map((s: string) => s.trim()) : [],
       colors: body.colors
@@ -36,6 +40,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "a product with this slug already exists" }, { status: 409 });
     }
     console.error("POST /api/admin/products error:", error);
-    return NextResponse.json({ error: "failed to create product" }, { status: 500 });
+    return NextResponse.json({ error: "failed to create product" ,res:error}, { status: 500 });
   }
 }

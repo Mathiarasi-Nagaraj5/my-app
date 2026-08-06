@@ -51,7 +51,7 @@ export default function AccountSidebar() {
               href={href}
               className={`flex items-center gap-2.5 rounded px-3 py-2.5 text-lg ${
                 active
-                  ? "bg-charcoal font-medium text-pink"
+                  ? "bg-pink font-medium text-charcoal"
                   : "text-charcoal/70 hover:bg-charcoal/5"
               }`}
             >

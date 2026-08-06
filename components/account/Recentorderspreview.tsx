@@ -5,7 +5,7 @@ import Link from "next/link";
 import Badge from "@/components/ui/Badge";
 import { useAuth } from "../../app/lib/context/AuthContext";
 
-type OrderStatus = "confirmed" | "in transit" | "delivered" | "cancelled";
+type OrderStatus = "Confirmed" | "In Transit" | "Delivered" | "Cancelled";
 
 interface RecentOrder {
   id: string;
@@ -15,11 +15,11 @@ interface RecentOrder {
   status: OrderStatus;
 }
 
-const STATUS_VARIANT: Record<OrderStatus, "success" | "info" | "danger" | "neutral"> = {
-  confirmed: "neutral",
-  "in transit": "info",
-  delivered: "success",
-  cancelled: "danger",
+const STATUS_VARIANT: Record<OrderStatus, "success" | "info" | "danger" | "brand"> = {
+  Confirmed: "brand",
+  "In Transit": "info",
+  Delivered: "success",
+  Cancelled: "danger",
 };
 
 const RECENT_ORDERS_LIMIT = 2;
@@ -30,11 +30,18 @@ export default function RecentOrdersPreview() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+
     if (!user) return;
 
     fetch(`/api/orders?userId=${user.id}`)
-      .then((res) => res.json())
+       .then(async (res) => {
+
+    const response =await res.json();
+
+    return response.data;
+  })
       .then((data) => {
+  
         const mapped: RecentOrder[] = data
           .slice(0, RECENT_ORDERS_LIMIT)
           .map((o: any) => ({
@@ -44,6 +51,7 @@ export default function RecentOrdersPreview() {
             total: `₹${o.total.toLocaleString("en-IN")}`,
             status: o.status,
           }));
+   
         setOrders(mapped);
       })
       .catch(() => setOrders([]))
@@ -54,7 +62,7 @@ export default function RecentOrdersPreview() {
     <div className="mt-10">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-xl font-medium text-charcoal">Recent Orders</h2>
-        <Link href="/orders" className="text-xs text-brass hover:underline">
+        <Link href="/orders" className="text-xs text-pink hover:underline">
           View all
         </Link>
       </div>
@@ -66,13 +74,17 @@ export default function RecentOrdersPreview() {
       ) : (
         <div className="flex flex-col gap-2.5">
           {orders.map((order) => (
+              <Link
+                  href={`/orders/${order.id}`}
+                  className="mb-3.5 block rounded-card  transition-colors hover:border-brass"
+                >
             <div
               key={order.id}
               className="flex items-center justify-between rounded border border-charcoal/15 px-4 py-3"
             >
               <div>
                 <p className="text-lg font-medium text-charcoal">
-                  order #{order.orderNumber}
+                  Order Number : {order.orderNumber}
                 </p>
                 <p className="text-md text-charcoal/55">
                   {order.itemCount} {order.itemCount === 1 ? "item" : "items"} · {order.total}
@@ -80,6 +92,7 @@ export default function RecentOrdersPreview() {
               </div>
               <Badge variant={STATUS_VARIANT[order.status]}>{order.status}</Badge>
             </div>
+            </Link>
           ))}
         </div>
       )}

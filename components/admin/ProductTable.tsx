@@ -11,7 +11,7 @@ export interface AdminProduct {
   category: string;
   price: number;
   stock: number;
-  imageUrl: string;
+  imageUrls: string[];
 }
 
 interface ProductTableProps {
@@ -29,43 +29,64 @@ export default function ProductTable({ products, onDelete }: ProductTableProps) 
   }
 
   return (
-    <div className="overflow-hidden rounded-card border border-charcoal/20 bg-white">
-      <div className="grid grid-cols-[2fr_1fr_1fr_1fr_80px] gap-2 border-b border-charcoal/10 px-4 py-1.5 text-lg text-charcoal">
-        <span>Product</span>
-        <span>Category</span>
-        <span>Price</span>
-        <span>Stock</span>
-        <span>Action</span>
-      </div>
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
       {products.map((product) => {
         const lowStock = product.stock <= LOW_STOCK_THRESHOLD;
         return (
           <div
             key={product._id}
-            className="grid grid-cols-[2fr_1fr_1fr_1fr_80px] items-center gap-2 border-b border-charcoal/10 px-4 py-1 text-md text-charcoal last:border-0"
+            className="group overflow-hidden rounded-card border border-charcoal/10 bg-white transition-shadow hover:shadow-md"
           >
-            <div className="flex items-center gap-2">
-              <div className="relative h-6 w-5 flex-shrink-0 overflow-hidden rounded bg-charcoal">
-                <Image src={product.imageUrl} alt={product.name} fill className="object-cover" sizes="20px" />
+            {/* Image */}
+            <div className="relative aspect-square w-full overflow-hidden bg-charcoal/5">
+              <Image
+                src={product.imageUrls[0]}
+                alt={product.name}
+                fill
+                className="object-cover transition-transform duration-200 group-hover:scale-105"
+                sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+              />
+
+              {/* Stock badge */}
+              {product.stock === 0 ? (
+                <span className="absolute left-2 top-2 rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-medium text-white">
+                  Out of stock
+                </span>
+              ) : lowStock ? (
+                <span className="absolute left-2 top-2 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-medium text-white">
+                  Low stock
+                </span>
+              ) : null}
+
+              {/* Action buttons */}
+              <div className="absolute right-2 top-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                <Link
+                  href={`/admin/products/${product._id}/edit`}
+                  aria-label="Edit product"
+                  className="flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-charcoal/70 shadow-sm hover:text-brass"
+                >
+                  <Pencil size={12} />
+                </Link>
+                <button
+                  onClick={() => onDelete(product._id)}
+                  aria-label="Delete product"
+                  className="flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-charcoal/70 shadow-sm hover:text-red-600"
+                >
+                  <Trash2 size={12} />
+                </button>
               </div>
-              <span className="truncate">{product.name}</span>
             </div>
-            <span className="text-charcoal/70">{product.category}</span>
-            <span>{formatINR(product.price)}</span>
-            <span className={lowStock ? "font-medium text-red-600" : "text-charcoal/70"}>
-              {product.stock}
-              {lowStock && product.stock > 0 && (
-                <span className="ml-1 text-[10px]">low</span>
-              )}
-              {product.stock === 0 && <span className="ml-1 text-[10px]">out</span>}
-            </span>
-            <div className="flex gap-3 text-charcoal/50">
-              <Link href={`/admin/products/${product._id}/edit`} aria-label="Edit product">
-                <Pencil size={13} className="hover:text-brass" />
-              </Link>
-              <button onClick={() => onDelete(product._id)} aria-label="Delete product">
-                <Trash2 size={13} className="hover:text-red-600" />
-              </button>
+
+            {/* Details */}
+            <div className="space-y-0.5 px-3 py-2">
+              <p className="truncate text-sm font-medium text-charcoal">{product.name}</p>
+              <p className="text-xs text-charcoal/55">{product.category}</p>
+              <div className="flex items-center justify-between pt-0.5">
+                <span className="text-sm font-medium text-charcoal">{formatINR(product.price)}</span>
+                <span className={lowStock ? "text-xs font-medium text-red-600" : "text-xs text-charcoal/55"}>
+                  {product.stock} in stock
+                </span>
+              </div>
             </div>
           </div>
         );

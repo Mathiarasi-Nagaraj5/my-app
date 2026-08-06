@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 
-type OrderStatus = "confirmed" | "in transit" | "delivered" | "cancelled";
+type OrderStatus = "Confirmed" | "In Transit" | "Delivered" | "Cancelled";
 
 const STATUS_COLORS: Record<OrderStatus, string> = {
-  confirmed: "border-charcoal/40 text-charcoal",
-  "in transit": "border-brass text-brass",
-  delivered: "border-green-600 text-green-700",
-  cancelled: "border-red-600 text-red-700",
+  Confirmed: "border-charcoal/40 text-charcoal",
+  "In Transit": "border-brass text-brass",
+  Delivered: "border-green-600 text-green-700",
+  Cancelled: "border-red-600 text-red-700",
 };
 
 interface OrderStatusSelectProps {
@@ -53,10 +53,10 @@ export default function OrderStatusSelect({
         updating ? "opacity-50" : ""
       }`}
     >
-      <option value="confirmed">confirmed</option>
-      <option value="in transit">in transit</option>
-      <option value="delivered">delivered</option>
-      <option value="cancelled">cancelled</option>
+      <option value="Confirmed">Confirmed</option>
+      <option value="In Transit">In Transit</option>
+      <option value="Delivered">Delivered</option>
+      <option value="Cancelled">Cancelled</option>
     </select>
   );
 }

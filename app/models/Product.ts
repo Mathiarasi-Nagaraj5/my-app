@@ -3,14 +3,13 @@ import mongoose, { Schema, models, model } from "mongoose";
 export interface ProductDocument extends mongoose.Document {
   slug: string;
   name: string;
-  category: "t-shirts" | "hoodies" | "pyjamas";
+  category: string[];
   price: number;
   originalPrice?: number;
   stock: number;
   rating: number;
   reviewCount: number;
-  imageUrl: string;
-  images?: string[]; // gallery images, replaces the derived-from-slug placeholder
+  imageUrls?: string[]; // gallery imageUrls, replaces the derived-from-slug placeholder
   isBestseller?: boolean;
   colors?: string[];
   sizes?: string[];
@@ -24,9 +23,8 @@ const ProductSchema = new Schema<ProductDocument>(
     slug: { type: String, required: true, unique: true, index: true },
     name: { type: String, required: true },
     category: {
-      type: String,
+      type: [String],
       required: true,
-      enum: ["t-shirts", "hoodies", "pyjamas"],
       index: true,
     },
     price: { type: Number, required: true },
@@ -34,8 +32,14 @@ const ProductSchema = new Schema<ProductDocument>(
     stock: { type: Number, required: true, default: 0 },
     rating: { type: Number, default: 0 },
     reviewCount: { type: Number, default: 0 },
-    imageUrl: { type: String, required: true },
-    images: [{ type: String }],
+   imageUrls: {
+      type: [String],
+      required: true,
+      validate: {
+        validator: (arr: string[]) => arr.length >= 1 && arr.length <= 5,
+        message: "A product must have between 1 and 5 imageUrls",
+      },
+    },
     isBestseller: { type: Boolean, default: false },
     colors: [{ type: String }],
     sizes: [{ type: String }],

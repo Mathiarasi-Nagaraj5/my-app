@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState ,useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Search as SearchIcon } from "lucide-react";
 import ProductCard from "@/components/ui/ProductCard";
@@ -9,11 +9,20 @@ import { SortOption } from "@/app/lib/types";
 import {
   getProducts,
 } from "@/services/product.service";
-export default async function SearchContent() {
+export default  function SearchContent() {
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(searchParams.get("q") ?? "");
   const [sort, setSort] = useState<SortOption>("featured");
-  const allProducts = await getProducts(); // Fetch all products (you may want to filter this based on the search query)
+    const [allProducts, setAllProducts] = useState<any[]>([]);// Fetch all products (you may want to filter this based on the search query)
+    useEffect(() => {
+    async function loadProducts() {
+      const products = await getProducts();
+      console.log("Fetched products:", products); // Log the fetched products
+      setAllProducts(products);
+    }
+    loadProducts();
+  }, []);
+
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
     let filtered = q
@@ -47,10 +56,10 @@ export default async function SearchContent() {
       </div>
 
       <div className="mb-5 flex items-center justify-between">
-        <p className="text-sm text-charcoal/70">
+        <p className="text-lg text-charcoal/70">
           {query
             ? `${results.length} results for "${query}"`
-            : `showing all ${results.length} products`}
+            : `Showing all ${results.length} products`}
         </p>
         <SortSelect value={sort} onChange={setSort} />
       </div>

@@ -19,9 +19,9 @@ const formatINR = (v: number) => `₹${v.toLocaleString("en-IN")}`;
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 
-const STATUS_VARIANT: Record<AdminReturn["status"], "neutral" | "success" | "danger" | "info"> = {
+const STATUS_VARIANT: Record<AdminReturn["status"], "brand" | "success" | "danger" | "info"> = {
   requested: "info",
-  approved: "neutral",
+  approved: "brand",
   rejected: "danger",
   refunded: "success",
 };
@@ -60,18 +60,18 @@ export default function ReturnsTable({ returns, onProcessed }: ReturnsTableProps
   };
 
   if (returns.length === 0) {
-    return <p className="text-sm text-charcoal/55">no return requests yet.</p>;
+    return <p className="text-xl text-charcoal/55">No Returns requests yet.</p>;
   }
 
   return (
     <div className="overflow-hidden rounded-card border border-charcoal/10 bg-white">
       <div className="grid grid-cols-[0.8fr_1fr_1.2fr_0.8fr_1fr_1.2fr] gap-2 border-b border-charcoal/10 px-4 py-1.5 text-xs text-charcoal/55">
-        <span>order</span>
-        <span>customer</span>
-        <span>reason</span>
-        <span>amount</span>
-        <span>status</span>
-        <span>action</span>
+        <span>Order</span>
+        <span>Customer</span>
+        <span>Reason</span>
+        <span>Amount</span>
+        <span>Status</span>
+        <span>Action</span>
       </div>
       {returns.map((r) => (
         <div

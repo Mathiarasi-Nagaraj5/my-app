@@ -22,7 +22,7 @@ export default function WishlistCard({
       <div className="relative aspect-[3/4] bg-charcoal">
         <Link href={`/shop/${product.slug}`}>
           <Image
-            src={product.imageUrl}
+            src={product.imageUrls[0]}
             alt={product.name}
             fill
             className="object-cover"

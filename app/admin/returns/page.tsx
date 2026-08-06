@@ -20,7 +20,7 @@ export default function AdminReturnsPage() {
 
   return (
     <div>
-      <h1 className="mb-5 text-xl font-medium text-charcoal">Returns</h1>
+      <h1 className="mb-5 text-2xl font-medium text-charcoal">Returns</h1>
 
       {loading ? (
         <p className="text-lg text-charcoal/55">Loading returns...</p>

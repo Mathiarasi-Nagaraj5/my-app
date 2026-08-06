@@ -21,7 +21,7 @@ export default function RecentOrdersList({ orders }: { orders: RecentOrderRow[] 
   return (
     <div className="rounded-card border border-charcoal/10 bg-white p-4">
       <div className="mb-4 flex items-center justify-between">
-        <p className="text-md text-charcoal">Recent orders</p>
+        <p className="text-md text-charcoal">Recent ordersss</p>
         <Link href="/admin/orders" className="text-xs text-pink hover:underline">
           View all
         </Link>

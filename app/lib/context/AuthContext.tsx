@@ -72,6 +72,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     setUser(null);
+    localStorage.removeItem("elite-soul-cart"); // Clear cart on logout
+    localStorage.removeItem("elite-soul-wishlist"); // Clear wishlist on logout
+    localStorage.removeItem("elite-soul-shipping"); // Clear shipping info on logout
+    
   };
 
   const updateProfile: AuthContextValue["updateProfile"] = async (updates) => {

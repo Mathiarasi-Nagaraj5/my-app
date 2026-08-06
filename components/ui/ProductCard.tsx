@@ -24,12 +24,13 @@ export default function ProductCard({ product }: ProductCardProps) {
       )
     : null;
 
+    console.log(product);
   return (
     <div className="group">
       <Link href={`/shop/${product.slug}`} className="block">
         <div className="relative aspect-[3/4] overflow-hidden rounded bg-charcoal">
           <Image
-            src={product.imageUrl}
+            src={product.imageUrls[0]}
             alt={product.name}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"

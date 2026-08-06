@@ -12,7 +12,7 @@ export default function ProductDetailShell({ product }: { product: Product }) {
   return (
     <>
       <div className="mx-auto grid max-w-5xl grid-cols-1 gap-10 px-6 py-6 md:grid-cols-2">
-        <Gallery slug={product.slug} productName={product.name} />
+        <Gallery imageUrls={product.imageUrls} productName={product.name} />
         <ProductInfo
           product={product}
           onSizeGuideClick={() => setSizeGuideOpen(true)}

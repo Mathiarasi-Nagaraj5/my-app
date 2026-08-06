@@ -46,29 +46,29 @@ export default function SettingsPage() {
 
         <div className="flex flex-col gap-10">
           <h1 className="font-serif text-2xl font-medium text-charcoal">
-            account settings
+            Account Settings
           </h1>
 
           {/* change password */}
           <div>
-            <p className="mb-3.5 text-sm font-medium text-charcoal">
-              change password
+            <p className="mb-3.5 text-xl font-medium text-pink">
+              Change Password
             </p>
             <div className="flex max-w-sm flex-col gap-3">
               <Input
-                label="current password"
+                label="Current password"
                 type="password"
                 value={passwords.current}
                 onChange={(e) => setPasswords({ ...passwords, current: e.target.value })}
               />
               <Input
-                label="new password"
+                label="New password"
                 type="password"
                 value={passwords.next}
                 onChange={(e) => setPasswords({ ...passwords, next: e.target.value })}
               />
               <Input
-                label="confirm new password"
+                label="Confirm new password"
                 type="password"
                 value={passwords.confirm}
                 onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}
@@ -76,29 +76,29 @@ export default function SettingsPage() {
               {passwordError && <p className="text-xs text-red-600">{passwordError}</p>}
               {passwordSaved && <p className="text-xs text-green-700">password updated successfully</p>}
               <Button variant="primary" size="sm" onClick={handleChangePassword} className="mt-1 w-fit">
-                update password
+                Update Password
               </Button>
             </div>
           </div>
 
           {/* notification preferences */}
           <div>
-            <p className="mb-3.5 text-sm font-medium text-charcoal">
-              notification preferences
+            <p className="mb-3.5 text-xl font-medium text-pink">
+              Notification Preferences
             </p>
             <div className="flex max-w-sm flex-col gap-2.5">
               <ToggleRow
-                label="order updates"
+                label="Order updates"
                 checked={notifications.orderUpdates}
                 onChange={() => toggleNotification("orderUpdates")}
               />
               <ToggleRow
-                label="new arrivals"
+                label="New arrivals"
                 checked={notifications.newArrivals}
                 onChange={() => toggleNotification("newArrivals")}
               />
               <ToggleRow
-                label="promotions and offers"
+                label="Promotions and offers"
                 checked={notifications.promotions}
                 onChange={() => toggleNotification("promotions")}
               />
@@ -107,9 +107,9 @@ export default function SettingsPage() {
 
           {/* danger zone */}
           <div className="rounded-card border border-red-200 p-5">
-            <p className="mb-1 text-sm font-medium text-charcoal">delete account</p>
-            <p className="mb-3.5 text-xs text-charcoal/60">
-              this permanently deletes your account, orders, and saved data.
+            <p className="mb-1 text-md font-medium text-charcoal">Delete account</p>
+            <p className="mb-3.5 text-md text-charcoal/60">
+              This permanently deletes your account, orders, and saved data.
               this cannot be undone.
             </p>
             {showDeleteConfirm ? (
@@ -123,15 +123,15 @@ export default function SettingsPage() {
                     console.log("delete account confirmed");
                   }}
                 >
-                  yes, delete my account
+                  Yes, delete my account
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => setShowDeleteConfirm(false)}>
-                  cancel
+                  Cancel
                 </Button>
               </div>
             ) : (
               <Button variant="outline" size="sm" onClick={() => setShowDeleteConfirm(true)}>
-                delete account
+                Delete Account
               </Button>
             )}
           </div>

@@ -9,7 +9,7 @@ export interface AdminOrder {
   orderNumber: string;
   shippingAddress: { fullName: string };
   total: number;
-  status: "confirmed" | "in transit" | "delivered" | "cancelled";
+  status: "Confirmed" | "In Transit" | "Delivered" | "Cancelled";
   createdAt: string;
   paymentMethod?: "upi" | "card" | "cod";
   paymentStatus?: "PENDING" | "PAID" | "FAILED";
@@ -45,7 +45,7 @@ export default function OrderTable({ orders, onStatusChanged, onShipped }: Order
       }
 
       onShipped?.(order._id, data.shipment);
-      onStatusChanged(order._id, "in transit");
+      onStatusChanged(order._id, "In Transit");
     } catch {
       alert("something went wrong while creating the shipment");
     } finally {
@@ -59,28 +59,28 @@ export default function OrderTable({ orders, onStatusChanged, onShipped }: Order
 
   return (
     <div className="overflow-hidden rounded-card border border-charcoal/10 bg-white">
-      <div className="grid grid-cols-[1fr_1.2fr_0.8fr_0.8fr_1fr_1.3fr] gap-2 border-b border-charcoal/10 px-4 py-1.5 text-xs text-charcoal/55">
-        <span>order</span>
-        <span>customer</span>
-        <span>date</span>
-        <span>total</span>
-        <span>status</span>
-        <span>shipping</span>
+      <div className="grid grid-cols-[1fr_1.2fr_0.8fr_0.8fr_1fr_1.3fr] gap-2 border-b border-charcoal/10 px-4 py-1.5 text-lg text-pink">
+        <span>Order No</span>
+        <span>Customer</span>
+        <span>Date</span>
+        <span>Total</span>
+        <span>Status</span>
+        <span>Shipping</span>
       </div>
       {orders.map((order) => {
         const canShip =
           !order.shipment?.awbCode &&
           (order.paymentStatus === "PAID" || order.paymentMethod === "cod") &&
-          order.status !== "cancelled";
+          order.status !== "Cancelled";
 
         return (
           <div
             key={order._id}
-            className="grid grid-cols-[1fr_1.2fr_0.8fr_0.8fr_1fr_1.3fr] items-center gap-2 border-b border-charcoal/10 px-4 py-1 text-xs text-charcoal last:border-0"
+            className="grid grid-cols-[1fr_1.2fr_0.8fr_0.8fr_1fr_1.3fr] items-center gap-2 border-b border-charcoal/10 px-4 py-1 text-sm text-charcoal last:border-0"
           >
             <span>#{order.orderNumber}</span>
             <span className="truncate">{order.shippingAddress.fullName}</span>
-            <span className="text-charcoal/70">{formatDate(order.createdAt)}</span>
+            <span className="text-charcoal">{formatDate(order.createdAt)}</span>
             <span>{formatINR(order.total)}</span>
             <OrderStatusSelect
               orderId={order._id}

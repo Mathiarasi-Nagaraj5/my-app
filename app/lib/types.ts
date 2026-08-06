@@ -7,7 +7,7 @@ export interface Product {
   originalPrice?: number; // present when the item is discounted
   rating: number;
   reviewCount: number;
-  imageUrl: string;
+  imageUrls: string[];
   isBestseller?: boolean;
   colors?: string[]; // hex values, e.g. ["#1C1B19", "#6B5B45"]
   sizes?: ("S" | "M" | "L" | "XL" | "XXL")[];
@@ -37,7 +37,7 @@ export interface CartItem {
   productId: string;
   slug: string;
   name: string;
-  imageUrl: string;
+  imageUrls: string[];
   price: number;
   size?: string;
   color?: string;

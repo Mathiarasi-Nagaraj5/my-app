@@ -43,7 +43,7 @@ export default function WishlistPage() {
       productId: product._id,
       slug: product.slug,
       name: product.name,
-      imageUrl: product.imageUrl,
+      imageUrls: product.imageUrls,
       price: product.price,
       quantity: 1,
     });

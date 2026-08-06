@@ -24,8 +24,8 @@ export default function ShippingForm({ value, onChange, errors = {} }: ShippingF
 
   return (
     <div>
-      <p className="mb-3.5 flex items-center gap-2 text-sm font-medium text-charcoal">
-        shipping address
+      <p className="mb-3.5 flex items-center gap-2 text-lg font-medium text-charcoal">
+        Shipping Address
       </p>
       <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Input

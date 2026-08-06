@@ -29,7 +29,7 @@ export default function Pagination({
 
   return (
     <div className="mt-5 flex items-center justify-between border-t border-charcoal/10 px-4 py-3">
-      <p className="text-sm text-charcoal/55">
+      <p className="text-md text-charcoal/75">
         Showing {startItem}–{endItem} of {totalItems}
       </p>
 

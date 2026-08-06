@@ -1,9 +1,13 @@
 "use client";
 
 import { ShopFilters } from "../../app/lib/types";
+import { useEffect, useState } from "react";
+interface Category {
+  name: string;
+  slug: string;
+}
 
-const ALL_CATEGORIES = ["t-shirts", "hoodies", "pyjamas"];
-const ALL_SIZES = ["S", "M", "L", "XL", "XXL"];
+const ALL_SIZES = ["S", "M", "L", "XL", "XXL","3XL","4XL","5XL"];
 const ALL_COLORS = ["#1C1B19", "#F3EFE7", "#6B5B45"];
 
 interface FilterSidebarProps {
@@ -12,13 +16,20 @@ interface FilterSidebarProps {
 }
 
 export default function FilterSidebar({ filters, onChange }: FilterSidebarProps) {
+    const [categories, setCategories] = useState<Category[]>([]); 
   const toggleCategory = (cat: string) => {
     const next = filters.categories.includes(cat)
       ? filters.categories.filter((c) => c !== cat)
       : [...filters.categories, cat];
     onChange({ ...filters, categories: next });
   };
-
+  useEffect(() => {
+    fetch("/api/categories").then((res) => res.json()).then((data) => {
+      setCategories(data); // Assuming the API returns an array of category objects with a 'name' property
+    }).catch((err) => {
+      console.error("Failed to fetch categories:", err);
+    });
+  }, []);
   const toggleSize = (size: string) => {
     const next = filters.sizes.includes(size)
       ? filters.sizes.filter((s) => s !== size)
@@ -39,18 +50,18 @@ export default function FilterSidebar({ filters, onChange }: FilterSidebarProps)
       <div className="border-b border-charcoal/15 pb-5">
         <p className="mb-3 font-medium text-charcoal text-xl">Category</p>
         <div className="flex flex-col gap-2">
-          {ALL_CATEGORIES.map((cat) => (
+          {categories.map((cat) => (
             <label
-              key={cat}
+              key={cat.name}
               className="flex items-center gap-2 text-charcoal/75 text-lg"
             >
               <input
                 type="checkbox"
-                checked={filters.categories.includes(cat)}
-                onChange={() => toggleCategory(cat)}
+                checked={filters.categories.includes(cat.name)}
+                onChange={() => toggleCategory(cat.name)}
                 className="accent-pink"
               />
-              {cat}
+              {cat.name}
             </label>
           ))}
         </div>

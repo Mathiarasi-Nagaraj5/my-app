@@ -16,10 +16,11 @@ export default function CartItemRow({
   onQuantityChange,
   onRemove,
 }: CartItemRowProps) {
+  console.log("Rendering CartItemRow for item:", item); // Debugging line
   return (
     <div className="flex gap-4 border-b border-charcoal/15 py-4">
       <Link href={`/shop/${item.slug}`} className="relative h-[100px] w-20 flex-shrink-0 overflow-hidden rounded bg-charcoal">
-        <Image src={item.imageUrl} alt={item.name} fill className="object-cover" sizes="80px" />
+        <Image src={item.imageUrls[0]} alt={item.name} fill className="object-cover" sizes="80px" />
       </Link>
 
       <div className="flex-1">

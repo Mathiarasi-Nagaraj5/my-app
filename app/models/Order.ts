@@ -4,7 +4,7 @@ export interface IOrderItem {
   productId: string;
   slug: string;
   name: string;
-  imageUrl: string;
+  imageUrls: string[];
   price: number;
   quantity: number;
   size?: string;
@@ -40,7 +40,7 @@ export interface IOrder extends Document {
   subtotal: number;
   delivery: number;
   total: number;
-  status: "confirmed" | "in transit" | "delivered" | "cancelled";
+  status: "Confirmed" | "In Transit" | "Delivered" | "Cancelled";
   shipment?: IShipment;
   createdAt: Date;
   updatedAt: Date;
@@ -51,7 +51,7 @@ const OrderItemSchema: Schema = new Schema(
     productId: { type: String, required: true },
     slug: { type: String, required: true },
     name: { type: String, required: true },
-    imageUrl: { type: String },
+    imageUrls: { type: [String] },
     price: { type: Number, required: true },
     quantity: { type: Number, required: true },
     size: { type: String },
@@ -111,8 +111,8 @@ const OrderSchema: Schema = new Schema(
     total: { type: Number, required: true },
     status: {
       type: String,
-      enum: ["confirmed", "in transit", "delivered", "cancelled"],
-      default: "confirmed",
+      enum: ["Confirmed", "In Transit", "Delivered", "Cancelled"],
+      default: "Confirmed",
     },
     shipment: { type: ShipmentSchema, default: undefined },
   },

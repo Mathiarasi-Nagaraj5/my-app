@@ -7,8 +7,12 @@ import { LayoutDashboard, Package, Truck, LogOut, RotateCcw, Wallet, X } from "l
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { label: "Products", href: "/admin/products", icon: Package },
+  { label: "Customers", href: "/admin/customers", icon: Wallet },
+  { label: "Categories", href: "/admin/categories", icon: Package },
+  { label: "Promotions", href: "/admin/promotions", icon: Package },
   { label: "Orders", href: "/admin/orders", icon: Truck },
   { label: "Returns", href: "/admin/returns", icon: RotateCcw },
+  { label: "Ratings", href: "/admin/ratings", icon: RotateCcw },
 ];
 
 interface AdminSidebarProps {

@@ -17,7 +17,7 @@ export default function PaymentMethodSelector({
 }) {
   return (
     <div>
-      <p className="mb-3.5 text-sm font-medium text-charcoal">payment method</p>
+      <p className="mb-3.5 text-lg font-medium text-charcoal">Payment Methods</p>
       <div className="flex flex-col gap-2.5">
         {OPTIONS.map((opt) => (
           <label

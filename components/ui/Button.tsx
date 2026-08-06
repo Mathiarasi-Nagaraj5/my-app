@@ -1,6 +1,6 @@
 import { ButtonHTMLAttributes, ReactNode } from "react";
 
-type ButtonVariant = "primary" | "secondary" | "outline" | "ghost";
+type ButtonVariant = "primary" | "secondary" | "outline" | "ghost" | "danger";
 type ButtonSize = "sm" | "md" | "lg";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -23,6 +23,8 @@ const variantStyles: Record<ButtonVariant, string> = {
   // ghost — low-emphasis, e.g. "remove" or "view all"
   ghost:
     "bg-transparent text-charcoal border border-transparent hover:bg-charcoal/5 underline-offset-2",
+  danger:
+    "bg-red-600 text-ivory hover:bg-red-700 active:scale-[0.98] border border-transparent",
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
@@ -40,6 +42,8 @@ export default function Button({
   className = "",
   ...props
 }: ButtonProps) {
+  const { ["font-bold"]: _fontBold, ...buttonProps } = props as any;
+
   return (
     <button
       className={[
@@ -49,7 +53,7 @@ export default function Button({
         fullWidth ? "w-full" : "",
         className,
       ].join(" ")}
-      {...props}
+      {...buttonProps}
     >
       {icon}
       {children}

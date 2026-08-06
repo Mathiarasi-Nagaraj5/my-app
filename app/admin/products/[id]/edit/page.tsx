@@ -12,30 +12,39 @@ export default function EditProductPage() {
   const [initialValues, setInitialValues] = useState<Partial<ProductFormValues> | null>(null);
   const [notFound, setNotFound] = useState(false);
 
-  useEffect(() => {
-    fetch(`/api/admin/products/${id}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("not found");
-        return res.json();
-      })
-      .then((product) =>
-        setInitialValues({
-          name: product.name,
-          slug: product.slug,
-          category: product.category,
-          price: product.price,
-          originalPrice: product.originalPrice,
-          imageUrl: product.imageUrl,
-          isBestseller: product.isBestseller,
-          sizes: (product.sizes || []).join(", "),
-          colors: (product.colors || []).join(", "),
-        })
-      )
-      .catch(() => setNotFound(true));
-  }, [id]);
+useEffect(() => {
+  fetch(`/api/products/${id}`)
+    .then(async (res) => {
+      if (!res.ok) throw new Error("not found");
 
+      const product = await res.json(); // ✅ Wait for JSON
+      console.log("Fetched product data:", product);
+
+      return product.data;
+    })
+    .then((product) => {
+      console.log("Setting initial values:", product);
+
+      setInitialValues({
+        name: product.name,
+        slug: product.slug,
+        stock: product.stock,
+        category: product.category,
+        price: product.price,
+        originalPrice: product.originalPrice,
+        imageUrls: product.imageUrls ?? [],
+        isBestseller: product.isBestseller,
+        sizes: (product.sizes ?? []).join(", "),
+        colors: (product.colors ?? []).join(", "),
+      });
+    })
+    .catch((err) => {
+      console.error(err);
+      setNotFound(true);
+    });
+}, [id]);
   const handleSubmit = async (values: ProductFormValues) => {
-    const res = await fetch(`/api/admin/products/${id}`, {
+    const res = await fetch(`/api/products/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(values),
@@ -59,7 +68,7 @@ export default function EditProductPage() {
 
   return (
     <div className="max-w-2xl">
-      <h1 className="mb-5 text-lg font-medium text-charcoal">Edit product</h1>
+      <h1 className="mb-5 text-lg font-medium text-charcoal">Edit Product</h1>
       <ProductForm
         initialValues={initialValues}
         onSubmit={handleSubmit}

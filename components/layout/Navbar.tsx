@@ -1,29 +1,37 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import { Search, User, ShoppingBag, Heart, Menu, X } from "lucide-react";
 import { useCart } from "@/app/lib/context/CartContext";
 import { useWishlist } from "@/app/lib/context/WishlistContext";
 import { useAuth } from "../../app/lib/context/AuthContext";
 
-const NAV_LINKS = [
-  { label: "T-Shirts", href: "/shop?category=t-shirts" },
-  { label: "Hoodies", href: "/shop?category=hoodies" },
-  { label: "Pyjamas", href: "/shop?category=pyjamas" },
-  { label: "New Arrivals", href: "/shop?sort=newest" },
-];
+
+interface Category {
+  name: string;
+  slug: string;
+}
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { itemCount: cartCount } = useCart();
   const { count: wishlistCount } = useWishlist();
+  const [categories, setCategories] = useState<Category[]>([]); // State to hold categories
   const { user } = useAuth();
 
   // logged in → account icon goes to the profile page
   // logged out → goes to login
   const accountHref = user ? "/profile" : "/login";
   const accountLabel = user ? `Account — ${user.name}` : "Login";
+   
+  useEffect(() => {
+    fetch("/api/categories").then((res) => res.json()).then((data) => {
+      setCategories(data); // Assuming the API returns an array of category objects with a 'name' property
+    }).catch((err) => {
+      console.error("Failed to fetch categories:", err);
+    });
+  }, []);
 
   return (
     <header className="bg-ivory">
@@ -34,9 +42,10 @@ export default function Navbar() {
 
         {/* desktop links */}
         <nav className="hidden gap-7 text-lg text-charcoal/85 md:flex">
-          {NAV_LINKS.map((link) => (
-            <Link key={link.href} href={link.href} className="hover:text-pink">
-              {link.label}
+          
+          {categories.map((category) => (
+            <Link key={category.name} href={`/shop?category=${encodeURIComponent(category.slug)}`} className="hover:text-pink">
+              {category.name}  
             </Link>
           ))}
         </nav>
@@ -80,14 +89,15 @@ export default function Navbar() {
       {/* mobile dropdown */}
       {menuOpen && (
         <nav className="flex flex-col gap-4 border-t border-charcoal/10 px-6 py-5 text-sm text-charcoal/85 md:hidden">
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
+         
+            {categories.map((category) => (
+           <Link
+              key={category.name}
+              href={`/shop?category=${encodeURIComponent(category.slug)}`}
               onClick={() => setMenuOpen(false)}
               className="hover:text-pink"
             >
-              {link.label}
+              {category.name}  
             </Link>
           ))}
         </nav>
