@@ -46,7 +46,7 @@ export default function ProductInfo({ product, onSizeGuideClick }: ProductInfoPr
     if (!requireSize()) return;
     console.log(product);
     addItem({
-      id: `${product._id}-${selectedSize}-${selectedColor ?? "default"}`,
+      id: product._id,
       productId: product._id,
       slug: product.slug,
       name: product.name,

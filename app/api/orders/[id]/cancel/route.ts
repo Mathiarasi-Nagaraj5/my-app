@@ -54,7 +54,7 @@ export async function POST(
     order.status = "Cancelled";
     await order.save();
 
-    return NextResponse.json(order);
+    return NextResponse.json({ data: order });
   } catch (error) {
     console.error("POST /api/orders/[id]/cancel error:", error);
     return NextResponse.json({ error: "failed to cancel order" }, { status: 500 });

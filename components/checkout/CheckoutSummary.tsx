@@ -7,6 +7,9 @@ const formatINR = (v: number) => `₹${v.toLocaleString("en-IN")}`;
 interface CheckoutSummaryProps {
   items: CartItem[];
   subtotal: number;
+  delivery: number;
+  discount?: number;
+  total: number;
   onPlaceOrder: () => void;
   placing: boolean;
 }
@@ -14,12 +17,12 @@ interface CheckoutSummaryProps {
 export default function CheckoutSummary({
   items,
   subtotal,
+  delivery,
+  discount = 0,
+  total,
   onPlaceOrder,
   placing,
 }: CheckoutSummaryProps) {
-  const delivery = subtotal >= 999 ? 0 : 0;
-  const total = subtotal + delivery;
-
   return (
     <div className="rounded-card bg-charcoal p-6">
       <p className="mb-3.5 text-lg font-medium text-ivory">Order Summary</p>
@@ -45,6 +48,12 @@ export default function CheckoutSummary({
             {delivery === 0 ? "free" : formatINR(delivery)}
           </span>
         </div>
+        {discount > 0 && (
+          <div className="flex justify-between">
+            <span>Discount</span>
+            <span>−{formatINR(discount)}</span>
+          </div>
+        )}
       </div>
 
       <div className="mt-3.5 flex justify-between border-t border-ivory/15 pt-3.5 text-base font-medium text-ivory">

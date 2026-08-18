@@ -75,6 +75,7 @@ export async function POST(req: Request) {
 
     // ── Create document ─────────────────────────────────────────────────────
    console.log("Creating product with data:",body);
+   
     const product = await Product.create({
       name: body.name.trim(),
       slug: body.slug.trim().toLowerCase(),

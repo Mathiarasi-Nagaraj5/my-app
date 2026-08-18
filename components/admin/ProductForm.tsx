@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef ,useEffect} from "react";
+import { useState, useRef, useEffect } from "react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -17,6 +17,7 @@ export interface ProductFormValues {
   colors: string;
 }
 interface Category {
+  _id?: string;
   name: string;
   slug: string;
 }
@@ -27,7 +28,7 @@ const EMPTY_VALUES: ProductFormValues = {
   category: ["t-shirts"],
   price: 0,
   originalPrice: undefined,
-  stock: 0,
+  stock: 1,
   imageUrls: [],
   isBestseller: false,
   sizes: "S, M, L, XL",
@@ -35,7 +36,7 @@ const EMPTY_VALUES: ProductFormValues = {
 };
 
 interface ProductFormProps {
-  initialValues?: Partial<ProductFormValues>;
+  initialValues?: Partial<ProductFormValues> & { _id?: string };
   onSubmit: (values: ProductFormValues) => Promise<void> | void;
   submitLabel?: string;
 }
@@ -57,7 +58,6 @@ function ImageThumb({
   onMoveLeft: () => void;
   onMoveRight: () => void;
 }) {
-  
   return (
     <div className="relative group w-24 h-24 rounded border border-charcoal overflow-hidden flex-shrink-0">
       <img src={url} alt={`product image ${index + 1}`} className="w-full h-full object-cover" />
@@ -117,29 +117,49 @@ export default function ProductForm({
 }: ProductFormProps) {
 
   const [values, setValues] = useState<ProductFormValues>({
-  ...EMPTY_VALUES,
-  ...initialValues,
-  imageUrls: initialValues?.imageUrls ?? [],
-});
-  const [categories, setCategories] = useState<Category[]>([]);
-   useEffect(() => {
-    fetch("/api/categories").then((res) => res.json()).then((data) => {
-      setCategories(data); // Assuming the API returns an array of category objects with a 'name' property
-    }).catch((err) => {
-      console.error("Failed to fetch categories:", err);
-    });
-  }, []);
-
-console.log("ProductForm initialValues:", initialValues);
-useEffect(() => {
-  if (!initialValues) return;
-
-  setValues({
     ...EMPTY_VALUES,
     ...initialValues,
-    imageUrls: initialValues.imageUrls ?? [],
+    imageUrls: initialValues?.imageUrls ?? [],
   });
-}, [initialValues]);
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((res) => res.json())
+      .then((data) => {
+        setCategories(data); // Assuming the API returns an array of category objects with a 'name' property
+      })
+      .catch((err) => {
+        console.error("Failed to fetch categories:", err);
+      });
+  }, []);
+
+  // Only re-sync form state from initialValues when we're actually loading a
+  // *different* record (matched by _id, falling back to slug). Previously this
+  // effect re-ran on every render where the parent passed a new `initialValues`
+  // object reference (e.g. an inline object literal), which silently clobbered
+  // in-progress edits — including `stock` — back to the original server value
+  // right before submit. That's why stock changes looked like they "weren't saving."
+  const loadedRecordIdRef = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (!initialValues) return;
+
+    const recordId = initialValues._id ?? initialValues.slug;
+
+    // Same record already loaded (or no stable id to compare) — don't overwrite
+    // whatever the user has typed so far.
+    if (recordId !== undefined && recordId === loadedRecordIdRef.current) return;
+
+    loadedRecordIdRef.current = recordId;
+
+    setValues({
+      ...EMPTY_VALUES,
+      ...initialValues,
+      imageUrls: initialValues.imageUrls ?? [],
+    });
+  }, [initialValues]);
+
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -251,6 +271,10 @@ useEffect(() => {
     if (!values.name.trim()) { setError("Product name is required"); return; }
     if (!values.slug.trim()) { setError("Slug is required"); return; }
     if (values.price <= 0)   { setError("Enter a valid price"); return; }
+    if (!values.stock || values.stock < 1) {
+      setError("Stock must be at least 1");
+      return;
+    }
     if (values.imageUrls.length === 0) {
       setError("Upload at least one product image");
       return;
@@ -267,7 +291,7 @@ useEffect(() => {
   };
 
   // ── Render ───────────────────────────────────────────────────────────────
-console.log("ProductForm values:", values);
+
   const canAddMore = values.imageUrls.length < MAX_IMAGES;
 
   return (
@@ -301,24 +325,25 @@ console.log("ProductForm values:", values);
 
       {/* Category */}
       <div>
-  <label className="mb-1.5 block text-sm font-medium text-charcoal">
-    Category
-  </label>
+        <label className="mb-1.5 block text-sm font-medium text-charcoal">
+          Category
+        </label>
 
-  <select
-    value={values.category}
-    onChange={(e) => update("category", e.target.value)}
-    className="h-10 w-full rounded border border-charcoal bg-ivory px-3 text-sm text-charcoal focus:outline-none focus:ring-1 focus:ring-brass"
-  >
-    <option value="">Select a category</option>
+        <select
+          value={values.category?.[0] ?? ""}
+          onChange={(e) => update("category", [e.target.value])}
+          className="h-10 w-full rounded border border-charcoal bg-ivory px-3 text-sm text-charcoal focus:outline-none focus:ring-1 focus:ring-brass"
+        >
+          <option value="">Select a category</option>
 
-    {categories.map((category) => (
-      <option key={category._id} value={category.slug ?? category.name}>
-        {category.name}
-      </option>
-    ))}
-  </select>
-</div>
+          {categories.map((category) => (
+            <option key={category._id ?? category.slug} value={category.slug ?? category.name}>
+              {category.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
       {/* Price + Original Price + Stock */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div>
@@ -357,10 +382,12 @@ console.log("ProductForm values:", values);
           </label>
           <input
             type="number"
-            min={0}
+            min={1}
             className="h-10 w-full rounded border border-charcoal bg-ivory px-3 text-sm text-charcoal focus:outline-none focus:ring-1 focus:ring-brass"
-           value={values.stock ?? ""}
-            onChange={(e) => update("stock", Number(e.target.value))}
+            value={values.stock ?? ""}
+            onChange={(e) =>
+              update("stock", e.target.value === "" ? 0 : Number(e.target.value))
+            }
           />
         </div>
       </div>

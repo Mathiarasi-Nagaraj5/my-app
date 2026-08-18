@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import connectDB from "@/app/lib/mongodb";
 import Review from "@/app/models/Review";
-import Order from "@/app/models/Order"; // adjust path if your Order model lives elsewhere
+import Order from "@/app/models/Order";
 
 // GET /api/reviews            -> all reviews, newest first (admin table)
 // GET /api/reviews?orderId=.. -> reviews for a single order (order detail page)
@@ -16,7 +16,7 @@ export async function GET(req: Request) {
 
     const reviews = await Review.find(filter)
       .sort({ createdAt: -1 })
-      .populate("orderId", "orderNumber"); // gives us order.orderNumber in the admin table
+      .populate("orderId", "orderNumber");
 
     return NextResponse.json({ success: true, data: reviews });
   } catch {
@@ -52,8 +52,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // only the customer who placed the order can review it
-    console.log("order.userId:", order, "userId:", userId);
     if (order.userId?.toString() !== userId) {
       return NextResponse.json(
         { success: false, message: "You are not authorized to review this order" },
@@ -61,17 +59,19 @@ export async function POST(req: Request) {
       );
     }
 
-    // core rule: reviews are only allowed once the order has been delivered
-    if (order.status !== "Delivered") {
+    // FIX 1: case-insensitive status check — DB may store "delivered" or "Delivered"
+    const normalizedStatus = order.status?.toLowerCase();
+    if (normalizedStatus !== "delivered") {
       return NextResponse.json(
         { success: false, message: "You can only rate items after the order is delivered" },
         { status: 400 }
       );
     }
 
-    // make sure the product being reviewed was actually part of this order
+    // FIX 2: compare as strings — item.productId is an ObjectId, productId is a string
     const wasPurchased = order.items?.some(
-      (item: { productId: string }) => item.productId === productId
+      (item: { productId: { toString(): string } }) =>
+        item.productId?.toString() === productId
     );
     if (!wasPurchased) {
       return NextResponse.json(
@@ -91,8 +91,12 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, data: review }, { status: 201 });
   } catch (err: unknown) {
-    // duplicate (orderId, productId) pair -> the schema's unique index
-    if (typeof err === "object" && err !== null && "code" in err && (err as { code?: number }).code === 11000) {
+    if (
+      typeof err === "object" &&
+      err !== null &&
+      "code" in err &&
+      (err as { code?: number }).code === 11000
+    ) {
       return NextResponse.json(
         { success: false, message: "You've already reviewed this item" },
         { status: 409 }

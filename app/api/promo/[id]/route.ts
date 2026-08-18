@@ -3,33 +3,28 @@ import connectDB from "@/app/lib/mongodb";
 import PromoCode from "@/app/models/Promocode";
 
 interface Params {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 // PATCH /api/promo/[id] -> partial update (e.g. { isActive: false })
 export async function PATCH(req: Request, { params }: Params) {
   try {
     await connectDB();
+    const { id } = await params;
 
     const body = await req.json();
-    const promo = await PromoCode.findByIdAndUpdate(params.id, body, {
+    const promo = await PromoCode.findByIdAndUpdate(id, body, {
       new: true,
       runValidators: true,
     });
 
     if (!promo) {
-      return NextResponse.json(
-        { success: false, message: "promo code not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, message: "promo code not found" }, { status: 404 });
     }
 
     return NextResponse.json({ success: true, data: promo });
   } catch {
-    return NextResponse.json(
-      { success: false, message: "Failed to update promo code" },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, message: "Failed to update promo code" }, { status: 500 });
   }
 }
 
@@ -37,21 +32,16 @@ export async function PATCH(req: Request, { params }: Params) {
 export async function DELETE(_req: Request, { params }: Params) {
   try {
     await connectDB();
+    const { id } = await params;
 
-    const promo = await PromoCode.findByIdAndDelete(params.id);
+    const promo = await PromoCode.findByIdAndDelete(id);
 
     if (!promo) {
-      return NextResponse.json(
-        { success: false, message: "promo code not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, message: "promo code not found" }, { status: 404 });
     }
 
     return NextResponse.json({ success: true, data: promo });
   } catch {
-    return NextResponse.json(
-      { success: false, message: "Failed to delete promo code" },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, message: "Failed to delete promo code" }, { status: 500 });
   }
 }

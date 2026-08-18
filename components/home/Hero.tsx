@@ -12,7 +12,7 @@ const slides = [
     eyebrow: "New Arrival",
     headline: "Oversized comfort.\nBuilt to last.",
     sub: "Heavy-weight cotton tees — made for everyday wear.",
-    cta: { label: "Shop T-shirts", href: "/shop/t-shirts" },
+    cta: { label: "Shop T-shirts", href: "/shop?category=t-shirts" },
     accent: "#C9A96E", // brass
   },
   {
@@ -21,7 +21,7 @@ const slides = [
     eyebrow: "This Season",
     headline: "Wrap yourself\nin warmth.",
     sub: "Fleece-lined hoodies that feel like a second skin.",
-    cta: { label: "Shop Hoodies", href: "/shop/hoodies" },
+    cta: { label: "Shop Hoodies", href: "/shop?category=hoodies" },
     accent: "#C9A96E",
   },
   {
@@ -30,7 +30,7 @@ const slides = [
     eyebrow: "Sleep Better",
     headline: "Soft sets for\nquiet mornings.",
     sub: "Co-ord pyjama sets in breathable cotton.",
-    cta: { label: "Shop Pyjamas", href: "/shop/pyjamas" },
+    cta: { label: "Shop Pyjamas", href: "/shop?category=pyjamas" },
     accent: "#C9A96E",
   },
 ];

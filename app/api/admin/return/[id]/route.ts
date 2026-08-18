@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import Razorpay from "razorpay";
 import connectDB from "@/app/lib/mongodb";
-import Return from "@/app/models/Return";
+import Return from "@/app/models/ReturnRequest";
 import Order from "@/app/models/Order";
 import { verifyAdminToken } from "@/app/lib/adminAuth";
 

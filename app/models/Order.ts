@@ -20,12 +20,27 @@ export interface IShippingAddress {
   pincode: string;
 }
 
+export interface IShipmentStatusEvent {
+  status: string;
+  activity?: string;
+  location?: string;
+  statusDate: Date;
+}
+
 export interface IShipment {
-  shiprocketOrderId?: string;
-  awbCode?: string;
+  shiprocketOrderId?: number;
+  shiprocketShipmentId?: number;
+  courierId?: number;
   courierName?: string;
+  awbCode?: string;
+  currentStatus?: string; // Shiprocket's raw current_status string
   trackingUrl?: string;
+  labelUrl?: string;
+  manifestUrl?: string;
+  packageWeightKg?: number; // what was actually sent, for audit/debugging
+  pickupScheduledAt?: Date;
   shippedAt?: Date;
+  statusHistory?: IShipmentStatusEvent[];
 }
 
 export interface IOrder extends Document {
@@ -39,11 +54,14 @@ export interface IOrder extends Document {
   razorpayPaymentId?: string;
   subtotal: number;
   delivery: number;
+  promoCode: string | null;
+  discount: number;
   total: number;
-  status: "Confirmed" | "In Transit" | "Delivered" | "Cancelled";
+  status: "Confirmed" | "In Transit" | "Delivered" | "Cancelled" | "Returned";
   shipment?: IShipment;
   createdAt: Date;
   updatedAt: Date;
+  deliveredAt?: Date;
 }
 
 const OrderItemSchema: Schema = new Schema(
@@ -72,13 +90,31 @@ const ShippingAddressSchema: Schema = new Schema(
   { _id: false }
 );
 
+const ShipmentStatusEventSchema: Schema = new Schema(
+  {
+    status: { type: String, required: true },
+    activity: { type: String },
+    location: { type: String },
+    statusDate: { type: Date, required: true },
+  },
+  { _id: false }
+);
+
 const ShipmentSchema: Schema = new Schema(
   {
-    shiprocketOrderId: { type: String },
-    awbCode: { type: String },
+    shiprocketOrderId: { type: Number },
+    shiprocketShipmentId: { type: Number },
+    courierId: { type: Number },
     courierName: { type: String },
+    awbCode: { type: String },
+    currentStatus: { type: String },
     trackingUrl: { type: String },
+    labelUrl: { type: String },
+    manifestUrl: { type: String },
+    packageWeightKg: { type: Number },
+    pickupScheduledAt: { type: Date },
     shippedAt: { type: Date },
+    statusHistory: { type: [ShipmentStatusEventSchema], default: [] },
   },
   { _id: false }
 );
@@ -108,11 +144,17 @@ const OrderSchema: Schema = new Schema(
     razorpayPaymentId: { type: String },
     subtotal: { type: Number, required: true },
     delivery: { type: Number, required: true, default: 0 },
+    promoCode: { type: String, default: null },
+    discount: { type: Number, required: true, default: 0 },
     total: { type: Number, required: true },
     status: {
       type: String,
-      enum: ["Confirmed", "In Transit", "Delivered", "Cancelled"],
+      enum: ["Confirmed", "In Transit", "Delivered", "Cancelled", "Returned"],
       default: "Confirmed",
+    },
+    deliveredAt: {
+      type: Date,
+      default: undefined,
     },
     shipment: { type: ShipmentSchema, default: undefined },
   },

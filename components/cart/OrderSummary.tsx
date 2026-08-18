@@ -3,9 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import Button from "@/components/ui/Button";
+import { useCart } from "@/app/lib/context/CartContext";
 
 const formatINR = (v: number) => `₹${v.toLocaleString("en-IN")}`;
 const FREE_DELIVERY_THRESHOLD = 999;
+const DELIVERY_FEE = 79;
 
 interface OrderSummaryProps {
   subtotal: number;
@@ -13,13 +15,13 @@ interface OrderSummaryProps {
 }
 
 export default function OrderSummary({ subtotal, itemCount }: OrderSummaryProps) {
+  const { promoCode: appliedCode, setPromoCode } = useCart();
   const [coupon, setCoupon] = useState("");
-  const [appliedCode, setAppliedCode] = useState<string | null>(null);
   const [discount, setDiscount] = useState(0);
   const [couponMessage, setCouponMessage] = useState("");
   const [applying, setApplying] = useState(false);
 
-  const delivery = subtotal >= FREE_DELIVERY_THRESHOLD || subtotal === 0 ? 0 : 79;
+  const delivery = subtotal >= FREE_DELIVERY_THRESHOLD || subtotal === 0 ? 0 : DELIVERY_FEE;
   const total = subtotal + delivery - discount;
 
   const applyCoupon = async () => {
@@ -37,17 +39,17 @@ export default function OrderSummary({ subtotal, itemCount }: OrderSummaryProps)
 
       if (!res.ok) {
         setDiscount(0);
-        setAppliedCode(null);
+        setPromoCode(null);
         setCouponMessage(data.message ?? "invalid coupon code");
         return;
       }
 
       setDiscount(data.data.discount);
-      setAppliedCode(data.data.code);
+      setPromoCode(data.data.code); // carries into CheckoutSteps via CartContext
       setCouponMessage(`coupon applied — you saved ${formatINR(data.data.discount)}`);
     } catch {
       setDiscount(0);
-      setAppliedCode(null);
+      setPromoCode(null);
       setCouponMessage("something went wrong, please try again");
     } finally {
       setApplying(false);
@@ -56,7 +58,7 @@ export default function OrderSummary({ subtotal, itemCount }: OrderSummaryProps)
 
   const removeCoupon = () => {
     setCoupon("");
-    setAppliedCode(null);
+    setPromoCode(null);
     setDiscount(0);
     setCouponMessage("");
   };

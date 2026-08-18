@@ -66,7 +66,7 @@ export default function PromoForm({ onCreated }: PromoFormProps) {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="mb-4 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+        className="mb-4 rounded-md bg-pink px-4 py-2 text-sm font-medium text-white hover:bg-charcoal"
       >
         + New Promo Code
       </button>
@@ -162,7 +162,7 @@ export default function PromoForm({ onCreated }: PromoFormProps) {
         <button
           onClick={handleSubmit}
           disabled={submitting}
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          className="rounded-md bg-charcoal px-4 py-2 text-sm font-medium text-white hover:bg-charcoal/40 disabled:opacity-50"
         >
           {submitting ? "creating..." : "Create Promo Code"}
         </button>

@@ -9,6 +9,7 @@ const nextConfig = {
       // add your real image host here (e.g. Cloudinary, S3, Shopify CDN)
     ],
   },
+   serverExternalPackages: ["pdfkit"],
 };
 
 module.exports = nextConfig;

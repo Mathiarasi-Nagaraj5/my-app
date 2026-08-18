@@ -37,14 +37,14 @@ export default async function HomePage() {
 
       <ProductRail
         title="New Arrivals"
-        products={newArrivals.at(0) ? newArrivals.slice(0, 3) : []}
+        products={newArrivals.at(0) ? newArrivals.slice(0, 4) : []}
         viewAllHref="/shop?sort=newest"
            tone="charcoal-tint"
       />
 
       <ProductRail
         title="Best Sellers"
-        products={bestSellers.at(0) ? bestSellers.slice(0, 3) : []}
+        products={bestSellers.at(0) ? bestSellers.slice(0, 4) : []}
         viewAllHref="/shop?bestseller=true"
      
       />
@@ -52,7 +52,7 @@ export default async function HomePage() {
 
       <ProductRail
         title="Trending Now"
-        products={trending.at(0) ? trending.slice(0, 3) : []}
+        products={trending.at(0) ? trending.slice(0, 4) : []}
         viewAllHref="/shop?sort=popular"
         tone="charcoal-tint"
       />

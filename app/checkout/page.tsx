@@ -11,6 +11,8 @@ import PaymentMethodSelector, { PaymentMethod } from "@/components/checkout/Paym
 import CheckoutSummary from "@/components/checkout/CheckoutSummary";
 import { useCart } from "@/app/lib/context/CartContext";
 import { useAuth } from "@/app/lib/context/AuthContext";
+import { computeDelivery } from "@/app/lib/pricing";
+import PincodeCheck from "@/components/checkout/PincodeCheckStatus";
 
 const EMPTY_ADDRESS: ShippingAddress = {
   fullName: "",
@@ -21,16 +23,13 @@ const EMPTY_ADDRESS: ShippingAddress = {
   pincode: "",
 };
 
-const FREE_DELIVERY_THRESHOLD = 999;
-const DELIVERY_FEE = 1;
-
 // This component only ever renders on /checkout — it's not a shared,
 // multi-page stepper, so "Checkout" is always the active step. "Bag" links
 // back, "Done" only becomes real once you land on the confirmation page
 // (a separate page/component, not this one).
 export default function CheckoutSteps() {
   const router = useRouter();
-  const { items, subtotal, clearCart } = useCart();
+  const { items, subtotal, clearCart, promoCode, hydrated } = useCart();
   const { user } = useAuth();
 
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
@@ -43,9 +42,15 @@ export default function CheckoutSteps() {
   const [placing, setPlacing] = useState(false);
   const [orderError, setOrderError] = useState("");
 
-  const delivery = subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : DELIVERY_FEE;
-  const total = subtotal + delivery;
+  // Preview-only discount for display. The number that actually gets
+  // charged is always recomputed server-side in create-order / /api/orders
+  // via PromoCode.reserve — this is never sent as authorization to charge less.
+  const [previewDiscount, setPreviewDiscount] = useState(0);
+  const [promoMessage, setPromoMessage] = useState("");
 
+  const delivery = computeDelivery(subtotal);
+  const total = Math.max(subtotal + delivery - previewDiscount, 0);
+const [pincodeServiceable, setPincodeServiceable] = useState<boolean | null>(null);
   useEffect(() => {
     if (!user) {
       setLoadingAddresses(false);
@@ -80,6 +85,43 @@ export default function CheckoutSteps() {
     }
   }, [selectedAddressId, savedAddresses]);
 
+  // Re-validate the carried-over promo against this page's own subtotal —
+  // display only, doesn't reserve/spend anything.
+  useEffect(() => {
+    if (!hydrated || !promoCode || subtotal === 0) {
+      setPreviewDiscount(0);
+      setPromoMessage("");
+      return;
+    }
+    fetch("/api/promo/validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: promoCode, subtotal }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setPreviewDiscount(data.data.discount);
+          setPromoMessage(`${promoCode} applied`);
+        } else {
+          setPreviewDiscount(0);
+          setPromoMessage(data.message ?? "coupon no longer valid");
+        }
+      })
+      .catch(() => {
+        setPreviewDiscount(0);
+        setPromoMessage("");
+      });
+  }, [hydrated, promoCode, subtotal]);
+
+  if (!hydrated) {
+    return (
+      <div className="flex items-center justify-center px-6 py-24">
+        <p className="text-sm text-charcoal/55">loading your bag...</p>
+      </div>
+    );
+  }
+
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center px-6 py-24 text-center">
@@ -113,6 +155,14 @@ export default function CheckoutSteps() {
     router.push(`/checkout/success?orderId=${orderId}`);
   };
 
+  const cartItemsForApi = () =>
+    items.map((i) => ({
+      productId: i.id,
+      quantity: i.quantity,
+      size: (i as any).size,
+      color: (i as any).color,
+    }));
+
   const handlePlaceOrder = async () => {
     setOrderError("");
     if (!validate()) return;
@@ -125,20 +175,16 @@ export default function CheckoutSteps() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             userId: user?.id,
-            items,
+            items: cartItemsForApi(),
             shippingAddress,
-            subtotal,
-            delivery,
-            total,
-            paymentMethod: "cod",
-            paymentStatus: "PENDING",
+            promoCode: promoCode ?? undefined,
           }),
         });
         const data = await res.json();
-        if (!res.ok || !data.success) throw new Error("failed to place order");
+        if (!res.ok || !data.success) throw new Error(data.message || "failed to place order");
         goToConfirmation(data.data._id);
-      } catch {
-        setOrderError("something went wrong while placing your order.");
+      } catch (err) {
+        setOrderError(err instanceof Error ? err.message : "something went wrong while placing your order.");
       } finally {
         setPlacing(false);
       }
@@ -156,13 +202,21 @@ export default function CheckoutSteps() {
       const res = await fetch("/api/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: total }),
+        body: JSON.stringify({
+          userId: user?.id,
+          items: cartItemsForApi(),
+          shippingAddress,
+          promoCode: promoCode ?? undefined,
+        }),
       });
 
       const data = await res.json();
       if (!res.ok || !data.success) {
+        console.error("Failed to create Razorpay order:", data);
         throw new Error(data.message || "Failed to create Razorpay order");
       }
+
+      const appOrderId = data.appOrderId;
 
       const options = {
         key: data.key,
@@ -183,6 +237,7 @@ export default function CheckoutSteps() {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
+                appOrderId,
                 order_id: response.razorpay_order_id,
                 payment_id: response.razorpay_payment_id,
                 signature: response.razorpay_signature,
@@ -194,26 +249,9 @@ export default function CheckoutSteps() {
               throw new Error(verifyData.message || "Payment verification failed");
             }
 
-            const orderRes = await fetch("/api/orders", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                userId: user?.id,
-                items,
-                shippingAddress,
-                subtotal,
-                delivery,
-                total,
-                paymentMethod: payment,
-                paymentStatus: "PAID",
-                razorpayOrderId: response.razorpay_order_id,
-                razorpayPaymentId: response.razorpay_payment_id,
-              }),
-            });
-            const orderData = await orderRes.json();
-            if (!orderRes.ok || !orderData.success) throw new Error("failed to save order");
-
-            goToConfirmation(orderData.data._id);
+            // Order already exists and is now marked PAID by verify-payment —
+            // no separate /api/orders call needed here.
+            goToConfirmation(verifyData.data._id);
           } catch (err) {
             console.error(err);
             setOrderError("Payment was successful but verification failed.");
@@ -238,7 +276,7 @@ export default function CheckoutSteps() {
       razorpay.open();
     } catch (err) {
       console.error(err);
-      setOrderError("Something went wrong while starting the payment.");
+      setOrderError(err instanceof Error ? err.message : "Something went wrong while starting the payment.");
       setPlacing(false);
     }
   };
@@ -260,6 +298,18 @@ export default function CheckoutSteps() {
           </p>
         )}
 
+        {promoCode && (
+          <p
+            className={`mb-5 rounded px-4 py-2.5 text-center text-sm ${
+              previewDiscount > 0
+                ? "border border-pink/40 bg-pink/5 text-pink"
+                : "border border-amber-200 bg-amber-50 text-amber-700"
+            }`}
+          >
+            {promoMessage}
+          </p>
+        )}
+
         <div className="grid grid-cols-1 gap-10 md:grid-cols-[1.6fr_1fr]">
           <div className="flex flex-col gap-8">
             {loadingAddresses ? (
@@ -271,12 +321,25 @@ export default function CheckoutSteps() {
                   selectedId={selectedAddressId}
                   onSelect={setSelectedAddressId}
                 />
-                {selectedAddressId === "new" && (
-                  <ShippingForm value={shippingAddress} onChange={setShippingAddress} errors={errors} />
-                )}
+                {selectedAddressId === "new" && <>
+<ShippingForm value={shippingAddress} onChange={setShippingAddress} errors={errors} />
+<PincodeCheck
+  pincode={shippingAddress.pincode}
+  itemCount={items.reduce((sum, i) => sum + i.quantity, 0)}
+  cod={payment === "cod"}
+  onServiceabilityChange={setPincodeServiceable}
+/></>
+                }
               </>
             ) : (
+              <>
               <ShippingForm value={shippingAddress} onChange={setShippingAddress} errors={errors} />
+<PincodeCheck
+  pincode={shippingAddress.pincode}
+  itemCount={items.reduce((sum, i) => sum + i.quantity, 0)}
+  cod={payment === "cod"}
+  onServiceabilityChange={setPincodeServiceable}
+/></>
             )}
 
             <PaymentMethodSelector value={payment} onChange={setPayment} />
@@ -285,6 +348,9 @@ export default function CheckoutSteps() {
           <CheckoutSummary
             items={items}
             subtotal={subtotal}
+            delivery={delivery}
+            discount={previewDiscount}
+            total={total}
             onPlaceOrder={handlePlaceOrder}
             placing={placing}
           />

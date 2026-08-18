@@ -9,7 +9,7 @@ export interface AdminOrder {
   orderNumber: string;
   shippingAddress: { fullName: string };
   total: number;
-  status: "Confirmed" | "In Transit" | "Delivered" | "Cancelled";
+  status: "Confirmed" | "In Transit" | "Delivered" | "Cancelled" | "Returned";
   createdAt: string;
   paymentMethod?: "upi" | "card" | "cod";
   paymentStatus?: "PENDING" | "PAID" | "FAILED";

@@ -3,37 +3,32 @@ import mongoose, { Schema, Document, Model } from "mongoose";
 export type DiscountType = "percentage" | "flat";
 
 export interface IPromoCode extends Document {
-  code: string;                  // e.g. "SUMMER20" — stored uppercase, unique
-  description: string;           // internal note e.g. "20% off summer sale"
-  discountType: DiscountType;    // "percentage" | "flat"
-  discountValue: number;         // 20 → 20% or ₹20
-  minOrderValue: number;         // minimum cart value to apply, 0 = no minimum
-  maxUses: number;               // 0 = unlimited
-  usedCount: number;             // how many times it has been redeemed
-  isActive: boolean;             // can be toggled without deleting
-  expiresAt: Date | null;        // null = never expires
+  code: string;
+  description: string;
+  discountType: DiscountType;
+  discountValue: number;
+  minOrderValue: number;
+  maxUses: number;
+  usedCount: number;
+  isActive: boolean;
+  expiresAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
 
+interface IPromoCodeModel extends Model<IPromoCode> {
+  reserve(code: string, subtotal: number): Promise<IPromoCode | null>;
+  release(code: string): Promise<void>;
+}
+
 const PromoCodeSchema = new Schema<IPromoCode>(
   {
-    code: {
-      type: String,
-      required: true,
-      unique: true,
-      uppercase: true,
-      trim: true,
-    },
+    code: { type: String, required: true, unique: true, uppercase: true, trim: true },
     description: { type: String, default: "" },
-    discountType: {
-      type: String,
-      required: true,
-      enum: ["percentage", "flat"],
-    },
+    discountType: { type: String, required: true, enum: ["percentage", "flat"] },
     discountValue: { type: Number, required: true, min: 0 },
     minOrderValue: { type: Number, default: 0, min: 0 },
-    maxUses: { type: Number, default: 0, min: 0 },   // 0 = unlimited
+    maxUses: { type: Number, default: 0, min: 0 }, // 0 = unlimited
     usedCount: { type: Number, default: 0, min: 0 },
     isActive: { type: Boolean, default: true },
     expiresAt: { type: Date, default: null },
@@ -41,7 +36,6 @@ const PromoCodeSchema = new Schema<IPromoCode>(
   { timestamps: true }
 );
 
-// Virtual: is this code still usable right now?
 PromoCodeSchema.virtual("isValid").get(function (this: IPromoCode) {
   if (!this.isActive) return false;
   if (this.expiresAt && this.expiresAt < new Date()) return false;
@@ -49,8 +43,43 @@ PromoCodeSchema.virtual("isValid").get(function (this: IPromoCode) {
   return true;
 });
 
-const PromoCode: Model<IPromoCode> =
-  mongoose.models.PromoCode ??
-  mongoose.model<IPromoCode>("PromoCode", PromoCodeSchema);
+/**
+ * Atomically claims one use of a promo code in a single conditional update.
+ * Under concurrent checkouts, only one findOneAndUpdate can match the
+ * usedCount < maxUses condition for the last slot — the loser gets null,
+ * not a coupon. Call this ONLY when about to charge the customer
+ * (create-order / COD order creation), never from a read-only preview.
+ */
+PromoCodeSchema.statics.reserve = async function (
+  code: string,
+  subtotal: number
+): Promise<IPromoCode | null> {
+  const now = new Date();
+  return this.findOneAndUpdate(
+    {
+      code: code.trim().toUpperCase(),
+      isActive: true,
+      minOrderValue: { $lte: subtotal },
+      $and: [
+        { $or: [{ expiresAt: null }, { expiresAt: { $gte: now } }] },
+        { $or: [{ maxUses: 0 }, { $expr: { $lt: ["$usedCount", "$maxUses"] } }] },
+      ],
+    },
+    { $inc: { usedCount: 1 } },
+    { new: true }
+  );
+};
+
+/** Releases a claimed use — call on payment failure/expiry so an abandoned checkout doesn't permanently burn a limited-use code. */
+PromoCodeSchema.statics.release = async function (code: string): Promise<void> {
+  await this.updateOne(
+    { code: code.trim().toUpperCase(), usedCount: { $gt: 0 } },
+    { $inc: { usedCount: -1 } }
+  );
+};
+
+const PromoCode =
+  (mongoose.models.PromoCode as IPromoCodeModel) ??
+  mongoose.model<IPromoCode, IPromoCodeModel>("PromoCode", PromoCodeSchema);
 
 export default PromoCode;

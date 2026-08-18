@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Package, Truck, LogOut, RotateCcw, Wallet, X } from "lucide-react";
+import { LayoutDashboard, Package, Truck, LogOut, RotateCcw, Wallet, X,Star } from "lucide-react";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
@@ -12,7 +12,7 @@ const NAV_ITEMS = [
   { label: "Promotions", href: "/admin/promotions", icon: Package },
   { label: "Orders", href: "/admin/orders", icon: Truck },
   { label: "Returns", href: "/admin/returns", icon: RotateCcw },
-  { label: "Ratings", href: "/admin/ratings", icon: RotateCcw },
+  { label: "Ratings", href: "/admin/ratings", icon: Star },
 ];
 
 interface AdminSidebarProps {
