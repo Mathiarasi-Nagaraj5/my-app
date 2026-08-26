@@ -1,6 +1,6 @@
 import { Product } from "@/app/lib/types";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "";
+const API = process.env.NEXT_API_URL || "";
 
 interface ApiResponse<T> {
   success: boolean;
