@@ -9,7 +9,7 @@ import { computeDelivery } from "@/app/lib/pricing";
 import { decrementStock, restoreStock } from "@/app/lib/inventory/stock";
 
 const razorpay = new Razorpay({
-  key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID!,
+  key_id: process.env.NEXT_RAZORPAY_KEY_ID!,
   key_secret: process.env.RAZORPAY_KEY_SECRET!,
 });
 
@@ -154,7 +154,7 @@ export async function POST(req: Request) {
       success: true,
       order: razorpayOrder,
       appOrderId: dbOrder._id,
-      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+      key: process.env.NEXT_RAZORPAY_KEY_ID,
     });
   } catch (error) {
     console.error("Create Order Error:", error);
