@@ -66,8 +66,7 @@ export async function POST(req: NextRequest) {
 
       const blob = await put(filename, file, {
         access: "public",
-        storeId: process.env.BLOB_STORE_ID,
-        oidcToken: process.env.VERCEL_OIDC_TOKEN,
+        storeId: process.env.BLOB_READ_WRITE_TOKEN_STORE_ID,
       });
 
       imageUrls.push(blob.url);
