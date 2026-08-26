@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 import { RETURN_REASONS } from "@/app/lib/returns";
 
-export type ReturnStatus = "Pending" | "Accepted" | "Rejected";
+export type ReturnStatus = "Pending" | "Accepted" | "Rejected" | "requested" | "approved" | "rejected" | "refunded" | "failed" | "completed";
 export type RefundStatus = "NotApplicable" | "Pending" | "Completed" | "Failed";
 export type RefundMethod = "razorpay" | "manual" | null;
 
@@ -30,10 +30,13 @@ export interface IReturnRequest extends Document {
   refundStatus: RefundStatus;
   refundMethod: RefundMethod;
   refund?: IReturnRefund;
+  razorpayRefundId?: string;
   reverseShipment?: IReverseShipment;
   resolvedAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
+  amount: number; // total amount to be refunded
+  refundedAt?: Date | null;
 }
 
 const RefundSchema: Schema = new Schema(
@@ -63,7 +66,7 @@ const ReturnRequestSchema = new Schema<IReturnRequest>(
     userId: { type: String, index: true },
     reason: { type: String, required: true, enum: RETURN_REASONS },
     otherReason: { type: String },
-    status: { type: String, enum: ["Pending", "Accepted", "Rejected"], default: "Pending" },
+    status: { type: String, enum: ["Pending", "Accepted", "Rejected", "requested", "approved", "rejected", "refunded", "failed", "completed"], default: "Pending" },
     adminNote: { type: String },
     refundStatus: {
       type: String,
