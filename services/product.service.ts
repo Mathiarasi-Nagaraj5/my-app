@@ -11,9 +11,11 @@ interface ApiResponse<T> {
 export async function getProducts(
   params?: URLSearchParams
 ): Promise<Product[]> {
+
   const url = params
     ? `${API}/api/products?${params.toString()}`
     : `${API}/api/products`;
+    console.log("Fetching products from URL:", url); // Log the URL being fetched
 
   const res = await fetch(url, {
     cache: "no-store",
