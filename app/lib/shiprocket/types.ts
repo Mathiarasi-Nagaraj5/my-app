@@ -116,3 +116,41 @@ export interface TrackByAwbResponse {
     shipment_track_activities?: TrackingActivity[];
   };
 }
+// Return-order (reverse pickup) payload. Verify these field names against
+// your Shiprocket dashboard's current API docs before relying on this in
+// production — return-order fields have shifted across Shiprocket API
+// versions before, same caveat as the webhook secret header.
+export interface CreateReturnOrderPayload {
+  order_id: string; // must be unique in Shiprocket, e.g. `${orderNumber}-RET`
+  order_date: string;
+  channel_id?: string;
+  pickup_customer_name: string; // customer's name — courier picks up FROM them
+  pickup_address: string;
+  pickup_city: string;
+  pickup_state: string;
+  pickup_country: string;
+  pickup_pincode: string;
+  pickup_email: string;
+  pickup_phone: string;
+  shipping_customer_name: string; // your warehouse — courier delivers TO you
+  shipping_address: string;
+  shipping_city: string;
+  shipping_state: string;
+  shipping_country: string;
+  shipping_pincode: string;
+  shipping_email: string;
+  shipping_phone: string;
+  order_items: ShiprocketOrderItem[];
+  payment_method: "Prepaid";
+  sub_total: number;
+  length: number;
+  breadth: number;
+  height: number;
+  weight: number;
+}
+
+export interface CreateReturnOrderResponse {
+  order_id: number;
+  shipment_id: number;
+  status: string;
+}

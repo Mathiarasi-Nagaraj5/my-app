@@ -83,7 +83,7 @@ export async function POST(req: Request, { params }: Params) {
       const nameParts = order.shippingAddress.fullName.trim().split(/\s+/);
       const firstName = nameParts[0] || order.shippingAddress.fullName;
       const lastName = nameParts.slice(1).join(" ");
-      const placeholderEmail = `${order.shippingAddress.phone}@noemail.eliteSoul.local`;
+      const billing_email = order.shippingAddress.email;
 
       const payload: CreateForwardOrderPayload = {
         order_id: order.orderNumber,
@@ -96,7 +96,7 @@ export async function POST(req: Request, { params }: Params) {
         billing_pincode: order.shippingAddress.pincode,
         billing_state: order.shippingAddress.state,
         billing_country: "India",
-        billing_email: placeholderEmail,
+        billing_email: billing_email,
         billing_phone: order.shippingAddress.phone,
         shipping_is_billing: true,
         order_items: order.items.map((item) => ({

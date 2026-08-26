@@ -25,7 +25,7 @@ const STATUS_VARIANT: Record<string, "brand" | "success" | "danger" | "info"> = 
   Returned: "info",
 };
 
-const STATUS_STEPS = ["Confirmed", "In Transit", "Delivered", "Cancelled"];
+const STATUS_STEPS = ["Confirmed", "In Transit", "Delivered", "Cancelled" , "Returned"];
 const STATUS_COLORS: Record<string, string> = {
   Confirmed: "bg-pink text-charcoal",
   "In Transit": "bg-blue-500 text-white",
@@ -40,7 +40,7 @@ interface OrderDetail {
   items: { productId: string; name: string; imageUrls: string[]; price: number; quantity: number; size?: string; color?: string }[];
   shippingAddress: { fullName: string; phone: string; addressLine: string; city: string; state: string; pincode: string };
   paymentMethod: "upi" | "card" | "cod";
-  paymentStatus: "PENDING" | "PAID" | "FAILED";
+  paymentStatus: "PENDING" | "PAID" | "FAILED" | "REFUNDED";
   subtotal: number;
   delivery: number;
   total: number;
@@ -296,6 +296,8 @@ console.log("user in order detail page",canReview ,user?.id);
       className={`rounded-full px-2.5 py-1 text-xs font-medium ${
         order.paymentStatus === "PAID"
           ? "bg-green-100 text-green-700"
+          : order.paymentStatus === "REFUNDED"
+      ? "bg-purple-100 text-purple-700"
           : order.paymentStatus === "FAILED"
           ? "bg-red-100 text-red-700"
           : "bg-yellow-100 text-yellow-700"

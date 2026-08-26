@@ -5,7 +5,8 @@ import Product from "@/app/models/Product";
 import PromoCode from "@/app/models/Promocode";
 import { computeDiscount } from "@/app/lib/promo";
 import { computeDelivery } from "@/app/lib/pricing";
-
+import { sendOrderConfirmationEmail } from "@/app/lib/email/send";
+import { decrementStock } from "@/app/lib/inventory/stock";
 export async function GET() {
   try {
     await connectDB();
@@ -72,7 +73,17 @@ export async function POST(req: Request) {
     });
 
     const delivery = computeDelivery(subtotal);
-
+    
+    const stockResult = await decrementStock(
+  items.map((i: any) => ({ productId: i.productId, quantity: i.quantity }))
+);
+if (!stockResult.ok) {
+  const failedProduct = productMap.get(stockResult.failedProductId);
+  return NextResponse.json(
+    { success: false, message: `${failedProduct?.name ?? "an item"} is out of stock` },
+    { status: 400 }
+  );
+}
     let discount = 0;
     let reservedPromoCode: string | null = null;
     if (promoCode) {
@@ -99,6 +110,7 @@ export async function POST(req: Request) {
       total,
     });
 
+    await sendOrderConfirmationEmail(order);
     return NextResponse.json({ success: true, data: order }, { status: 201 });
   } catch (error) {
     console.error("Create Order Error:", error);

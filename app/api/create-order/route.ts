@@ -6,6 +6,7 @@ import Order from "@/app/models/Order";
 import PromoCode from "@/app/models/Promocode";
 import { computeDiscount } from "@/app/lib/promo";
 import { computeDelivery } from "@/app/lib/pricing";
+import { decrementStock, restoreStock } from "@/app/lib/inventory/stock";
 
 const razorpay = new Razorpay({
   key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID!,
@@ -56,7 +57,7 @@ export async function POST(req: Request) {
     const orderItems = items.map((item) => {
       const product = productMap.get(item.productId);
       if (!product) throw new Error(`PRODUCT_NOT_FOUND:${item.productId}`);
-      if (product.stock < item.quantity) throw new Error(`OUT_OF_STOCK:${product.name}`);
+
       subtotal += product.price * item.quantity;
       return {
         productId: String(product._id),
@@ -72,6 +73,20 @@ export async function POST(req: Request) {
 
     const delivery = computeDelivery(subtotal);
 
+    // Reserve stock atomically before anything downstream can fail — every
+    // branch below this point that returns/throws MUST call restoreStock()
+    // first, or a failed order permanently shrinks inventory for stock
+    // nobody actually bought.
+    const stockItems = items.map((i) => ({ productId: i.productId, quantity: i.quantity }));
+    const stockResult = await decrementStock(stockItems);
+    if (!stockResult.ok) {
+      const failedProduct = productMap.get(stockResult.failedProductId);
+      return NextResponse.json(
+        { success: false, message: `${failedProduct?.name ?? "an item"} is out of stock` },
+        { status: 400 }
+      );
+    }
+
     // Atomically reserve the promo, if any. Single conditional update is
     // what makes usedCount/maxUses actually enforceable under concurrency.
     let discount = 0;
@@ -80,6 +95,8 @@ export async function POST(req: Request) {
     if (promoCode) {
       const reserved = await PromoCode.reserve(promoCode, subtotal);
       if (!reserved) {
+        await restoreStock(stockItems);
+
         const promoDoc = await PromoCode.findOne({ code: promoCode.trim().toUpperCase() });
         const message = !promoDoc
           ? "invalid coupon code"
@@ -100,6 +117,7 @@ export async function POST(req: Request) {
 
     if (total <= 0) {
       if (reservedPromoCode) await PromoCode.release(reservedPromoCode);
+      await restoreStock(stockItems);
       return NextResponse.json({ success: false, message: "invalid order amount" }, { status: 400 });
     }
 
@@ -113,6 +131,7 @@ export async function POST(req: Request) {
       });
     } catch (err) {
       if (reservedPromoCode) await PromoCode.release(reservedPromoCode); // never spent, give it back
+      await restoreStock(stockItems);
       throw err;
     }
     console.log("Razorpay Order Created:", razorpayOrder);
@@ -146,13 +165,7 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-    if (error instanceof Error && error.message.startsWith("OUT_OF_STOCK:")) {
-      return NextResponse.json(
-        { success: false, message: `${error.message.replace("OUT_OF_STOCK:", "")} is out of stock` },
-        { status: 400 }
-      );
-    }
-console.error("Unexpected error in create-order:", error);
+
     return NextResponse.json({ success: false, message: "Failed to create order" }, { status: 500 });
   }
 }

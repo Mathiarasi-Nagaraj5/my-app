@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import connectDB from "@/app/lib/mongodb";
 import Order from "@/app/models/Order";
 import PromoCode from "@/app/models/Promocode";
+import { sendOrderConfirmationEmail } from "@/app/lib/email/send";
 
 export async function POST(req: Request) {
   try {
@@ -52,6 +53,7 @@ export async function POST(req: Request) {
     // usedCount was already incremented atomically in create-order via
     // PromoCode.reserve — nothing to do here for the promo on success.
 
+    await sendOrderConfirmationEmail(dbOrder);
     return NextResponse.json({
       success: true,
       verified: true,

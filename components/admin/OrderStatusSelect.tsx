@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 
-type OrderStatus = "Confirmed" | "In Transit" | "Delivered" | "Cancelled";
+type OrderStatus = "Confirmed" | "In Transit" | "Delivered" | "Cancelled" | "Returned";
 
 const STATUS_COLORS: Record<OrderStatus, string> = {
   Confirmed: "border-charcoal/40 text-charcoal",
   "In Transit": "border-brass text-brass",
   Delivered: "border-green-600 text-green-700",
   Cancelled: "border-red-600 text-red-700",
+  Returned: "border-purple-600 text-purple-700",
 };
 
 interface OrderStatusSelectProps {

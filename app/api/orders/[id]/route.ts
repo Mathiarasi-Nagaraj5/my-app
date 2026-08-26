@@ -76,6 +76,12 @@ export async function PATCH(
       update.status = body.status;
       if (body.status === "Delivered") {
         update.deliveredAt = new Date();
+        // COD cash is collected at the moment of delivery — mark it paid here
+        // rather than never, which was the previous (broken) behavior.
+        const existing = await Order.findById(id).select("paymentMethod paymentStatus");
+        if (existing?.paymentMethod === "cod" && existing.paymentStatus === "PENDING") {
+          update.paymentStatus = "PAID";
+        }
       }
     }
 

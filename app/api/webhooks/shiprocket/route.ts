@@ -83,10 +83,12 @@ export async function POST(req: Request) {
     const mappedStatus = mapShiprocketStatusToOrderStatus(body.current_status);
     if (mappedStatus) {
       order.status = mappedStatus;
-      // This is what actually starts the 7-day return-eligibility clock now
-      // — replaces the manual admin PATCH we locked down earlier.
       if (mappedStatus === "Delivered" && !order.deliveredAt) {
         order.deliveredAt = eventDate;
+      }
+      // Same COD-cash-collected-at-delivery fix as the admin PATCH route.
+      if (mappedStatus === "Delivered" && order.paymentMethod === "cod" && order.paymentStatus === "PENDING") {
+        order.paymentStatus = "PAID";
       }
     }
 

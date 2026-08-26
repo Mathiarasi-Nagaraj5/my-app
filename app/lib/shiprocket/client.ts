@@ -8,6 +8,8 @@ import type {
   GenerateManifestResponse,
   RequestPickupResponse,
   TrackByAwbResponse,
+  CreateReturnOrderResponse,
+  CreateReturnOrderPayload,
 } from "./types";
 
 const BASE_URL = process.env.SHIPROCKET_BASE_URL || "https://apiv2.shiprocket.in/v1/external";
@@ -182,5 +184,11 @@ export function cancelShipment(orderIds: number[]): Promise<{ message: string }>
   return shiprocketFetch<{ message: string }>("/orders/cancel", {
     method: "POST",
     body: { ids: orderIds },
+  });
+}
+export function createReturnOrder(payload: CreateReturnOrderPayload): Promise<CreateReturnOrderResponse> {
+  return shiprocketFetch<CreateReturnOrderResponse>("/orders/create/return", {
+    method: "POST",
+    body: payload,
   });
 }

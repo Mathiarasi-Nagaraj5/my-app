@@ -7,14 +7,14 @@ import { useAuth } from "../../app/lib/context/AuthContext";
 
 export default function AccountDetailsForm() {
   const { user, updateProfile } = useAuth();
-  const [form, setForm] = useState({ name: "", phone: "" });
+  const [form, setForm] = useState({ name: "", phone: "" , email: "" });
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
   // populate the form once the real user loads
   useEffect(() => {
-    if (user) setForm({ name: user.name, phone: user.phone ?? "" });
+    if (user) setForm({ name: user.name, phone: user.phone ?? "", email: user.email ?? "" });
   }, [user]);
 
   const update = (field: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,7 +41,7 @@ export default function AccountDetailsForm() {
         <Input label="Full Name" value={form.name} onChange={update("name")} />
         <Input label="Phone Number" value={form.phone} onChange={update("phone")} />
         <div className="sm:col-span-2">
-          <Input label="Email Address" value={user?.email ?? ""} disabled />
+          <Input label="Email Address" value={form.email} onChange={update("email")} />
         </div>
       </div>
       <div className="mt-5 flex items-center gap-3">

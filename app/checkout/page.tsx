@@ -17,6 +17,7 @@ import PincodeCheck from "@/components/checkout/PincodeCheckStatus";
 const EMPTY_ADDRESS: ShippingAddress = {
   fullName: "",
   phone: "",
+  email: "",
   addressLine: "",
   city: "",
   state: "",
@@ -80,6 +81,7 @@ const [pincodeServiceable, setPincodeServiceable] = useState<boolean | null>(nul
         city: match.city,
         state: match.state,
         pincode: match.pincode,
+        email: match.email,
       });
       setErrors({});
     }
@@ -140,6 +142,7 @@ const [pincodeServiceable, setPincodeServiceable] = useState<boolean | null>(nul
     const next: typeof errors = {};
     if (!shippingAddress.fullName) next.fullName = "required";
     if (!shippingAddress.phone || shippingAddress.phone.length < 10) next.phone = "enter a valid phone number";
+    if (!shippingAddress.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(shippingAddress.email))  next.email = "enter a valid email address";
     if (!shippingAddress.addressLine) next.addressLine = "required";
     if (!shippingAddress.city) next.city = "required";
     if (!shippingAddress.state) next.state = "required";

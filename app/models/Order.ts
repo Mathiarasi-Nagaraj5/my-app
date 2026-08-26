@@ -14,6 +14,7 @@ export interface IOrderItem {
 export interface IShippingAddress {
   fullName: string;
   phone: string;
+   email: string;
   addressLine: string;
   city: string;
   state: string;
@@ -49,7 +50,7 @@ export interface IOrder extends Document {
   items: IOrderItem[];
   shippingAddress: IShippingAddress;
   paymentMethod: "upi" | "card" | "cod";
-  paymentStatus: "PENDING" | "PAID" | "FAILED";
+  paymentStatus: "PENDING" | "PAID" | "FAILED" | "REFUNDED";
   razorpayOrderId?: string;
   razorpayPaymentId?: string;
   subtotal: number;
@@ -58,12 +59,17 @@ export interface IOrder extends Document {
   discount: number;
   total: number;
   status: "Confirmed" | "In Transit" | "Delivered" | "Cancelled" | "Returned";
+   refund?: IRefund;
   shipment?: IShipment;
   createdAt: Date;
   updatedAt: Date;
   deliveredAt?: Date;
 }
-
+export interface IRefund {
+  razorpayRefundId?: string;
+  amount: number;
+  refundedAt: Date;
+}
 const OrderItemSchema: Schema = new Schema(
   {
     productId: { type: String, required: true },
@@ -82,6 +88,7 @@ const ShippingAddressSchema: Schema = new Schema(
   {
     fullName: { type: String, required: true },
     phone: { type: String, required: true },
+     email: { type: String, required: true },
     addressLine: { type: String, required: true },
     city: { type: String, required: true },
     state: { type: String, required: true },
@@ -89,7 +96,14 @@ const ShippingAddressSchema: Schema = new Schema(
   },
   { _id: false }
 );
-
+const RefundSchema: Schema = new Schema(
+  {
+    razorpayRefundId: { type: String }, // no longer required: true
+    amount: { type: Number, required: true },
+    refundedAt: { type: Date, required: true },
+  },
+  { _id: false }
+);
 const ShipmentStatusEventSchema: Schema = new Schema(
   {
     status: { type: String, required: true },
@@ -140,6 +154,7 @@ const OrderSchema: Schema = new Schema(
       enum: ["PENDING", "PAID", "FAILED"],
       default: "PENDING",
     },
+    refund: { type: RefundSchema, default: undefined },
     razorpayOrderId: { type: String },
     razorpayPaymentId: { type: String },
     subtotal: { type: Number, required: true },
@@ -166,5 +181,6 @@ const OrderSchema: Schema = new Schema(
 );
 
 const Order: Model<IOrder> = mongoose.models.Order || mongoose.model<IOrder>("Order", OrderSchema);
+
 
 export default Order;

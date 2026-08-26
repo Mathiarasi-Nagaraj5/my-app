@@ -13,6 +13,7 @@ interface Address {
   label: string;
   fullName: string;
   phone: string;
+  email: string;
   addressLine: string;
   city: string;
   state: string;
@@ -23,6 +24,7 @@ const EMPTY_FORM = {
   label: "",
   fullName: "",
   phone: "",
+  email: "",
   addressLine: "",
   city: "",
   state: "",
@@ -70,6 +72,7 @@ function AddressesContent() {
       city: address.city,
       state: address.state,
       pincode: address.pincode,
+      email: address.email,
     });
     setEditingId(address._id);
     setShowForm(true);
@@ -151,7 +154,13 @@ function AddressesContent() {
                   value={form.fullName}
                   onChange={(e) => setForm({ ...form, fullName: e.target.value })}
                 />
+                <Input
+                  placeholder="email address"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                />
               </div>
+
               <div className="mb-3">
                 <Input
                   placeholder="phone number"

@@ -7,6 +7,7 @@ export interface SavedAddress {
   label: string;
   fullName: string;
   phone: string;
+  email: string;
   addressLine: string;
   city: string;
   state: string;

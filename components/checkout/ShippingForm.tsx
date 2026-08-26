@@ -9,6 +9,7 @@ export interface ShippingAddress {
   city: string;
   state: string;
   pincode: string;
+  email: string;
 }
 
 interface ShippingFormProps {
@@ -33,6 +34,12 @@ export default function ShippingForm({ value, onChange, errors = {} }: ShippingF
           value={value.fullName}
           onChange={update("fullName")}
           error={errors.fullName}
+        />
+          <Input
+          placeholder="email address"
+          value={value.email}
+          onChange={update("email")}
+          error={errors.email}
         />
         <Input
           placeholder="phone number"

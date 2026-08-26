@@ -11,6 +11,9 @@ export interface ReturnRecord {
   otherReason?: string;
   status: "Pending" | "Accepted" | "Rejected";
   adminNote?: string;
+  refundStatus: "NotApplicable" | "Pending" | "Completed" | "Failed";
+  refundMethod: "razorpay" | "manual" | null;
+  reverseShipment?: { shiprocketOrderId?: number; awbCode?: string; failedReason?: string };
   createdAt: string;
   resolvedAt?: string | null;
 }
@@ -19,6 +22,13 @@ interface ReturnsTableProps {
   returns: ReturnRecord[];
   onReturnsChange: (returns: ReturnRecord[]) => void;
 }
+
+const REFUND_STYLES: Record<string, string> = {
+  Completed: "bg-green-100 text-green-700",
+  Pending: "bg-amber-100 text-amber-700",
+  Failed: "bg-red-100 text-red-700",
+  NotApplicable: "bg-gray-100 text-gray-500",
+};
 
 export default function ReturnsTable({ returns, onReturnsChange }: ReturnsTableProps) {
   const [search, setSearch] = useState("");
@@ -46,6 +56,24 @@ export default function ReturnsTable({ returns, onReturnsChange }: ReturnsTableP
       const data = await res.json();
       if (res.ok && data.success) {
         onReturnsChange(returns.map((x) => (x._id === r._id ? data.data : x)));
+      } else {
+        alert(data.message ?? "failed to update return");
+      }
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const markRefunded = async (r: ReturnRecord) => {
+    if (!confirm(`Confirm you've completed the bank transfer for order #${r.orderNumber}?`)) return;
+    setBusyId(r._id);
+    try {
+      const res = await fetch(`/api/returns/${r._id}/mark-refunded`, { method: "POST" });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        onReturnsChange(returns.map((x) => (x._id === r._id ? data.data : x)));
+      } else {
+        alert(data.message ?? "failed to mark as refunded");
       }
     } finally {
       setBusyId(null);
@@ -83,8 +111,8 @@ export default function ReturnsTable({ returns, onReturnsChange }: ReturnsTableP
             <tr>
               <th className="px-4 py-3 text-left font-medium text-gray-600">Order</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">Reason</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-600">Requested</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">Status</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-600">Refund</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">Admin note</th>
               <th className="px-4 py-3 text-right font-medium text-gray-600">Actions</th>
             </tr>
@@ -106,7 +134,6 @@ export default function ReturnsTable({ returns, onReturnsChange }: ReturnsTableP
                       <p className="mt-1 max-w-xs text-xs text-gray-400">{r.otherReason}</p>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-gray-600">{new Date(r.createdAt).toLocaleDateString()}</td>
                   <td className="px-4 py-3">
                     <span
                       className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${
@@ -119,6 +146,21 @@ export default function ReturnsTable({ returns, onReturnsChange }: ReturnsTableP
                     >
                       {r.status}
                     </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    {r.status === "Accepted" ? (
+                      <>
+                        <span className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${REFUND_STYLES[r.refundStatus]}`}>
+                          {r.refundStatus === "NotApplicable" ? "N/A" : r.refundStatus}
+                          {r.refundMethod ? ` · ${r.refundMethod}` : ""}
+                        </span>
+                        {r.reverseShipment?.failedReason && (
+                          <p className="mt-1 text-[11px] text-red-500">pickup: {r.reverseShipment.failedReason}</p>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-xs text-gray-400">—</span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     {r.status === "Pending" ? (
@@ -151,6 +193,14 @@ export default function ReturnsTable({ returns, onReturnsChange }: ReturnsTableP
                           Reject
                         </button>
                       </>
+                    ) : r.status === "Accepted" && r.refundMethod === "manual" && r.refundStatus === "Pending" ? (
+                      <button
+                        onClick={() => markRefunded(r)}
+                        disabled={busyId === r._id}
+                        className="text-xs font-medium text-blue-600 hover:underline disabled:opacity-40"
+                      >
+                        Mark refunded
+                      </button>
                     ) : (
                       <span className="text-xs text-gray-400">
                         resolved {r.resolvedAt ? new Date(r.resolvedAt).toLocaleDateString() : ""}

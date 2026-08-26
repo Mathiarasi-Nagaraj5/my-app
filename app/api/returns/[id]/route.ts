@@ -2,12 +2,62 @@ import { NextResponse } from "next/server";
 import connectDB from "@/app/lib/mongodb";
 import ReturnRequest from "@/app/models/ReturnRequest";
 import Order from "@/app/models/Order";
-
+import PromoCode from "@/app/models/Promocode";
+import { refundRazorpayPayment } from "@/app/lib/payments/refundRazorpayPayment";
+import { createReturnOrder } from "@/app/lib/shiprocket/client";
+import { DEFAULT_PACKAGE_DIMENSIONS_CM, computePackageWeightKg } from "@/app/lib/shiprocket/pricing";
+import { sendReturnStatusEmail, sendRefundConfirmationEmail } from "@/app/lib/email/send";
+import { restoreStock } from "@/app/lib/inventory/stock";
 interface Params {
   params: Promise<{ id: string }>;
 }
 
-// PATCH /api/returns/[id] -> admin accepts or rejects a pending return
+async function scheduleReversePickup(order: any) {
+  const pickupLocationName = process.env.SHIPROCKET_PICKUP_LOCATION;
+  const pickupPincode = process.env.SHIPROCKET_PICKUP_PINCODE;
+  if (!pickupLocationName || !pickupPincode) return { failedReason: "reverse pickup not configured" };
+
+  try {
+    const totalQuantity = order.items.reduce((sum: number, i: any) => sum + i.quantity, 0);
+    const result = await createReturnOrder({
+      order_id: `${order.orderNumber}-RET`,
+      order_date: new Date().toISOString().slice(0, 16).replace("T", " "),
+      pickup_customer_name: order.shippingAddress.fullName,
+      pickup_address: order.shippingAddress.addressLine,
+      pickup_city: order.shippingAddress.city,
+      pickup_state: order.shippingAddress.state,
+      pickup_country: "India",
+      pickup_pincode: order.shippingAddress.pincode,
+      pickup_email: order.shippingAddress.email,
+      pickup_phone: order.shippingAddress.phone,
+      shipping_customer_name: "Elite Soul Warehouse",
+      shipping_address: "Warehouse address on file with Shiprocket", // resolved by pickup_location on Shiprocket's side in practice — placeholder text field
+      shipping_city: "Tiruppur",
+      shipping_state: "Tamil Nadu",
+      shipping_country: "India",
+      shipping_pincode: pickupPincode,
+      shipping_email: "returns@example.com",
+      shipping_phone: "0000000000",
+      order_items: order.items.map((item: any) => ({
+        name: item.name,
+        sku: item.productId,
+        units: item.quantity,
+        selling_price: item.price,
+      })),
+      payment_method: "Prepaid",
+      sub_total: order.total,
+      length: DEFAULT_PACKAGE_DIMENSIONS_CM.length,
+      breadth: DEFAULT_PACKAGE_DIMENSIONS_CM.breadth,
+      height: DEFAULT_PACKAGE_DIMENSIONS_CM.height,
+      weight: computePackageWeightKg(totalQuantity),
+    });
+    return { shiprocketOrderId: result.order_id, scheduledAt: new Date() };
+  } catch (err) {
+    console.error("Reverse pickup scheduling failed:", err);
+    return { failedReason: err instanceof Error ? err.message : "unknown error" };
+  }
+}
+
 export async function PATCH(req: Request, { params }: Params) {
   try {
     await connectDB();
@@ -30,17 +80,74 @@ export async function PATCH(req: Request, { params }: Params) {
       );
     }
 
+    const order = await Order.findById(returnRequest.orderId);
+    if (!order) {
+      return NextResponse.json({ success: false, message: "the underlying order no longer exists" }, { status: 404 });
+    }
+
     returnRequest.status = status;
     returnRequest.adminNote = adminNote?.trim() || undefined;
     returnRequest.resolvedAt = new Date();
+
+    if (status === "Rejected") {
+      returnRequest.refundStatus = "NotApplicable";
+      await returnRequest.save();
+      await sendReturnStatusEmail(order, "Rejected", returnRequest.adminNote);
+      return NextResponse.json({ success: true, data: returnRequest });
+    }
+
+    // status === "Accepted" from here on.
+    order.status = "Returned";
+ await restoreStock(order.items.map((item) => ({ productId: item.productId, quantity: item.quantity })));
+    if (order.paymentStatus === "PAID" && order.razorpayPaymentId) {
+      // Prepaid — refund automatically, right now.
+      try {
+        const refund = await refundRazorpayPayment(order.razorpayPaymentId, order.total);
+        returnRequest.refundStatus = "Completed";
+        returnRequest.refundMethod = "razorpay";
+        returnRequest.refund = {
+          razorpayRefundId: refund.id,
+          amount: order.total,
+          refundedAt: new Date(),
+        };
+        order.paymentStatus = "REFUNDED";
+        order.refund = { razorpayRefundId: refund.id, amount: order.total, refundedAt: new Date() };
+      } catch (refundErr) {
+        console.error("Return refund failed:", refundErr);
+        returnRequest.refundStatus = "Failed";
+        returnRequest.refundMethod = "razorpay";
+        // Return is still approved — the refund needs manual follow-up,
+        // same principle as the cancel-order route: don't silently revert
+        // approval just because the payment gateway call failed.
+      }
+    } else if (order.paymentStatus === "PAID" && order.paymentMethod === "cod") {
+      // COD, cash was collected at delivery — nothing to auto-refund to,
+      // since no bank details are captured anywhere in this app. Admin
+      // processes the transfer outside the system, then calls
+      // /api/returns/[id]/mark-refunded to record it.
+      returnRequest.refundStatus = "Pending";
+      returnRequest.refundMethod = "manual";
+    } else {
+      // Payment was never actually collected (shouldn't normally happen
+      // for a Delivered order, but defensive) — nothing to refund.
+      returnRequest.refundStatus = "NotApplicable";
+    }
+
+    // Best-effort reverse pickup — never blocks approval/refund above.
+    const reverseResult = await scheduleReversePickup(order);
+    returnRequest.reverseShipment = reverseResult;
+
+    await order.save();
     await returnRequest.save();
 
-    if (status === "Accepted") {
-      await Order.findByIdAndUpdate(returnRequest.orderId, { status: "Returned" });
+    await sendReturnStatusEmail(order, "Accepted", returnRequest.adminNote);
+    if (returnRequest.refundStatus === "Completed") {
+      await sendRefundConfirmationEmail(order, order.total);
     }
 
     return NextResponse.json({ success: true, data: returnRequest });
-  } catch {
+  } catch (error) {
+    console.error("Update Return Error:", error);
     return NextResponse.json({ success: false, message: "failed to update return request" }, { status: 500 });
   }
 }
