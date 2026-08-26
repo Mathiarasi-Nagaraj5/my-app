@@ -3,6 +3,7 @@ import { put } from "@vercel/blob";
 import { randomUUID } from "crypto";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+
 const ALLOWED_TYPES = [
   "image/jpeg",
   "image/png",
@@ -10,21 +11,10 @@ const ALLOWED_TYPES = [
   "image/gif",
 ];
 
-/**
- * POST /api/upload
- *
- * Accepts multipart/form-data with one or more "file"/"files" fields.
- * Maximum 5 images per request, each ≤ 5 MB.
- *
- * Returns: { imageUrls: string[] }
- *
- * Files are stored in Vercel Blob.
- */
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
 
-    // Support both single "file" and multiple "files[]" field names
     const rawFiles = [
       ...formData.getAll("file"),
       ...formData.getAll("files"),
@@ -45,7 +35,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Validate all files before uploading
+    // Validate files
     for (const file of rawFiles) {
       if (!ALLOWED_TYPES.includes(file.type)) {
         return NextResponse.json(
@@ -69,12 +59,15 @@ export async function POST(req: NextRequest) {
     const imageUrls: string[] = [];
 
     for (const file of rawFiles) {
-      const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+      const ext =
+        file.name.split(".").pop()?.toLowerCase() ?? "jpg";
 
       const filename = `products/${randomUUID()}.${ext}`;
 
       const blob = await put(filename, file, {
         access: "public",
+        storeId: process.env.BLOB_STORE_ID,
+        oidcToken: process.env.VERCEL_OIDC_TOKEN,
       });
 
       imageUrls.push(blob.url);
