@@ -1,4 +1,5 @@
 /** @type {import('next').NextConfig} */
+
 const nextConfig = {
   images: {
     remotePatterns: [
@@ -6,10 +7,14 @@ const nextConfig = {
         protocol: "https",
         hostname: "picsum.photos",
       },
-      // add your real image host here (e.g. Cloudinary, S3, Shopify CDN)
+      {
+        protocol: "https",
+        hostname: "**.public.blob.vercel-storage.com",
+      },
     ],
   },
-   serverExternalPackages: ["pdfkit"],
+
+  serverExternalPackages: ["pdfkit"],
 };
 
 module.exports = nextConfig;
