@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     }
 
     // only delivered orders can be returned
-    if (order.status !== "delivered") {
+    if (order.status !== "Delivered") {
       return NextResponse.json(
         { error: "only delivered orders are eligible for return" },
         { status: 400 }
