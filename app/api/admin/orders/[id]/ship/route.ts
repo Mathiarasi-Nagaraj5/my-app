@@ -120,7 +120,7 @@ export async function POST(req: Request, { params }: Params) {
           ...(order.shipment.statusHistory ?? []),
           { status: "AWB Assigned", activity: `Auto-assigned to ${created.courier_name}`, statusDate: now },
         ];
-        order.status = "In Transit";
+        order.status = "Out for Delivery";
         await order.save();
 
         return NextResponse.json({ shipment: order.shipment });
@@ -154,7 +154,7 @@ export async function POST(req: Request, { params }: Params) {
         { status: "AWB Assigned", activity: `Assigned to ${courier_name}`, statusDate: now },
       ],
     };
-    order.status = "In Transit";
+    order.status = "Out for Delivery";
     await order.save();
 
     return NextResponse.json({ shipment: order.shipment });

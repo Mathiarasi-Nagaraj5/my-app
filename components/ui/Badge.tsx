@@ -3,7 +3,7 @@ import { ReactNode } from "react";
 type BadgeVariant =
   | "brand" // pink — bestseller, discount %
   | "success" // delivered
-  | "info" // in transit
+  | "info" // Out for Delivery
   | "danger" // cancelled / out of stock
   | "neutral"; // default / low-emphasis tag
 

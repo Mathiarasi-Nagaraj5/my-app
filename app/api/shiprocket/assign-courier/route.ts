@@ -50,7 +50,7 @@ export async function POST(req: Request) {
       ...(order.shipment.statusHistory ?? []),
       { status: "AWB Assigned", activity: `Assigned to ${courier_name}`, statusDate: now },
     ];
-    order.status = "In Transit";
+    order.status = "Out for Delivery";
     await order.save();
 
     return NextResponse.json({ success: true, data: order });

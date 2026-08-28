@@ -5,7 +5,7 @@ import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import { Download, ChevronRight } from "lucide-react";
 
-export type OrderStatus = "confirmed" | "in transit" | "delivered" | "cancelled";
+export type OrderStatus = "confirmed" | "Out for Delivery" | "delivered" | "cancelled";
 
 export interface Order {
   id: string; // real MongoDB _id — used for the detail page link
@@ -19,7 +19,7 @@ export interface Order {
 
 const STATUS_VARIANT = {
   confirmed: "brand",
-  "in transit": "info",
+  "Out for Delivery": "info",
   delivered: "success",
   cancelled: "danger",
 } as const;
@@ -45,7 +45,7 @@ export default function OrderCard({ order }: { order: Order }) {
         </p>
         <div className="flex items-center gap-2">
           <span className="flex items-center gap-1 text-sm text-brass">
-            {order.status === "in transit" ? "Track Order" : "View Details"}
+            {order.status === "Out for Delivery" ? "Track Order" : "View Details"}
             <ChevronRight size={14} />
           </span>
           {order.status === "delivered" && (

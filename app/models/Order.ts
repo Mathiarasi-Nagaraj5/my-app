@@ -64,7 +64,7 @@ export interface IOrder extends Document {
   promoCode: string | null;
   discount: number;
   total: number;
-  status: "Confirmed" | "In Transit" | "Delivered" | "Cancelled" | "Returned";
+  status: "Confirmed" | "Out for Delivery" | "Delivered" | "Cancelled" | "Returned";
   shipment?: IShipment;
   refund?: IRefund;
   createdAt: Date;
@@ -167,7 +167,7 @@ const OrderSchema: Schema = new Schema(
     total: { type: Number, required: true },
     status: {
       type: String,
-      enum: ["Confirmed", "In Transit", "Delivered", "Cancelled", "Returned"],
+      enum: ["Confirmed", "Out for Delivery", "Delivered", "Cancelled", "Returned"],
       default: "Confirmed",
     },
     deliveredAt: {

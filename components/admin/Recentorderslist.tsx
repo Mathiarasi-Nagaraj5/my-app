@@ -10,7 +10,7 @@ export interface RecentOrderRow {
 
 const STATUS_STYLE: Record<string, string> = {
   confirmed: "bg-amber-50 text-amber-700",
-  "in transit": "bg-blue-50 text-blue-700",
+  "Out for Delivery": "bg-blue-50 text-blue-700",
   delivered: "bg-green-50 text-green-700",
   cancelled: "bg-red-50 text-red-700",
 };

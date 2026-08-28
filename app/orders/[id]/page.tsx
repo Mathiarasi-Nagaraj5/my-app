@@ -20,16 +20,16 @@ const formatDate = (iso: string) =>
 
 const STATUS_VARIANT: Record<string, "brand" | "success" | "danger" | "info"> = {
   Confirmed: "brand",
-  "In Transit": "info",
+  "Out for Delivery": "info",
   Delivered: "success",
   Cancelled: "danger",
   Returned: "info",
 };
 
-const STATUS_STEPS = ["Confirmed", "In Transit", "Delivered", "Cancelled"];
+const STATUS_STEPS = ["Confirmed", "Out for Delivery", "Delivered", "Cancelled"];
 const STATUS_COLORS: Record<string, string> = {
   Confirmed: "bg-pink text-charcoal",
-  "In Transit": "bg-blue-500 text-white",
+  "Out for Delivery": "bg-blue-500 text-white",
   Delivered: "bg-green-500 text-white",
   Cancelled: "bg-red-500 text-white",
   Returned: "bg-purple-500 text-white",
@@ -46,7 +46,7 @@ interface OrderDetail {
   subtotal: number;
   delivery: number;
   total: number;
-  status: "Confirmed" | "In Transit" | "Delivered" | "Cancelled" | "Returned";
+  status: "Confirmed" | "Out for Delivery" | "Delivered" | "Cancelled" | "Returned";
   deliveredAt?: string | null;
   shipment?: {
     awbCode?: string;

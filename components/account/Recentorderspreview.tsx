@@ -5,7 +5,7 @@ import Link from "next/link";
 import Badge from "@/components/ui/Badge";
 import { useAuth } from "../../app/lib/context/AuthContext";
 
-type OrderStatus = "Confirmed" | "In Transit" | "Delivered" | "Cancelled";
+type OrderStatus = "Confirmed" | "Out for Delivery" | "Delivered" | "Cancelled";
 
 interface RecentOrder {
   id: string;
@@ -17,7 +17,7 @@ interface RecentOrder {
 
 const STATUS_VARIANT: Record<OrderStatus, "success" | "info" | "danger" | "brand"> = {
   Confirmed: "brand",
-  "In Transit": "info",
+  "Out for Delivery": "info",
   Delivered: "success",
   Cancelled: "danger",
 };

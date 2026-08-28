@@ -10,7 +10,7 @@ export interface AdminOrder {
   orderNumber: string;
   shippingAddress: { fullName: string };
   total: number;
-  status: "Confirmed" | "In Transit" | "Delivered" | "Cancelled" | "Returned";
+  status: "Confirmed" | "Out for Delivery" | "Delivered" | "Cancelled" | "Returned";
   createdAt: string;
   paymentMethod?: "upi" | "card" | "cod";
   paymentStatus?: "PENDING" | "PAID" | "FAILED" | "REFUNDED";
@@ -50,7 +50,7 @@ export default function OrderTable({ orders, onStatusChanged, onShipped }: Order
       }
 
       onShipped?.(order._id, data.shipment);
-      onStatusChanged(order._id, "In Transit");
+      onStatusChanged(order._id, "Out for Delivery");
     } catch {
       alert("something went wrong while creating the shipment");
     } finally {

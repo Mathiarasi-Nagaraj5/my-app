@@ -26,7 +26,7 @@ export async function GET(
   }
 }
 
-const ALLOWED_STATUSES = ["Confirmed", "In Transit", "Delivered", "Cancelled"] as const;
+const ALLOWED_STATUSES = ["Confirmed", "Out for Delivery", "Delivered", "Cancelled"] as const;
 
 export async function PATCH(
   req: Request,
