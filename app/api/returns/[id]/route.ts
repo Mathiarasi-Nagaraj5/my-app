@@ -2,23 +2,23 @@ import { NextResponse } from "next/server";
 import connectDB from "@/app/lib/mongodb";
 import ReturnRequest from "@/app/models/ReturnRequest";
 import Order from "@/app/models/Order";
-import PromoCode from "@/app/models/Promocode";
 import { refundRazorpayPayment } from "@/app/lib/payments/refundRazorpayPayment";
 import { createReturnOrder } from "@/app/lib/shiprocket/client";
 import { DEFAULT_PACKAGE_DIMENSIONS_CM, computePackageWeightKg } from "@/app/lib/shiprocket/pricing";
 import { sendReturnStatusEmail, sendRefundConfirmationEmail } from "@/app/lib/email/send";
-import { restoreStock } from "@/app/lib/inventory/stock";
+import type { IOrder } from "@/app/models/Order";
+
 interface Params {
   params: Promise<{ id: string }>;
 }
 
-async function scheduleReversePickup(order: any) {
+async function scheduleReversePickup(order: IOrder) {
   const pickupLocationName = process.env.SHIPROCKET_PICKUP_LOCATION;
   const pickupPincode = process.env.SHIPROCKET_PICKUP_PINCODE;
   if (!pickupLocationName || !pickupPincode) return { failedReason: "reverse pickup not configured" };
 
   try {
-    const totalQuantity = order.items.reduce((sum: number, i: any) => sum + i.quantity, 0);
+    const totalQuantity = order.items.reduce((sum, i) => sum + i.quantity, 0);
     const result = await createReturnOrder({
       order_id: `${order.orderNumber}-RET`,
       order_date: new Date().toISOString().slice(0, 16).replace("T", " "),
@@ -31,14 +31,14 @@ async function scheduleReversePickup(order: any) {
       pickup_email: order.shippingAddress.email,
       pickup_phone: order.shippingAddress.phone,
       shipping_customer_name: "Elite Soul Warehouse",
-      shipping_address: "Warehouse address on file with Shiprocket", // resolved by pickup_location on Shiprocket's side in practice — placeholder text field
+      shipping_address: "Warehouse address on file with Shiprocket",
       shipping_city: "Tiruppur",
       shipping_state: "Tamil Nadu",
       shipping_country: "India",
       shipping_pincode: pickupPincode,
       shipping_email: "returns@example.com",
       shipping_phone: "0000000000",
-      order_items: order.items.map((item: any) => ({
+      order_items: order.items.map((item) => ({
         name: item.name,
         sku: item.productId,
         units: item.quantity,
@@ -98,9 +98,8 @@ export async function PATCH(req: Request, { params }: Params) {
 
     // status === "Accepted" from here on.
     order.status = "Returned";
- await restoreStock(order.items.map((item) => ({ productId: item.productId, quantity: item.quantity })));
+
     if (order.paymentStatus === "PAID" && order.razorpayPaymentId) {
-      // Prepaid — refund automatically, right now.
       try {
         const refund = await refundRazorpayPayment(order.razorpayPaymentId, order.total);
         returnRequest.refundStatus = "Completed";
@@ -116,24 +115,14 @@ export async function PATCH(req: Request, { params }: Params) {
         console.error("Return refund failed:", refundErr);
         returnRequest.refundStatus = "Failed";
         returnRequest.refundMethod = "razorpay";
-        // Return is still approved — the refund needs manual follow-up,
-        // same principle as the cancel-order route: don't silently revert
-        // approval just because the payment gateway call failed.
       }
     } else if (order.paymentStatus === "PAID" && order.paymentMethod === "cod") {
-      // COD, cash was collected at delivery — nothing to auto-refund to,
-      // since no bank details are captured anywhere in this app. Admin
-      // processes the transfer outside the system, then calls
-      // /api/returns/[id]/mark-refunded to record it.
       returnRequest.refundStatus = "Pending";
       returnRequest.refundMethod = "manual";
     } else {
-      // Payment was never actually collected (shouldn't normally happen
-      // for a Delivered order, but defensive) — nothing to refund.
       returnRequest.refundStatus = "NotApplicable";
     }
 
-    // Best-effort reverse pickup — never blocks approval/refund above.
     const reverseResult = await scheduleReversePickup(order);
     returnRequest.reverseShipment = reverseResult;
 

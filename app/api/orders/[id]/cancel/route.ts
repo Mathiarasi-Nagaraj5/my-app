@@ -1,15 +1,10 @@
 import { NextResponse } from "next/server";
-import Razorpay from "razorpay";
 import connectDB from "@/app/lib/mongodb";
 import Order from "@/app/models/Order";
 import PromoCode from "@/app/models/Promocode";
-import { sendRefundConfirmationEmail } from "@/app/lib/email/send";
 import { restoreStock } from "@/app/lib/inventory/stock";
-
-const razorpay = new Razorpay({
-  key_id: process.env.NEXT_RAZORPAY_KEY_ID!,
-  key_secret: process.env.RAZORPAY_KEY_SECRET!,
-});
+import { refundRazorpayPayment } from "@/app/lib/payments/refundRazorpayPayment";
+import { sendRefundConfirmationEmail } from "@/app/lib/email/send";
 
 export async function POST(
   req: Request,
@@ -25,28 +20,16 @@ export async function POST(
       return NextResponse.json({ error: "order not found" }, { status: 404 });
     }
 
-    // Ownership check — now also blocks guest orders (order.userId undefined)
-    // from being cancelled by anyone who didn't place them. Previously this
-    // only checked when BOTH sides had a userId, silently allowing anyone to
-    // cancel a guest order by just knowing its id.
     if (order.userId) {
       if (!userId || order.userId !== userId) {
         return NextResponse.json({ error: "not authorized to cancel this order" }, { status: 403 });
       }
     }
-    // else: guest order with no userId recorded at all — can't verify
-    // ownership either way with the current data model. Not fixing that
-    // gap here (would need e.g. an email/OTP check on guest orders); flagged
-    // as a separate, pre-existing limitation of guest checkout specifically.
 
-    // Atomic conditional update: only cancels if status is STILL "Confirmed"
-    // at write time. If two requests race, only one findOneAndUpdate can
-    // match — the other gets null back and skips straight to the "already
-    // cancelled" response instead of double-refunding.
     const claimed = await Order.findOneAndUpdate(
       { _id: id, status: "Confirmed" },
       { $set: { status: "Cancelled" } },
-      { new: false } // we want the PRE-update doc, to read paymentStatus/promoCode before our own write
+      { new: false }
     );
 
     if (!claimed) {
@@ -58,21 +41,18 @@ export async function POST(
       return NextResponse.json({ error: reason }, { status: 400 });
     }
 
-    // Release the promo reservation, if any — same pattern as a failed
-    // payment in verify-payment. Without this, usedCount stays incremented
-    // forever for an order that no longer exists.
     if (claimed.promoCode) {
       await PromoCode.release(claimed.promoCode);
     }
-// Give the stock back — the order that was holding it never shipped.
-await restoreStock(claimed.items.map((item) => ({ productId: item.productId, quantity: item.quantity })));
-    // Refund if it was actually paid online. COD: nothing was charged yet,
-    // nothing to refund.
+
+    await restoreStock(
+      claimed.items.map((item) => ({ productId: item.productId, quantity: item.quantity })),
+      { reason: "cancellation-restore", orderId: id }
+    );
+
     if (claimed.paymentStatus === "PAID" && claimed.razorpayPaymentId) {
       try {
-        const refund = await razorpay.payments.refund(claimed.razorpayPaymentId, {
-          amount: Math.round(claimed.total * 100), // paise
-        });
+        const refund = await refundRazorpayPayment(claimed.razorpayPaymentId, claimed.total);
 
         await Order.findByIdAndUpdate(id, {
           paymentStatus: "REFUNDED",
@@ -82,17 +62,13 @@ await restoreStock(claimed.items.map((item) => ({ productId: item.productId, qua
             refundedAt: new Date(),
           },
         });
+
         const refundedOrder = await Order.findById(id);
         if (refundedOrder) {
           await sendRefundConfirmationEmail(refundedOrder, claimed.total);
         }
       } catch (refundError) {
         console.error("cancel-order refund failed:", refundError);
-        // Order is already marked Cancelled at this point (see note below) —
-        // deliberately NOT rolling that back. The order should stay
-        // cancelled either way; what failed is just the refund, which
-        // needs manual follow-up, not a silent revert back to "Confirmed"
-        // that could let the order ship anyway.
         return NextResponse.json(
           { error: "order was cancelled, but the refund failed — please contact support" },
           { status: 502 }

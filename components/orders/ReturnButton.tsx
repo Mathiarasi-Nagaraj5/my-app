@@ -48,7 +48,6 @@ export default function ReturnButton({ orderId, orderStatus, deliveredAt, userId
 
   if (loading) return null;
 
-  // Already requested — show status instead of the action button.
   if (existingReturn) {
     return (
       <div className="mt-2">

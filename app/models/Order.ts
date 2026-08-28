@@ -14,7 +14,7 @@ export interface IOrderItem {
 export interface IShippingAddress {
   fullName: string;
   phone: string;
-   email: string;
+  email: string;
   addressLine: string;
   city: string;
   state: string;
@@ -34,14 +34,20 @@ export interface IShipment {
   courierId?: number;
   courierName?: string;
   awbCode?: string;
-  currentStatus?: string; // Shiprocket's raw current_status string
+  currentStatus?: string;
   trackingUrl?: string;
   labelUrl?: string;
   manifestUrl?: string;
-  packageWeightKg?: number; // what was actually sent, for audit/debugging
+  packageWeightKg?: number;
   pickupScheduledAt?: Date;
   shippedAt?: Date;
   statusHistory?: IShipmentStatusEvent[];
+}
+
+export interface IRefund {
+  razorpayRefundId?: string; // optional — manual/COD refunds have no Razorpay id
+  amount: number;
+  refundedAt: Date;
 }
 
 export interface IOrder extends Document {
@@ -59,17 +65,13 @@ export interface IOrder extends Document {
   discount: number;
   total: number;
   status: "Confirmed" | "In Transit" | "Delivered" | "Cancelled" | "Returned";
-   refund?: IRefund;
   shipment?: IShipment;
+  refund?: IRefund;
   createdAt: Date;
   updatedAt: Date;
   deliveredAt?: Date;
 }
-export interface IRefund {
-  razorpayRefundId?: string;
-  amount: number;
-  refundedAt: Date;
-}
+
 const OrderItemSchema: Schema = new Schema(
   {
     productId: { type: String, required: true },
@@ -88,7 +90,7 @@ const ShippingAddressSchema: Schema = new Schema(
   {
     fullName: { type: String, required: true },
     phone: { type: String, required: true },
-     email: { type: String, required: true },
+    email: { type: String, required: true },
     addressLine: { type: String, required: true },
     city: { type: String, required: true },
     state: { type: String, required: true },
@@ -96,14 +98,7 @@ const ShippingAddressSchema: Schema = new Schema(
   },
   { _id: false }
 );
-const RefundSchema: Schema = new Schema(
-  {
-    razorpayRefundId: { type: String }, // no longer required: true
-    amount: { type: Number, required: true },
-    refundedAt: { type: Date, required: true },
-  },
-  { _id: false }
-);
+
 const ShipmentStatusEventSchema: Schema = new Schema(
   {
     status: { type: String, required: true },
@@ -133,6 +128,15 @@ const ShipmentSchema: Schema = new Schema(
   { _id: false }
 );
 
+const RefundSchema: Schema = new Schema(
+  {
+    razorpayRefundId: { type: String },
+    amount: { type: Number, required: true },
+    refundedAt: { type: Date, required: true },
+  },
+  { _id: false }
+);
+
 function generateOrderNumber() {
   return `ES${Math.floor(1000 + Math.random() * 9000)}`;
 }
@@ -151,10 +155,9 @@ const OrderSchema: Schema = new Schema(
     paymentMethod: { type: String, enum: ["upi", "card", "cod"], required: true },
     paymentStatus: {
       type: String,
-      enum: ["PENDING", "PAID", "FAILED"],
+      enum: ["PENDING", "PAID", "FAILED", "REFUNDED"],
       default: "PENDING",
     },
-    refund: { type: RefundSchema, default: undefined },
     razorpayOrderId: { type: String },
     razorpayPaymentId: { type: String },
     subtotal: { type: Number, required: true },
@@ -172,6 +175,7 @@ const OrderSchema: Schema = new Schema(
       default: undefined,
     },
     shipment: { type: ShipmentSchema, default: undefined },
+    refund: { type: RefundSchema, default: undefined },
   },
   {
     timestamps: true,
@@ -180,7 +184,25 @@ const OrderSchema: Schema = new Schema(
   }
 );
 
-const Order: Model<IOrder> = mongoose.models.Order || mongoose.model<IOrder>("Order", OrderSchema);
+// Retries orderNumber on collision instead of letting the unique-index
+// error surface raw — ~9,000 possible values means collisions become
+// likely well before you'd expect at scale.
+OrderSchema.pre("validate", async function (next) {
+  if (!this.isNew) return next();
 
+  const OrderModel = this.constructor as Model<IOrder>;
+  let attempts = 0;
+
+  while (attempts < 5) {
+    const exists = await OrderModel.exists({ orderNumber: this.orderNumber });
+    if (!exists) break;
+    this.orderNumber = generateOrderNumber();
+    attempts++;
+  }
+
+  next();
+});
+
+const Order: Model<IOrder> = mongoose.models.Order || mongoose.model<IOrder>("Order", OrderSchema);
 
 export default Order;

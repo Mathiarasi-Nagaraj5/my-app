@@ -37,7 +37,7 @@ export default function PincodeCheck({ pincode, itemCount, cod, onServiceability
 
         if (!res.ok || !data.success) {
           setState("error");
-          onServiceabilityChange(null); // don't block checkout on our own check failing
+          onServiceabilityChange(null);
           return;
         }
 
@@ -49,7 +49,7 @@ export default function PincodeCheck({ pincode, itemCount, cod, onServiceability
           onServiceabilityChange(null);
         }
       }
-    }, 400); // debounce while typing
+    }, 400);
 
     return () => {
       cancelled = true;

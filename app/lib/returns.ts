@@ -16,12 +16,6 @@ interface EligibilityInput {
   deliveredAt?: Date | string | null;
 }
 
-/**
- * Single source of truth for "can this order be returned right now?" —
- * used both to show/hide the Return button on the client and to validate
- * the actual POST /api/returns request server-side. Never trust the
- * client-side check alone; the server re-runs this on every submission.
- */
 export function isReturnEligible(order: EligibilityInput): { eligible: boolean; reason?: string } {
   if (order.status !== "Delivered") {
     return { eligible: false, reason: "this order hasn't been delivered yet" };

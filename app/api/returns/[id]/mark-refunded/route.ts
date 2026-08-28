@@ -8,12 +8,6 @@ interface Params {
   params: Promise<{ id: string }>;
 }
 
-// POST /api/returns/[id]/mark-refunded
-// body: { note?: string }
-//
-// Admin-only action for COD/manual refunds where money was moved outside
-// this system (e.g. a bank transfer) — this just records that it happened
-// and notifies the customer. Does NOT move any money itself.
 export async function POST(req: Request, { params }: Params) {
   try {
     await connectDB();

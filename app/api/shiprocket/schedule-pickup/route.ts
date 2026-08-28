@@ -3,8 +3,6 @@ import connectDB from "@/app/lib/mongodb";
 import Order from "@/app/models/Order";
 import { requestPickup } from "@/app/lib/shiprocket/client";
 
-// POST /api/shiprocket/schedule-pickup
-// body: { orderId: string }
 export async function POST(req: Request) {
   try {
     await connectDB();
@@ -19,10 +17,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: "order not found" }, { status: 404 });
     }
     if (!order.shipment?.shiprocketShipmentId) {
-      return NextResponse.json(
-        { success: false, message: "this order hasn't been shipped yet" },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, message: "this order hasn't been shipped yet" }, { status: 400 });
     }
     if (order.shipment.pickupScheduledAt) {
       return NextResponse.json(

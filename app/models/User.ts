@@ -1,22 +1,25 @@
-import mongoose, { Schema, models, model } from "mongoose";
+import mongoose, { Schema, Document, Model } from "mongoose";
 
-export interface UserDocument extends mongoose.Document {
-  name: string;
+export interface IUser extends Document {
+  fullName: string;
   email: string;
   phone?: string;
-  passwordHash: string; // never store plain passwords — hash with bcrypt before saving
+  passwordHash: string;
+  role: "customer" | "admin";
   createdAt: Date;
   updatedAt: Date;
 }
 
-const UserSchema = new Schema<UserDocument>(
+const UserSchema = new Schema<IUser>(
   {
-    name: { type: String, required: true },
-    email: { type: String, required: true, unique: true, index: true },
+    fullName: { type: String, required: true },
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     phone: { type: String },
     passwordHash: { type: String, required: true },
+    role: { type: String, enum: ["customer", "admin"], default: "customer" },
   },
   { timestamps: true }
 );
 
-export default models.User || model<UserDocument>("User", UserSchema);
+const User: Model<IUser> = mongoose.models.User || mongoose.model<IUser>("User", UserSchema);
+export default User;

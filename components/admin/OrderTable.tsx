@@ -13,7 +13,7 @@ export interface AdminOrder {
   status: "Confirmed" | "In Transit" | "Delivered" | "Cancelled" | "Returned";
   createdAt: string;
   paymentMethod?: "upi" | "card" | "cod";
-  paymentStatus?: "PENDING" | "PAID" | "FAILED";
+  paymentStatus?: "PENDING" | "PAID" | "FAILED" | "REFUNDED";
   shipment?: {
     awbCode?: string;
     courierName?: string;

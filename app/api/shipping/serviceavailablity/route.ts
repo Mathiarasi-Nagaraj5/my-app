@@ -1,14 +1,12 @@
 import { NextResponse } from "next/server";
 import { checkServiceability } from "@/app/lib/shiprocket/client";
 import { computePackageWeightKg } from "@/app/lib/shiprocket/pricing";
+import { enforceRateLimit } from "@/app/lib/rateLimitResponse";
 
-// POST /api/shipping/serviceability
-// body: { pincode: string, itemCount: number, cod?: boolean }
-//
-// Used in two places:
-//  - checkout, before payment: reject unserviceable pincodes early
-//  - admin ShipOrderModal: list couriers + rates for a specific order to ship
 export async function POST(req: Request) {
+  const limited = enforceRateLimit(req, "shipping-serviceability", 20, 60 * 1000);
+  if (limited) return limited;
+
   try {
     const body = await req.json();
     const { pincode, itemCount, cod } = body;
@@ -19,10 +17,7 @@ export async function POST(req: Request) {
 
     const pickupPincode = process.env.SHIPROCKET_PICKUP_PINCODE;
     if (!pickupPincode) {
-      return NextResponse.json(
-        { success: false, message: "pickup pincode is not configured" },
-        { status: 500 }
-      );
+      return NextResponse.json({ success: false, message: "pickup pincode is not configured" }, { status: 500 });
     }
 
     const weightKg = computePackageWeightKg(Number(itemCount) || 1);
@@ -35,7 +30,6 @@ export async function POST(req: Request) {
     });
 
     const couriers = result.data?.available_courier_companies ?? [];
-
     if (couriers.length === 0) {
       return NextResponse.json({ success: true, serviceable: false, couriers: [] });
     }

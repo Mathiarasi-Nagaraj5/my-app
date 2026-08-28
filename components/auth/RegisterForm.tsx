@@ -9,7 +9,7 @@ import { useAuth } from "../../app/lib/context/AuthContext";
 
 export default function RegisterForm() {
   const router = useRouter();
-  const { register } = useAuth();
+  const { signup } = useAuth();
   const [form, setForm] = useState({ name: "", email: "", phone: "", password: "" });
   const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState("");
@@ -36,11 +36,12 @@ export default function RegisterForm() {
     }
 
     setLoading(true);
-    const result = await register(form.name, form.email, form.phone, form.password);
+    const result = await signup(form.name, form.email, form.phone, form.password);
     setLoading(false);
 
-    if (!result.success) {
-      setError(result.error ?? "registration failed");
+    console.log("signup result:", result);
+    if (!result.ok) {
+      setError(result.message ?? "registration failed");
       return;
     }
 

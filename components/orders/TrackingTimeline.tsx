@@ -21,7 +21,6 @@ export default function TrackingTimeline({ courierName, awbCode, trackingUrl, st
   if (!awbCode) return null;
 
   const events = statusHistory ?? [];
-  // Most recent first for display, but the underlying data is stored oldest-first.
   const reversed = [...events].reverse();
 
   return (

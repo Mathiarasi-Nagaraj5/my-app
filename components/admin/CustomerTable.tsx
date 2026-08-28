@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 
 export interface Customer {
   _id: string;
-  name: string;
+  fullName: string;
   email: string;
   phone?: string;
   createdAt: string; // ISO date string
@@ -27,7 +27,7 @@ export default function CustomerTable({
     if (!q) return customers;
     return customers.filter(
       (c) =>
-        c.name?.toLowerCase().includes(q) ||
+        c.fullName?.toLowerCase().includes(q) ||
         c.email?.toLowerCase().includes(q) ||
         c.phone?.toLowerCase().includes(q)
     );
@@ -78,7 +78,7 @@ export default function CustomerTable({
             ) : (
               paginated.map((c) => (
                 <tr key={c._id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium text-gray-900">{c.name}</td>
+                  <td className="px-4 py-3 font-medium text-gray-900">{c.fullName}</td>
                   <td className="px-4 py-3 text-gray-600">{c.email}</td>
                   <td className="px-4 py-3 text-gray-600">{c.phone || "-"}</td>
                   <td className="px-4 py-3 text-gray-600">

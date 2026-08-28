@@ -3,13 +3,6 @@ import connectDB from "@/app/lib/mongodb";
 import Order from "@/app/models/Order";
 import { assignAwb } from "@/app/lib/shiprocket/client";
 
-// POST /api/shiprocket/assign-courier
-// body: { orderId: string, courierId: number }
-//
-// Requires create-shipment to have already run (needs shiprocketShipmentId).
-// On success, marks the order "In Transit" and records the AWB.
-//
-// NOTE: no admin-auth check yet — same gap as the other admin routes.
 export async function POST(req: Request) {
   try {
     await connectDB();
@@ -23,14 +16,12 @@ export async function POST(req: Request) {
     if (!order) {
       return NextResponse.json({ success: false, message: "order not found" }, { status: 404 });
     }
-
     if (!order.shipment?.shiprocketShipmentId) {
       return NextResponse.json(
         { success: false, message: "this order has not been pushed to Shiprocket yet — create the shipment first" },
         { status: 400 }
       );
     }
-
     if (order.shipment.awbCode) {
       return NextResponse.json(
         { success: false, message: `this order is already assigned to ${order.shipment.courierName} (AWB ${order.shipment.awbCode})` },

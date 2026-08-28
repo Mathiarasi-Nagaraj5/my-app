@@ -9,17 +9,6 @@ interface Params {
   params: Promise<{ id: string }>;
 }
 
-// POST /api/admin/orders/[id]/ship
-//
-// Single-click ship: checks serviceability, auto-picks the cheapest
-// serviceable courier, creates the Shiprocket order, assigns the AWB, and
-// returns the resulting `shipment` object — matches OrderTable's existing
-// contract exactly: { shipment: {...} } on success, { error: "..." } on
-// failure (not the { success, data } shape used elsewhere, intentionally,
-// to avoid touching the already-working button code).
-//
-// NOTE: no admin-auth check yet — same gap flagged on every other admin
-// route so far. Add a requireAdmin() check here before this ships.
 export async function POST(req: Request, { params }: Params) {
   try {
     await connectDB();
@@ -37,10 +26,7 @@ export async function POST(req: Request, { params }: Params) {
       );
     }
     if (order.status === "Cancelled" || order.status === "Returned") {
-      return NextResponse.json(
-        { error: `cannot ship an order that is ${order.status.toLowerCase()}` },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: `cannot ship an order that is ${order.status.toLowerCase()}` }, { status: 400 });
     }
     if (order.paymentMethod !== "cod" && order.paymentStatus !== "PAID") {
       return NextResponse.json({ error: "this order has not been paid for yet" }, { status: 400 });
@@ -56,7 +42,6 @@ export async function POST(req: Request, { params }: Params) {
     const weightKg = computePackageWeightKg(totalQuantity);
     const isCod = order.paymentMethod === "cod";
 
-    // 1. Serviceability + pick the cheapest serviceable courier for this pincode.
     const serviceability = await checkServiceability({
       pickupPincode,
       deliveryPincode: order.shippingAddress.pincode,
@@ -75,7 +60,6 @@ export async function POST(req: Request, { params }: Params) {
     const cheapest = [...couriers].sort((a, b) => a.rate - b.rate)[0];
     const chosenCourierId = serviceability.data.recommended_courier_id ?? cheapest.courier_company_id;
 
-    // 2. Create the Shiprocket order (skip if somehow already created without an AWB).
     let shiprocketOrderId = order.shipment?.shiprocketOrderId;
     let shiprocketShipmentId = order.shipment?.shiprocketShipmentId;
 
@@ -83,7 +67,6 @@ export async function POST(req: Request, { params }: Params) {
       const nameParts = order.shippingAddress.fullName.trim().split(/\s+/);
       const firstName = nameParts[0] || order.shippingAddress.fullName;
       const lastName = nameParts.slice(1).join(" ");
-      const billing_email = order.shippingAddress.email;
 
       const payload: CreateForwardOrderPayload = {
         order_id: order.orderNumber,
@@ -96,7 +79,7 @@ export async function POST(req: Request, { params }: Params) {
         billing_pincode: order.shippingAddress.pincode,
         billing_state: order.shippingAddress.state,
         billing_country: "India",
-        billing_email: billing_email,
+        billing_email: order.shippingAddress.email,
         billing_phone: order.shippingAddress.phone,
         shipping_is_billing: true,
         order_items: order.items.map((item) => ({
@@ -125,7 +108,6 @@ export async function POST(req: Request, { params }: Params) {
       };
       await order.save();
 
-      // Some Shiprocket accounts auto-assign an AWB right at creation.
       if (created.awb_code) {
         const now = new Date();
         order.shipment.awbCode = created.awb_code;
@@ -145,7 +127,6 @@ export async function POST(req: Request, { params }: Params) {
       }
     }
 
-    // 3. Assign AWB with the chosen courier.
     const assigned = await assignAwb({
       shipmentId: shiprocketShipmentId!,
       courierId: chosenCourierId,

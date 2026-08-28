@@ -80,6 +80,21 @@ export default function ReturnsTable({ returns, onReturnsChange }: ReturnsTableP
     }
   };
 
+  const retryPickup = async (r: ReturnRecord) => {
+    setBusyId(r._id);
+    try {
+      const res = await fetch(`/api/returns/${r._id}/retry-pickup`, { method: "POST" });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        onReturnsChange(returns.map((x) => (x._id === r._id ? data.data : x)));
+      } else {
+        alert(data.message ?? "failed to retry pickup");
+      }
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   return (
     <div className="w-full">
       <div className="mb-4 flex flex-wrap items-center gap-3">
@@ -155,7 +170,16 @@ export default function ReturnsTable({ returns, onReturnsChange }: ReturnsTableP
                           {r.refundMethod ? ` · ${r.refundMethod}` : ""}
                         </span>
                         {r.reverseShipment?.failedReason && (
-                          <p className="mt-1 text-[11px] text-red-500">pickup: {r.reverseShipment.failedReason}</p>
+                          <>
+                            <p className="mt-1 text-[11px] text-red-500">pickup: {r.reverseShipment.failedReason}</p>
+                            <button
+                              onClick={() => retryPickup(r)}
+                              disabled={busyId === r._id}
+                              className="mt-1 block text-[11px] font-medium text-blue-600 hover:underline disabled:opacity-40"
+                            >
+                              retry pickup
+                            </button>
+                          </>
                         )}
                       </>
                     ) : (

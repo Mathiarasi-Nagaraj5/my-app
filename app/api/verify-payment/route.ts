@@ -8,7 +8,6 @@ import { sendOrderConfirmationEmail } from "@/app/lib/email/send";
 export async function POST(req: Request) {
   try {
     await connectDB();
-
     const { appOrderId, order_id, payment_id, signature } = await req.json();
 
     if (!appOrderId || !order_id || !payment_id || !signature) {
@@ -20,13 +19,9 @@ export async function POST(req: Request) {
 
     const dbOrder = await Order.findById(appOrderId);
     if (!dbOrder || dbOrder.razorpayOrderId !== order_id) {
-      return NextResponse.json(
-        { success: false, verified: false, message: "order not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, verified: false, message: "order not found" }, { status: 404 });
     }
 
-    // Already processed (duplicate webhook / client retry) — don't double-handle.
     if (dbOrder.paymentStatus === "PAID") {
       return NextResponse.json({ success: true, verified: true, data: dbOrder });
     }
@@ -39,21 +34,19 @@ export async function POST(req: Request) {
     if (expectedSignature !== signature) {
       dbOrder.paymentStatus = "FAILED";
       await dbOrder.save();
-      if (dbOrder.promoCode) await PromoCode.release(dbOrder.promoCode); // give the coupon slot back
+      if (dbOrder.promoCode) await PromoCode.release(dbOrder.promoCode);
       return NextResponse.json(
         { success: false, verified: false, message: "Invalid payment signature" },
         { status: 400 }
       );
     }
 
-    // ✅ Payment is genuine
     dbOrder.paymentStatus = "PAID";
     dbOrder.razorpayPaymentId = payment_id;
     await dbOrder.save();
-    // usedCount was already incremented atomically in create-order via
-    // PromoCode.reserve — nothing to do here for the promo on success.
 
     await sendOrderConfirmationEmail(dbOrder);
+
     return NextResponse.json({
       success: true,
       verified: true,

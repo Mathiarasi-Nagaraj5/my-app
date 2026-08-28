@@ -16,10 +16,6 @@ export async function GET(
       return NextResponse.json({ error: "order not found" }, { status: 404 });
     }
 
-    // This gate stays here, not in the generator — the download button is
-    // deliberately "invoice available once delivered" for the customer,
-    // but the generator itself is reused for order-confirmation emails
-    // that fire immediately after payment, long before delivery.
     if (order.status !== "Delivered") {
       return NextResponse.json(
         { error: "invoice is only available once the order is delivered" },

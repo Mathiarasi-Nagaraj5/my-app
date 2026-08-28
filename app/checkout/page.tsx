@@ -9,10 +9,10 @@ import ShippingForm, { ShippingAddress } from "@/components/checkout/ShippingFor
 import SavedAddressSelector, { SavedAddress } from "@/components/checkout/SavedAddressSelector";
 import PaymentMethodSelector, { PaymentMethod } from "@/components/checkout/PaymentMethodSelector";
 import CheckoutSummary from "@/components/checkout/CheckoutSummary";
+import PincodeCheck from "@/components/checkout/PincodeCheck";
 import { useCart } from "@/app/lib/context/CartContext";
 import { useAuth } from "@/app/lib/context/AuthContext";
 import { computeDelivery } from "@/app/lib/pricing";
-import PincodeCheck from "@/components/checkout/PincodeCheckStatus";
 
 const EMPTY_ADDRESS: ShippingAddress = {
   fullName: "",
@@ -24,10 +24,6 @@ const EMPTY_ADDRESS: ShippingAddress = {
   pincode: "",
 };
 
-// This component only ever renders on /checkout — it's not a shared,
-// multi-page stepper, so "Checkout" is always the active step. "Bag" links
-// back, "Done" only becomes real once you land on the confirmation page
-// (a separate page/component, not this one).
 export default function CheckoutSteps() {
   const router = useRouter();
   const { items, subtotal, clearCart, promoCode, hydrated } = useCart();
@@ -43,15 +39,13 @@ export default function CheckoutSteps() {
   const [placing, setPlacing] = useState(false);
   const [orderError, setOrderError] = useState("");
 
-  // Preview-only discount for display. The number that actually gets
-  // charged is always recomputed server-side in create-order / /api/orders
-  // via PromoCode.reserve — this is never sent as authorization to charge less.
   const [previewDiscount, setPreviewDiscount] = useState(0);
   const [promoMessage, setPromoMessage] = useState("");
+  const [pincodeServiceable, setPincodeServiceable] = useState<boolean | null>(null);
 
   const delivery = computeDelivery(subtotal);
   const total = Math.max(subtotal + delivery - previewDiscount, 0);
-const [pincodeServiceable, setPincodeServiceable] = useState<boolean | null>(null);
+
   useEffect(() => {
     if (!user) {
       setLoadingAddresses(false);
@@ -77,18 +71,16 @@ const [pincodeServiceable, setPincodeServiceable] = useState<boolean | null>(nul
       setShippingAddress({
         fullName: match.fullName,
         phone: match.phone,
+        email: match.email,
         addressLine: match.addressLine,
         city: match.city,
         state: match.state,
         pincode: match.pincode,
-        email: match.email,
       });
       setErrors({});
     }
   }, [selectedAddressId, savedAddresses]);
 
-  // Re-validate the carried-over promo against this page's own subtotal —
-  // display only, doesn't reserve/spend anything.
   useEffect(() => {
     if (!hydrated || !promoCode || subtotal === 0) {
       setPreviewDiscount(0);
@@ -142,17 +134,17 @@ const [pincodeServiceable, setPincodeServiceable] = useState<boolean | null>(nul
     const next: typeof errors = {};
     if (!shippingAddress.fullName) next.fullName = "required";
     if (!shippingAddress.phone || shippingAddress.phone.length < 10) next.phone = "enter a valid phone number";
-    if (!shippingAddress.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(shippingAddress.email))  next.email = "enter a valid email address";
+    if (!shippingAddress.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(shippingAddress.email))
+      next.email = "enter a valid email address";
     if (!shippingAddress.addressLine) next.addressLine = "required";
     if (!shippingAddress.city) next.city = "required";
     if (!shippingAddress.state) next.state = "required";
     if (!shippingAddress.pincode || shippingAddress.pincode.length !== 6) next.pincode = "enter a valid 6-digit pincode";
+    else if (pincodeServiceable === false) next.pincode = "we don't deliver to this pincode yet";
     setErrors(next);
     return Object.keys(next).length === 0;
   };
 
-  // goes to the confirmation page with the real order's Mongo _id, so it
-  // can fetch and display the actual order that was just placed
   const goToConfirmation = (orderId: string) => {
     clearCart();
     router.push(`/checkout/success?orderId=${orderId}`);
@@ -214,8 +206,8 @@ const [pincodeServiceable, setPincodeServiceable] = useState<boolean | null>(nul
       });
 
       const data = await res.json();
+      console.log("Create order response:", data);
       if (!res.ok || !data.success) {
-        console.error("Failed to create Razorpay order:", data);
         throw new Error(data.message || "Failed to create Razorpay order");
       }
 
@@ -231,6 +223,7 @@ const [pincodeServiceable, setPincodeServiceable] = useState<boolean | null>(nul
         prefill: {
           name: shippingAddress.fullName,
           contact: shippingAddress.phone,
+          email: shippingAddress.email,
         },
         theme: { color: "#e0629b" },
 
@@ -252,8 +245,6 @@ const [pincodeServiceable, setPincodeServiceable] = useState<boolean | null>(nul
               throw new Error(verifyData.message || "Payment verification failed");
             }
 
-            // Order already exists and is now marked PAID by verify-payment —
-            // no separate /api/orders call needed here.
             goToConfirmation(verifyData.data._id);
           } catch (err) {
             console.error(err);
@@ -324,25 +315,28 @@ const [pincodeServiceable, setPincodeServiceable] = useState<boolean | null>(nul
                   selectedId={selectedAddressId}
                   onSelect={setSelectedAddressId}
                 />
-                {selectedAddressId === "new" && <>
-<ShippingForm value={shippingAddress} onChange={setShippingAddress} errors={errors} />
-<PincodeCheck
-  pincode={shippingAddress.pincode}
-  itemCount={items.reduce((sum, i) => sum + i.quantity, 0)}
-  cod={payment === "cod"}
-  onServiceabilityChange={setPincodeServiceable}
-/></>
-                }
+                {selectedAddressId === "new" && (
+                  <div>
+                    <ShippingForm value={shippingAddress} onChange={setShippingAddress} errors={errors} />
+                    <PincodeCheck
+                      pincode={shippingAddress.pincode}
+                      itemCount={items.reduce((sum, i) => sum + i.quantity, 0)}
+                      cod={payment === "cod"}
+                      onServiceabilityChange={setPincodeServiceable}
+                    />
+                  </div>
+                )}
               </>
             ) : (
-              <>
-              <ShippingForm value={shippingAddress} onChange={setShippingAddress} errors={errors} />
-<PincodeCheck
-  pincode={shippingAddress.pincode}
-  itemCount={items.reduce((sum, i) => sum + i.quantity, 0)}
-  cod={payment === "cod"}
-  onServiceabilityChange={setPincodeServiceable}
-/></>
+              <div>
+                <ShippingForm value={shippingAddress} onChange={setShippingAddress} errors={errors} />
+                <PincodeCheck
+                  pincode={shippingAddress.pincode}
+                  itemCount={items.reduce((sum, i) => sum + i.quantity, 0)}
+                  cod={payment === "cod"}
+                  onServiceabilityChange={setPincodeServiceable}
+                />
+              </div>
             )}
 
             <PaymentMethodSelector value={payment} onChange={setPayment} />

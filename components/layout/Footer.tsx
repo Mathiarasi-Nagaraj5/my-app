@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Truck, RotateCcw, Wallet, Shirt } from "lucide-react";
 import Input from "../ui/Input";
 import Button from "../ui/Button";
+import PolicyLinks from "./PolicyLinks";
 
 const FOOTER_LINKS = {
   Shop: [
@@ -26,6 +27,13 @@ const TRUST_ITEMS = [
   { icon: Wallet, label: "Cash on delivery" },
   { icon: Shirt, label: "Premium cotton" },
 ];
+const POLICY_LINKS = [
+  { href: "/privacy-policy", label: "Privacy Policy" },
+  { href: "/terms-and-conditions", label: "Terms & Conditions" },
+  { href: "/refund-policy", label: "Refund & Return Policy" },
+  { href: "/shipping-policy", label: "Shipping Policy" },
+];
+
 
 export default function Footer() {
   return (
@@ -60,21 +68,24 @@ export default function Footer() {
 
       {/* link columns */}
       <div className="mx-auto grid max-w-7xl grid-cols-2 gap-8 px-6 py-10 text-sm md:grid-cols-4">
-        <div>
+        {/* <div>
           <p className="mb-3 font-medium">ELITE SOUL</p>
           <p className="text-sm text-ivory/55 leading-relaxed">
             Oversized t-shirts, hoodies and pyjama sets made for everyday
             comfort.
           </p>
-        </div>
+        </div> */}
         <FooterColumn title="Shop" links={FOOTER_LINKS.Shop} />
         <FooterColumn title="Company" links={FOOTER_LINKS.Company} />
         <FooterColumn title="Account" links={FOOTER_LINKS.Account} />
+        <FooterColumn title="Policies" links={POLICY_LINKS} />
       </div>
 
       <div className="border-t border-ivory/10 px-6 py-4 text-center text-sm text-ivory/40">
         © {new Date().getFullYear()} Elite Soul. All rights reserved.
+
       </div>
+
     </footer>
   );
 }

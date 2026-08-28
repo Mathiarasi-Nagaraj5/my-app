@@ -4,9 +4,6 @@ const formatINR = (v: number) => `₹${v.toLocaleString("en-IN")}`;
 const formatDate = (d: Date) =>
   new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
 
-// Shared shell so all three emails look consistent — kept intentionally
-// plain (table-based, inline styles) since most email clients strip
-// <style> blocks and mangle modern CSS.
 function emailShell(title: string, bodyHtml: string): string {
   return `
   <div style="font-family: -apple-system, Arial, sans-serif; max-width: 560px; margin: 0 auto; color: #1a1a1a;">

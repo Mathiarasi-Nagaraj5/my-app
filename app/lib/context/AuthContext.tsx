@@ -1,48 +1,43 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  ReactNode,
-} from "react";
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 
-interface User {
+export interface AuthUser {
   id: string;
-  name: string;
+  fullName: string;
   email: string;
   phone?: string;
+  role: "customer" | "admin";
 }
 
 interface AuthContextValue {
-  user: User | null;
+  user: AuthUser | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  register: (
-    name: string,
-    email: string,
-    phone: string,
-    password: string
-  ) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string) => Promise<{ ok: boolean; message?: string }>;
+  adminLogin: (email: string, password: string) => Promise<{ ok: boolean; message?: string }>;
+  signup: (fullName: string, email: string, password: string, phone?: string) => Promise<{ ok: boolean; message?: string }>;
   logout: () => Promise<void>;
-  updateProfile: (
-    updates: Partial<Pick<User, "name" | "phone">>
-  ) => Promise<{ success: boolean; error?: string }>;
+  refresh: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const refresh = async () => {
+    try {
+      const res = await fetch("/api/auth/me");
+      const data = await res.json();
+      setUser(data.success ? data.data : null);
+    } catch {
+      setUser(null);
+    }
+  };
+
   useEffect(() => {
-    fetch("/api/auth/me")
-      .then((res) => (res.ok ? res.json() : { user: null }))
-      .then((data) => setUser(data.user))
-      .catch(() => setUser(null))
-      .finally(() => setLoading(false));
+    refresh().finally(() => setLoading(false));
   }, []);
 
   const login: AuthContextValue["login"] = async (email, password) => {
@@ -52,46 +47,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       body: JSON.stringify({ email, password }),
     });
     const data = await res.json();
-    if (!res.ok) return { success: false, error: data.error };
-    setUser(data.user);
-    return { success: true };
+    if (!res.ok || !data.success) return { ok: false, message: data.message ?? "login failed" };
+    setUser(data.data);
+    return { ok: true };
   };
 
-  const register: AuthContextValue["register"] = async (name, email, phone, password) => {
-    const res = await fetch("/api/auth/register", {
+  // Separate call from `login` — hits /api/auth/admin-login, which never
+  // issues a cookie unless the account's role is actually "admin". This is
+  // what AdminLoginPage should call, not `login`.
+  const adminLogin: AuthContextValue["adminLogin"] = async (email, password) => {
+    const res = await fetch("/api/auth/admin-login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, phone, password }),
+      body: JSON.stringify({ email, password }),
     });
     const data = await res.json();
-    if (!res.ok) return { success: false, error: data.error };
-    setUser(data.user);
-    return { success: true };
+    if (!res.ok || !data.success) return { ok: false, message: data.message ?? "login failed" };
+    setUser(data.data);
+    return { ok: true };
+  };
+
+  const signup: AuthContextValue["signup"] = async (fullName, email, password, phone) => {
+    const res = await fetch("/api/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fullName, email, password, phone }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) return { ok: false, message: data.message ?? "signup failed" };
+    setUser(data.data);
+    return { ok: true };
   };
 
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     setUser(null);
-    localStorage.removeItem("elite-soul-cart"); // Clear cart on logout
-    localStorage.removeItem("elite-soul-wishlist"); // Clear wishlist on logout
-    localStorage.removeItem("elite-soul-shipping"); // Clear shipping info on logout
-    
-  };
-
-  const updateProfile: AuthContextValue["updateProfile"] = async (updates) => {
-    const res = await fetch("/api/auth/me", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updates),
-    });
-    const data = await res.json();
-    if (!res.ok) return { success: false, error: data.error };
-    setUser(data.user);
-    return { success: true };
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, updateProfile }}>
+    <AuthContext.Provider value={{ user, loading, login, adminLogin, signup, logout, refresh }}>
       {children}
     </AuthContext.Provider>
   );

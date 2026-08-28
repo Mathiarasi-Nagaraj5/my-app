@@ -13,6 +13,7 @@ import ReviewForm, { ReviewRecord } from "@/components/review/ReviewForm";
 import CancellationPolicy from "@/components/orders/Cancellationpolicy";
 import ReturnButton from "@/components/orders/ReturnButton";
 import TrackingTimeline from "@/components/orders/TrackingTimeline";
+
 const formatINR = (v: number) => `₹${v.toLocaleString("en-IN")}`;
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
@@ -25,7 +26,7 @@ const STATUS_VARIANT: Record<string, "brand" | "success" | "danger" | "info"> = 
   Returned: "info",
 };
 
-const STATUS_STEPS = ["Confirmed", "In Transit", "Delivered", "Cancelled" , "Returned"];
+const STATUS_STEPS = ["Confirmed", "In Transit", "Delivered", "Cancelled"];
 const STATUS_COLORS: Record<string, string> = {
   Confirmed: "bg-pink text-charcoal",
   "In Transit": "bg-blue-500 text-white",
@@ -33,6 +34,7 @@ const STATUS_COLORS: Record<string, string> = {
   Cancelled: "bg-red-500 text-white",
   Returned: "bg-purple-500 text-white",
 };
+
 interface OrderDetail {
   _id: string;
   orderNumber: string;
@@ -46,7 +48,7 @@ interface OrderDetail {
   total: number;
   status: "Confirmed" | "In Transit" | "Delivered" | "Cancelled" | "Returned";
   deliveredAt?: string | null;
-   shipment?: {
+  shipment?: {
     awbCode?: string;
     courierName?: string;
     trackingUrl?: string;
@@ -65,8 +67,6 @@ function OrderDetailContent() {
   const [cancelling, setCancelling] = useState(false);
   const [error, setError] = useState("");
 
-  // productId -> existing review for this order, so we know which items
-  // already have feedback vs. still need the "rate this product" prompt
   const [reviewsByProduct, setReviewsByProduct] = useState<Record<string, ReviewRecord>>({});
 
   useEffect(() => {
@@ -92,32 +92,31 @@ function OrderDetailContent() {
         }
         setReviewsByProduct(map);
       })
-      .catch(() => {
-        /* non-critical - review form just falls back to "not yet reviewed" */
-      });
+      .catch(() => {});
   }, [order]);
 
   const handleDownloadInvoice = async () => {
-  try {
-    const res = await fetch(`/api/orders/${id}/invoice`);
-    if (!res.ok) {
-      const data = await res.json();
-      setError(data.error ?? "failed to download invoice");
-      return;
+    try {
+      const res = await fetch(`/api/orders/${id}/invoice`);
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error ?? "failed to download invoice");
+        return;
+      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `invoice-${order?.orderNumber}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      setError("failed to download invoice");
     }
-    const blob = await res.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `invoice-${order?.orderNumber}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    window.URL.revokeObjectURL(url);
-  } catch {
-    setError("failed to download invoice");
-  }
-};
+  };
+
   const handleCancel = async () => {
     if (!confirm("cancel this order? if you've already paid, a refund will be issued.")) return;
 
@@ -148,8 +147,7 @@ function OrderDetailContent() {
   const canCancel = order.status === "Confirmed";
   const canReview = order.status === "Delivered";
   const currentStepIndex = STATUS_STEPS.indexOf(order.status);
-  console.log(canReview, reviewsByProduct, order.items,order .status,order.status === "Delivered");
-console.log("user in order detail page",canReview ,user?.id);
+
   return (
     <div className="mx-auto max-w-3xl px-6 py-8">
       <button
@@ -169,48 +167,35 @@ console.log("user in order detail page",canReview ,user?.id);
         <Badge variant={STATUS_VARIANT[order.status]}>{order.status}</Badge>
       </div>
 
-   <div className="mb-8 flex items-center">
-  {STATUS_STEPS.map((step, i) => (
-    <div key={step} className="flex flex-1 items-center last:flex-none">
-      <div className="flex flex-col items-center">
-        <div
-          className={`flex h-7 w-7 items-center justify-center rounded-full text-xs ${
-            i <= currentStepIndex
-              ? STATUS_COLORS[step]
-              : "bg-charcoal/10 text-charcoal/40"
-          }`}
-        >
-          {i + 1}
-        </div>
-
-        <span className="mt-1.5 text-[11px] capitalize text-charcoal/60">
-          {step}
-        </span>
+      <div className="mb-8 flex items-center">
+        {STATUS_STEPS.map((step, i) => (
+          <div key={step} className="flex flex-1 items-center last:flex-none">
+            <div className="flex flex-col items-center">
+              <div
+                className={`flex h-7 w-7 items-center justify-center rounded-full text-xs ${
+                  i <= currentStepIndex ? STATUS_COLORS[step] : "bg-charcoal/10 text-charcoal/40"
+                }`}
+              >
+                {i + 1}
+              </div>
+              <span className="mt-1.5 text-[11px] capitalize text-charcoal/60">{step}</span>
+            </div>
+            {i < STATUS_STEPS.length - 1 && (
+              <div className={`mx-2 h-0.5 flex-1 ${i < currentStepIndex ? "bg-charcoal/20" : "bg-charcoal/10"}`} />
+            )}
+          </div>
+        ))}
       </div>
 
-      {i < STATUS_STEPS.length - 1 && (
-        <div
-          className={`mx-2 h-0.5 flex-1 ${
-            i < currentStepIndex
-              ? "bg-charcoal/20"
-              : "bg-charcoal/10"
-          }`}
-        />
-      )}
-    </div>
-  ))}
-</div>
-
       {/* tracking */}
- 
-<div className="mb-6">
-  <TrackingTimeline
-    courierName={order.shipment?.courierName}
-    awbCode={order.shipment?.awbCode}
-    trackingUrl={order.shipment?.trackingUrl}
-    statusHistory={order.shipment?.statusHistory}
-  />
-</div>
+      <div className="mb-6">
+        <TrackingTimeline
+          courierName={order.shipment?.courierName}
+          awbCode={order.shipment?.awbCode}
+          trackingUrl={order.shipment?.trackingUrl}
+          statusHistory={order.shipment?.statusHistory}
+        />
+      </div>
 
       {/* items */}
       <div className="mb-6 rounded-card border border-charcoal/15 p-5">
@@ -231,7 +216,6 @@ console.log("user in order detail page",canReview ,user?.id);
                   qty: {item.quantity}
                 </p>
 
-                {/* reviews only unlock once the order has been delivered */}
                 {canReview && user?.id && (
                   <ReviewForm
                     orderId={order._id}
@@ -271,74 +255,71 @@ console.log("user in order detail page",canReview ,user?.id);
         </p>
       </div>
 
-   {/* payment */}
-<div className="mb-6 rounded-card border border-charcoal/15 p-5">
-  <p className="mb-3 text-md font-medium text-pink">Payment Details</p>
+      {/* payment */}
+      <div className="mb-6 rounded-card border border-charcoal/15 p-5">
+        <p className="mb-3 text-md font-medium text-pink">Payment Details</p>
 
-  <div className="flex items-center justify-between">
-    <div className="flex items-center gap-2.5">
-      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-charcoal/5">
-        {order.paymentMethod === "upi" && <Smartphone size={16} className="text-brass" />}
-        {order.paymentMethod === "card" && <CreditCard size={16} className="text-brass" />}
-        {order.paymentMethod === "cod" && <Banknote size={16} className="text-brass" />}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-charcoal/5">
+              {order.paymentMethod === "upi" && <Smartphone size={16} className="text-brass" />}
+              {order.paymentMethod === "card" && <CreditCard size={16} className="text-brass" />}
+              {order.paymentMethod === "cod" && <Banknote size={16} className="text-brass" />}
+            </div>
+            <div>
+              <p className="text-sm font-medium text-charcoal">
+                {order.paymentMethod === "upi" && "UPI"}
+                {order.paymentMethod === "card" && "Card Payment"}
+                {order.paymentMethod === "cod" && "Cash on Delivery"}
+              </p>
+              <p className="text-xs text-charcoal/50">Order total {formatINR(order.total)}</p>
+            </div>
+          </div>
+
+          <span
+            className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+              order.paymentStatus === "PAID"
+                ? "bg-green-100 text-green-700"
+                : order.paymentStatus === "REFUNDED"
+                ? "bg-purple-100 text-purple-700"
+                : order.paymentStatus === "FAILED"
+                ? "bg-red-100 text-red-700"
+                : "bg-yellow-100 text-yellow-700"
+            }`}
+          >
+            {order.paymentStatus.charAt(0) + order.paymentStatus.slice(1).toLowerCase()}
+          </span>
+        </div>
       </div>
-      <div>
-        <p className="text-sm font-medium text-charcoal">
-          {order.paymentMethod === "upi" && "UPI"}
-          {order.paymentMethod === "card" && "Card Payment"}
-          {order.paymentMethod === "cod" && "Cash on Delivery"}
-        </p>
-        <p className="text-xs text-charcoal/50">Order total {formatINR(order.total)}</p>
+
+      {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+
+      <CancellationPolicy />
+
+      <div className="mt-4 flex flex-col items-start gap-3">
+        <div className="flex gap-3">
+          {canCancel && (
+            <Button variant="danger" onClick={handleCancel} disabled={cancelling}>
+              {cancelling ? "cancelling..." : "Cancel Order"}
+            </Button>
+          )}
+
+          {order.status === "Delivered" && (
+            <Button variant="primary" icon={<Download size={14} />} onClick={handleDownloadInvoice}>
+              Download Invoice
+            </Button>
+          )}
+        </div>
+
+        {order.status === "Delivered" && (
+          <ReturnButton
+            orderId={order._id}
+            orderStatus={order.status}
+            deliveredAt={order.deliveredAt}
+            userId={user?.id}
+          />
+        )}
       </div>
-    </div>
-
-    <span
-      className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-        order.paymentStatus === "PAID"
-          ? "bg-green-100 text-green-700"
-          : order.paymentStatus === "REFUNDED"
-      ? "bg-purple-100 text-purple-700"
-          : order.paymentStatus === "FAILED"
-          ? "bg-red-100 text-red-700"
-          : "bg-yellow-100 text-yellow-700"
-      }`}
-    >
-      {order.paymentStatus.charAt(0) + order.paymentStatus.slice(1).toLowerCase()}
-    </span>
-  </div>
-</div>
-   
- 
-{error && <p className="mb-4 text-sm text-red-600">{error}</p>}
-
-<CancellationPolicy />
-
-<div className="mt-4 flex flex-col items-start gap-3">
-  <div className="flex gap-3">
-    {canCancel && (
-      <Button variant="danger" onClick={handleCancel} disabled={cancelling}>
-        {cancelling ? "cancelling..." : "Cancel Order"}
-      </Button>
-    )}
-
-    {order.status === "Delivered" && (
-      <Button variant="primary" icon={<Download size={14} />} onClick={handleDownloadInvoice}>
-        Download Invoice
-      </Button>
-    )}
-  </div>
-
-  {order.status === "Delivered" && (
-    <ReturnButton
-      orderId={order._id}
-      orderStatus={order.status}
-      deliveredAt={order.deliveredAt}
-      userId={user?.id}
-    />
-  )}
-</div>
-
-
     </div>
   );
 }

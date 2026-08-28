@@ -40,6 +40,7 @@ export async function POST(req: Request) {
     if (
       !shippingAddress?.fullName ||
       !shippingAddress?.phone ||
+      !shippingAddress?.email ||
       !shippingAddress?.addressLine ||
       !shippingAddress?.city ||
       !shippingAddress?.state ||
@@ -48,8 +49,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: "shipping address is incomplete" }, { status: 400 });
     }
 
-    // Re-price and snapshot every item server-side from Product — never
-    // trust client-sent price/name/slug/imageUrls, only productId/quantity/size/color.
     const products = await Product.find({ _id: { $in: items.map((i) => i.productId) } });
     const productMap = new Map(products.map((p) => [String(p._id), p]));
 
@@ -57,14 +56,13 @@ export async function POST(req: Request) {
     const orderItems = items.map((item) => {
       const product = productMap.get(item.productId);
       if (!product) throw new Error(`PRODUCT_NOT_FOUND:${item.productId}`);
-
       subtotal += product.price * item.quantity;
       return {
         productId: String(product._id),
         slug: product.slug,
         name: product.name,
         imageUrls: product.imageUrls,
-        price: product.price, // snapshot at order time
+        price: product.price,
         quantity: item.quantity,
         size: item.size,
         color: item.color,
@@ -73,12 +71,8 @@ export async function POST(req: Request) {
 
     const delivery = computeDelivery(subtotal);
 
-    // Reserve stock atomically before anything downstream can fail — every
-    // branch below this point that returns/throws MUST call restoreStock()
-    // first, or a failed order permanently shrinks inventory for stock
-    // nobody actually bought.
     const stockItems = items.map((i) => ({ productId: i.productId, quantity: i.quantity }));
-    const stockResult = await decrementStock(stockItems);
+    const stockResult = await decrementStock(stockItems, { reason: "order-created" });
     if (!stockResult.ok) {
       const failedProduct = productMap.get(stockResult.failedProductId);
       return NextResponse.json(
@@ -87,15 +81,13 @@ export async function POST(req: Request) {
       );
     }
 
-    // Atomically reserve the promo, if any. Single conditional update is
-    // what makes usedCount/maxUses actually enforceable under concurrency.
     let discount = 0;
     let reservedPromoCode: string | null = null;
 
     if (promoCode) {
       const reserved = await PromoCode.reserve(promoCode, subtotal);
       if (!reserved) {
-        await restoreStock(stockItems);
+        await restoreStock(stockItems, { reason: "rollback" });
 
         const promoDoc = await PromoCode.findOne({ code: promoCode.trim().toUpperCase() });
         const message = !promoDoc
@@ -117,24 +109,23 @@ export async function POST(req: Request) {
 
     if (total <= 0) {
       if (reservedPromoCode) await PromoCode.release(reservedPromoCode);
-      await restoreStock(stockItems);
+      await restoreStock(stockItems, { reason: "rollback" });
       return NextResponse.json({ success: false, message: "invalid order amount" }, { status: 400 });
     }
 
     let razorpayOrder;
     try {
       razorpayOrder = await razorpay.orders.create({
-        amount: Math.round(total * 100), // ₹ → paise
+        amount: Math.round(total * 100),
         currency: "INR",
         receipt: `receipt_${Date.now()}`,
         payment_capture: true,
       });
     } catch (err) {
-      if (reservedPromoCode) await PromoCode.release(reservedPromoCode); // never spent, give it back
-      await restoreStock(stockItems);
+      if (reservedPromoCode) await PromoCode.release(reservedPromoCode);
+      await restoreStock(stockItems, { reason: "rollback" });
       throw err;
     }
-    console.log("Razorpay Order Created:", razorpayOrder);
 
     const dbOrder = await Order.create({
       userId,

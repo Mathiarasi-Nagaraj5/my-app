@@ -39,7 +39,7 @@ export default function WishlistPage() {
     const product = products.find((p) => p.id === id);
     if (!product) return;
     addItem({
-      id: `${product._id}-default`,
+      id: `${product._id}`,
       productId: product._id,
       slug: product.slug,
       name: product.name,

@@ -13,8 +13,6 @@ async function getInvoiceAttachment(order: IOrder): Promise<Attachment | null> {
     const pdfBuffer = await generateInvoicePdf(order);
     return { filename: `invoice-${order.orderNumber}.pdf`, content: pdfBuffer };
   } catch (err) {
-    // Don't let a PDF generation failure block the email itself — send
-    // without the attachment rather than not sending at all.
     console.error("Invoice PDF generation failed for email:", err);
     return null;
   }
@@ -45,8 +43,10 @@ async function safeSend(params: {
 }
 
 export async function sendOrderConfirmationEmail(order: IOrder) {
+  console.log("Preparing to send order confirmation email for order:", order.orderNumber);
   if (!order.shippingAddress.email) return;
   const { subject, html } = orderConfirmationEmail(order);
+  console.log("Email subject:", subject);
   const invoice = await getInvoiceAttachment(order);
   return safeSend({
     to: order.shippingAddress.email,
@@ -72,4 +72,20 @@ export async function sendRefundConfirmationEmail(order: IOrder, refundAmount: n
     html,
     attachments: invoice ? [invoice] : undefined,
   });
+}
+
+export async function sendLowStockAlert(productName: string, currentStock: number) {
+  const adminEmail = process.env.ADMIN_ALERT_EMAIL;
+  if (!adminEmail) return;
+
+  try {
+    await resend.emails.send({
+      from: EMAIL_FROM,
+      to: adminEmail,
+      subject: `Low stock: ${productName} (${currentStock} left)`,
+      html: `<p><strong>${productName}</strong> is down to <strong>${currentStock}</strong> units. Consider restocking.</p>`,
+    });
+  } catch (err) {
+    console.error("Low stock alert email failed:", err);
+  }
 }

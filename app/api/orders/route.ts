@@ -5,8 +5,9 @@ import Product from "@/app/models/Product";
 import PromoCode from "@/app/models/Promocode";
 import { computeDiscount } from "@/app/lib/promo";
 import { computeDelivery } from "@/app/lib/pricing";
+import { decrementStock, restoreStock } from "@/app/lib/inventory/stock";
 import { sendOrderConfirmationEmail } from "@/app/lib/email/send";
-import { decrementStock } from "@/app/lib/inventory/stock";
+
 export async function GET() {
   try {
     await connectDB();
@@ -24,10 +25,6 @@ interface CartItemInput {
   color?: string;
 }
 
-// COD only. Razorpay orders are created in /api/create-order and finalized
-// in /api/verify-payment — this endpoint never accepts paymentStatus,
-// subtotal, delivery, or total from the client, so it can't be used to
-// fabricate a PAID order.
 export async function POST(req: Request) {
   try {
     await connectDB();
@@ -43,6 +40,7 @@ export async function POST(req: Request) {
     if (
       !shippingAddress?.fullName ||
       !shippingAddress?.phone ||
+      !shippingAddress?.email ||
       !shippingAddress?.addressLine ||
       !shippingAddress?.city ||
       !shippingAddress?.state ||
@@ -58,7 +56,6 @@ export async function POST(req: Request) {
     const orderItems = items.map((item) => {
       const product = productMap.get(item.productId);
       if (!product) throw new Error(`PRODUCT_NOT_FOUND:${item.productId}`);
-      if (product.stock < item.quantity) throw new Error(`OUT_OF_STOCK:${product.name}`);
       subtotal += product.price * item.quantity;
       return {
         productId: String(product._id),
@@ -73,22 +70,23 @@ export async function POST(req: Request) {
     });
 
     const delivery = computeDelivery(subtotal);
-    
-    const stockResult = await decrementStock(
-  items.map((i: any) => ({ productId: i.productId, quantity: i.quantity }))
-);
-if (!stockResult.ok) {
-  const failedProduct = productMap.get(stockResult.failedProductId);
-  return NextResponse.json(
-    { success: false, message: `${failedProduct?.name ?? "an item"} is out of stock` },
-    { status: 400 }
-  );
-}
+
+    const stockItems = items.map((i) => ({ productId: i.productId, quantity: i.quantity }));
+    const stockResult = await decrementStock(stockItems, { reason: "order-created" });
+    if (!stockResult.ok) {
+      const failedProduct = productMap.get(stockResult.failedProductId);
+      return NextResponse.json(
+        { success: false, message: `${failedProduct?.name ?? "an item"} is out of stock` },
+        { status: 400 }
+      );
+    }
+
     let discount = 0;
     let reservedPromoCode: string | null = null;
     if (promoCode) {
       const reserved = await PromoCode.reserve(promoCode, subtotal);
       if (!reserved) {
+        await restoreStock(stockItems, { reason: "rollback" });
         return NextResponse.json({ success: false, message: "coupon is no longer valid" }, { status: 400 });
       }
       discount = computeDiscount(reserved.discountType, reserved.discountValue, subtotal);
@@ -97,20 +95,28 @@ if (!stockResult.ok) {
 
     const total = Math.max(subtotal + delivery - discount, 0);
 
-    const order = await Order.create({
-      userId,
-      items: orderItems,
-      shippingAddress,
-      paymentMethod: "cod",
-      paymentStatus: "PENDING", // stays pending until delivery/collection
-      subtotal,
-      delivery,
-      promoCode: reservedPromoCode,
-      discount,
-      total,
-    });
-
+    let order;
+    try {
+      order = await Order.create({
+        userId,
+        items: orderItems,
+        shippingAddress,
+        paymentMethod: "cod",
+        paymentStatus: "PENDING",
+        subtotal,
+        delivery,
+        promoCode: reservedPromoCode,
+        discount,
+        total,
+      });
+    } catch (err) {
+      if (reservedPromoCode) await PromoCode.release(reservedPromoCode);
+      await restoreStock(stockItems, { reason: "rollback" });
+      throw err;
+    }
+console.log("Order created:", order);
     await sendOrderConfirmationEmail(order);
+
     return NextResponse.json({ success: true, data: order }, { status: 201 });
   } catch (error) {
     console.error("Create Order Error:", error);
@@ -118,12 +124,6 @@ if (!stockResult.ok) {
     if (error instanceof Error && error.message.startsWith("PRODUCT_NOT_FOUND:")) {
       return NextResponse.json(
         { success: false, message: "one or more items in your cart are no longer available" },
-        { status: 400 }
-      );
-    }
-    if (error instanceof Error && error.message.startsWith("OUT_OF_STOCK:")) {
-      return NextResponse.json(
-        { success: false, message: `${error.message.replace("OUT_OF_STOCK:", "")} is out of stock` },
         { status: 400 }
       );
     }

@@ -2,58 +2,62 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Input from "@/components/ui/Input";
-import Button from "@/components/ui/Button";
+import { useAuth } from "@/app/lib/context/AuthContext";
+import PasswordInput from "@/components/auth/PasswordInput";
 
 export default function AdminLoginPage() {
+  const { adminLogin } = useAuth();
   const router = useRouter();
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitting(true);
     setError("");
-    setLoading(true);
 
-    const res = await fetch("/api/admin/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password }),
-    });
-
-    setLoading(false);
-
-    if (!res.ok) {
-      setError("incorrect password");
+    const result = await adminLogin(email, password);
+    console.log("Admin login result:", result);
+    if (!result.ok) {
+      setError(result.message ?? "login failed");
+      setSubmitting(false);
       return;
     }
-
-    router.push("/admin");
-    router.refresh();
+console.log("Admin login successful, redirecting to /admin/orders");
+    // adminLogin only ever succeeds for a real admin account (role checked
+    // server-side before any cookie was issued) — no follow-up role check
+    // needed here, unlike the earlier version.
+    router.push("/admin/orders");
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-charcoal px-6">
-      <form onSubmit={handleSubmit} className="w-full max-w-sm">
-        <p className="mb-1.5 text-center text-lg font-medium text-ivory">
-          Elite Soul <span className="text-brass">admin</span>
-        </p>
-        <p className="mb-6 text-center text-sm text-ivory/55">
-          enter the admin password to continue
-        </p>
-
-        <Input
-          type="password"
-          placeholder="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          error={error}
+    <div className="mx-auto max-w-sm px-6 py-16">
+      <h1 className="mb-6 text-xl font-semibold text-gray-900">Admin Login</h1>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <input
+          type="email"
+          placeholder="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+          required
         />
-
-        <Button type="submit" variant="primary" fullWidth className="mt-4" disabled={loading}>
-          {loading ? "checking..." : "login"}
-        </Button>
+       <PasswordInput
+  value={password}
+  onChange={(e) => setPassword(e.target.value)}
+  className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+  required
+/>
+        {error && <p className="text-xs text-red-600">{error}</p>}
+        <button
+          type="submit"
+          disabled={submitting}
+            className="rounded-md bg-pink px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+        >
+          {submitting ? "logging in..." : "Log in"}
+        </button>
       </form>
     </div>
   );

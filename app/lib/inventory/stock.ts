@@ -1,51 +1,79 @@
 import Product from "@/app/models/Product";
+import StockLog, { StockChangeReason } from "@/app/models/StockLog";
+import { LOW_STOCK_THRESHOLD } from "./constant";
+import { sendLowStockAlert } from "@/app/lib/email/send";
 
 export interface StockItem {
   productId: string;
   quantity: number;
 }
 
-/**
- * Atomically decrements stock for each item. Each decrement is its own
- * conditional update (stock >= quantity in the filter) — this is what
- * prevents two concurrent orders from both succeeding for the last unit,
- * same principle as PromoCode.reserve().
- *
- * If any item fails (out of stock, product deleted mid-request), every
- * item successfully decremented so far in THIS call is rolled back before
- * returning — an order should never partially reserve stock.
- */
-export async function decrementStock(items: StockItem[]): Promise<
-  { ok: true } | { ok: false; failedProductId: string }
-> {
+export interface StockContext {
+  reason: StockChangeReason;
+  orderId?: string;
+}
+
+export async function decrementStock(
+  items: StockItem[],
+  context: StockContext
+): Promise<{ ok: true } | { ok: false; failedProductId: string }> {
   const decremented: StockItem[] = [];
 
   for (const item of items) {
     const result = await Product.findOneAndUpdate(
       { _id: item.productId, stock: { $gte: item.quantity } },
-      { $inc: { stock: -item.quantity } }
+      { $inc: { stock: -item.quantity } },
+      { new: true }
     );
 
     if (!result) {
-      // This item failed — roll back everything decremented so far in this call.
-      await restoreStock(decremented);
+      await restoreStock(decremented, { reason: "rollback", orderId: context.orderId });
       return { ok: false, failedProductId: item.productId };
     }
 
     decremented.push(item);
+
+    try {
+      await StockLog.create({
+        productId: item.productId,
+        orderId: context.orderId,
+        change: -item.quantity,
+        resultingStock: result.stock,
+        reason: context.reason,
+      });
+    } catch (err) {
+      console.error("StockLog write failed (non-blocking):", err);
+    }
+
+    if (result.stock <= LOW_STOCK_THRESHOLD) {
+      sendLowStockAlert(result.name, result.stock).catch(() => {
+        /* already logged inside sendLowStockAlert */
+      });
+    }
   }
 
   return { ok: true };
 }
 
-/**
- * Adds stock back — used both for the rollback above and for order
- * cancellation / accepted returns. Not conditional (no floor check needed
- * going up), but still a single atomic $inc per item rather than
- * read-then-write, so concurrent restores can't clobber each other.
- */
-export async function restoreStock(items: StockItem[]): Promise<void> {
+export async function restoreStock(items: StockItem[], context: StockContext): Promise<void> {
   for (const item of items) {
-    await Product.updateOne({ _id: item.productId }, { $inc: { stock: item.quantity } });
+    const result = await Product.findOneAndUpdate(
+      { _id: item.productId },
+      { $inc: { stock: item.quantity } },
+      { new: true }
+    );
+    if (!result) continue;
+
+    try {
+      await StockLog.create({
+        productId: item.productId,
+        orderId: context.orderId,
+        change: item.quantity,
+        resultingStock: result.stock,
+        reason: context.reason,
+      });
+    } catch (err) {
+      console.error("StockLog write failed (non-blocking):", err);
+    }
   }
 }

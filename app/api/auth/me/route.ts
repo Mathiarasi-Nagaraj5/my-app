@@ -1,67 +1,32 @@
 import { NextResponse } from "next/server";
-import  connectDB  from "../../../lib/mongodb";
-import User from "../../../models/User";
-import { verifySession, SESSION_COOKIE_NAME } from "../../../lib/auth/session";
+import { cookies } from "next/headers";
+import connectDB from "@/app/lib/mongodb";
+import User from "@/app/models/User";
+import { verifySession, SESSION_COOKIE_NAME } from "@/app/lib/auth/session";
 
-function getUserIdFromRequest(req: Request): string | null {
-  const cookie = req.headers
-    .get("cookie")
-    ?.match(new RegExp(`${SESSION_COOKIE_NAME}=([^;]+)`))?.[1];
-  const session = verifySession(cookie);
-  return session?.userId ?? null;
-}
-
-export async function GET(req: Request) {
+export async function GET() {
   try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+    const session = verifySession(token);
+
+    if (!session) {
+      return NextResponse.json({ success: false, data: null }, { status: 200 }); // 200, not 401 — "not logged in" is a normal state, not an error
+    }
+
     await connectDB();
-    const userId = getUserIdFromRequest(req);
-
-    if (!userId) {
-      return NextResponse.json({ user: null }, { status: 401 });
-    }
-
-    const user = await User.findById(userId).select("-passwordHash");
+    const user = await User.findById(session.userId).select("fullName email phone role");
+console.log('user data:', user);
     if (!user) {
-      return NextResponse.json({ user: null }, { status: 401 });
+      return NextResponse.json({ success: false, data: null }, { status: 200 });
     }
 
+    console.log('user data:', { id: user._id, fullName: user.fullName, email: user.email, phone: user.phone, role: user.role });
     return NextResponse.json({
-      user: { id: user._id, name: user.name, email: user.email, phone: user.phone },
+      success: true,
+      data: { id: user._id, fullName: user.fullName, email: user.email, phone: user.phone, role: user.role,test:'summa' },
     });
-  } catch (error) {
-    console.error("GET /api/auth/me error:", error);
-    return NextResponse.json({ user: null }, { status: 500 });
-  }
-}
-
-export async function PATCH(req: Request) {
-  try {
-    await connectDB();
-    const userId = getUserIdFromRequest(req);
-
-    if (!userId) {
-      return NextResponse.json({ error: "not authenticated" }, { status: 401 });
-    }
-
-    const { name, phone } = await req.json();
-    // email intentionally not editable here — changing it would need
-    // re-verification in a real system, kept out of scope for now
-
-    const user = await User.findByIdAndUpdate(
-      userId,
-      { name, phone },
-      { new: true }
-    ).select("-passwordHash");
-
-    if (!user) {
-      return NextResponse.json({ error: "user not found" }, { status: 404 });
-    }
-
-    return NextResponse.json({
-      user: { id: user._id, name: user.name, email: user.email, phone: user.phone },
-    });
-  } catch (error) {
-    console.error("PATCH /api/auth/me error:", error);
-    return NextResponse.json({ error: "update failed" }, { status: 500 });
+  } catch {
+    return NextResponse.json({ success: false, data: null }, { status: 200 });
   }
 }
