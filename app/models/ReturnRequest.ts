@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 import { RETURN_REASONS } from "@/app/lib/returns";
 
-export type ReturnStatus = "Pending" | "Accepted" | "Rejected";
+export type ReturnStatus = "Pending" | "Accepted" | "Rejected" | "requested" | "in_progress" | "completed" | "failed" | "rejected" | "refunded" | "approved" | "cancelled";
 export type RefundStatus = "NotApplicable" | "Pending" | "Completed" | "Failed";
 export type RefundMethod = "razorpay" | "manual" | null;
 
@@ -34,6 +34,9 @@ export interface IReturnRequest extends Document {
   resolvedAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
+  refundedAt?: Date;
+  amount: number;
+  razorpayRefundId?: string;
 }
 
 const RefundSchema: Schema = new Schema(

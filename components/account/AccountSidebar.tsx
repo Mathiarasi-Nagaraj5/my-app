@@ -19,7 +19,7 @@ export default function AccountSidebar() {
   const router = useRouter();
   const { user, logout } = useAuth();
 
-  const initials = (user?.name ?? "?")
+  const initials = (user?.fullName ?? "?")
     .split(" ")
     .map((n) => n[0])
     .join("")
@@ -37,7 +37,7 @@ export default function AccountSidebar() {
           {initials}
         </div>
         <div>
-          <p className="text-md font-medium text-charcoal">{user?.name ?? "..."}</p>
+          <p className="text-md font-medium text-charcoal">{user?.fullName ?? "..."}</p>
           <p className="text-sm text-charcoal/55">{user?.email ?? ""}</p>
         </div>
       </div>

@@ -23,7 +23,7 @@ export default function Navbar() {
   // logged in → account icon goes to the profile page
   // logged out → goes to login
   const accountHref = user ? "/profile" : "/login";
-  const accountLabel = user ? `Account — ${user.name}` : "Login";
+  const accountLabel = user ? `Account — ${user.fullName}` : "Login";
    
   useEffect(() => {
     fetch("/api/categories").then((res) => res.json()).then((data) => {
