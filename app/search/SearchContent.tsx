@@ -24,14 +24,30 @@ export default  function SearchContent() {
   }, []);
 
   const results = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    let filtered = q
-      ? allProducts.filter(
-          (p) =>
-            p.name.toLowerCase().includes(q) ||
-            p.category.toLowerCase().includes(q)
-        )
-      : allProducts;
+  const q = query.trim().toLowerCase();
+
+  const getCategoryText = (category: unknown): string => {
+    if (typeof category === "string") return category;
+    if (Array.isArray(category)) {
+      return category
+        .map((c) => (typeof c === "string" ? c : (c as { name?: string })?.name ?? ""))
+        .join(" ");
+    }
+    if (category && typeof category === "object") {
+      return (category as { name?: string }).name ?? "";
+    }
+    return "";
+  };
+
+  let filtered = q
+    ? allProducts.filter((p) => {
+        const name = typeof p.name === "string" ? p.name.toLowerCase() : "";
+        const category = getCategoryText(p.category).toLowerCase();
+        return name.includes(q) || category.includes(q);
+      })
+    : allProducts;
+
+  // ...rest of your logic (sorting, etc.) continues unchanged
 
     if (sort === "price-low-high") filtered = [...filtered].sort((a, b) => a.price - b.price);
     if (sort === "price-high-low") filtered = [...filtered].sort((a, b) => b.price - a.price);
