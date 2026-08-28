@@ -8,33 +8,44 @@ import Link from "next/link";
 const slides = [
   {
     id: 1,
-    image: "https://picsum.photos/seed/hero-black-tee/1600/900",
+    image: "/images/hero/tshirt.png",
+    panelColor: "#EDE7DD",
     eyebrow: "New Arrival",
     headline: "Oversized comfort.\nBuilt to last.",
     sub: "Heavy-weight cotton tees — made for everyday wear.",
-    cta: { label: "Shop T-shirts", href: "/shop?category=t-shirts" },
-    accent: "#C9A96E", // brass
+    cta: {
+      label: "Shop T-shirts",
+      href: "/shop?category=t-shirts",
+    },
+    accent: "#C9A96E",
   },
   {
     id: 2,
-    image: "https://picsum.photos/seed/hero-hoodie/1600/900",
+    image: "/images/hero/hoodie.png",
+    panelColor: "#FDF5F8",
     eyebrow: "This Season",
     headline: "Wrap yourself\nin warmth.",
     sub: "Fleece-lined hoodies that feel like a second skin.",
-    cta: { label: "Shop Hoodies", href: "/shop?category=hoodies" },
+    cta: {
+      label: "Shop Hoodies",
+      href: "/shop?category=hoodies",
+    },
     accent: "#C9A96E",
   },
   {
     id: 3,
-    image: "https://picsum.photos/seed/hero-pyjama/1600/900",
+    image: "/images/hero/pyjama.png",
+   panelColor: "#E8B4C8",
     eyebrow: "Sleep Better",
     headline: "Soft sets for\nquiet mornings.",
     sub: "Co-ord pyjama sets in breathable cotton.",
-    cta: { label: "Shop Pyjamas", href: "/shop?category=pyjamas" },
+    cta: {
+      label: "Shop Pyjamas",
+      href: "/shop?category=pyjamas",
+    },
     accent: "#C9A96E",
   },
 ];
-
 const AUTOPLAY_MS = 5000;
 
 // ─── Arrow icons ──────────────────────────────────────────────────────────────
@@ -121,80 +132,125 @@ export default function HeroSlider() {
       onMouseLeave={() => setPaused(false)}
     >
       {/* ── Slides ──────────────────────────────────────────────────────────── */}
-      {slides.map((slide, idx) => {
-        const isActive = idx === current;
-        const isPrev  = idx === prev;
-        if (!isActive && !isPrev) return null;
+{slides.map((slide, idx) => {
+  const isActive = idx === current;
+  const isPrev = idx === prev;
 
-        // Slide enters from right when going right, from left when going left
-        const enterX  = isActive ? (direction === "right" ? "100%" : "-100%") : "0%";
-        const exitX   = isPrev   ? (direction === "right" ? "-100%" : "100%") : "0%";
+  if (!isActive && !isPrev) return null;
 
-        return (
-          <div
-            key={slide.id}
-            aria-hidden={!isActive}
+  const exitX = direction === "right" ? "-100%" : "100%";
+
+  return (
+    <div
+      key={slide.id}
+      aria-hidden={!isActive}
+      className="absolute inset-0 overflow-hidden"
+      style={{
+        backgroundColor: slide.panelColor,
+
+        transform: animating
+          ? isActive
+            ? "translateX(0)"
+            : `translateX(${exitX})`
+          : "translateX(0)",
+
+        transition: animating
+          ? "transform 600ms cubic-bezier(0.77,0,0.18,1)"
+          : "none",
+
+        willChange: "transform",
+        zIndex: isActive ? 2 : 1,
+      }}
+    >
+    <img
+  src={slide.image}
+  alt=""
+  aria-hidden="true"
+  draggable={false}
+  className="
+    absolute
+    bottom-0
+    right-0
+    h-full
+    w-auto
+    max-w-[65%]
+    object-contain
+    object-bottom
+  "
+/>
+
+      {/* ================= LEFT GRADIENT ================= */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: `linear-gradient(
+            90deg,
+            ${slide.panelColor} 0%,
+            ${slide.panelColor} 38%,
+            transparent 72%
+          )`,
+        }}
+      />
+
+      {/* ================= CONTENT ================= */}
+      <div className="relative z-[3] flex h-full items-center px-8 sm:px-12 lg:px-20">
+        <div className="max-w-xl">
+
+          <p
+            className="mb-4 text-xs font-semibold uppercase tracking-[0.25em]"
             style={{
-              position: "absolute",
-              inset: 0,
-              transform: animating
-                ? isActive
-                  ? `translateX(0)`    // settling in
-                  : `translateX(${exitX})`  // leaving
-                : isActive
-                ? "translateX(0)"
-                : `translateX(${enterX})`,
-              transition: animating ? "transform 600ms cubic-bezier(0.77,0,0.18,1)" : "none",
-              willChange: "transform",
-              zIndex: isActive ? 2 : 1,
+              color: slide.accent,
             }}
           >
-            {/* Background image */}
-            <img
-              src={slide.image}
-              alt=""
-              aria-hidden="true"
-              className="absolute inset-0 h-full w-full object-cover"
-              draggable={false}
-            />
-            {/* Dark gradient overlay — bottom-heavy so text is always readable */}
-            <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  "linear-gradient(to top, rgba(20,18,16,0.82) 0%, rgba(20,18,16,0.45) 45%, rgba(20,18,16,0.18) 100%)",
-              }}
-            />
+            {slide.eyebrow}
+          </p>
 
-            {/* Text content */}
-            <div className="absolute inset-0 flex flex-col justify-end px-6 pb-24 sm:px-12 sm:pb-28 md:px-20">
-              <p
-                className="mb-3 text-xs uppercase tracking-[0.22em] font-medium"
-                style={{ color: slide.accent }}
-              >
-                {slide.eyebrow}
-              </p>
-              <h1
-                className="mb-4 whitespace-pre-line font-serif text-3xl font-medium leading-tight text-ivory sm:text-4xl md:text-5xl lg:text-6xl max-w-xl"
-              >
-                {slide.headline}
-              </h1>
-              <p className="mb-8 max-w-sm text-sm leading-relaxed text-ivory/70">
-                {slide.sub}
-              </p>
-              <Link
-                href={slide.cta.href}
-                className="inline-flex w-fit items-center gap-2 rounded-none border border-ivory px-6 py-3 text-sm font-medium tracking-wide text-ivory transition-colors duration-200 hover:bg-ivory hover:text-charcoal focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ivory"
-              >
-                {slide.cta.label}
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M2 7h10M8 3l4 4-4 4" />
-                </svg>
-              </Link>
-            </div>
-          </div>
-        );
-      })}
+          <h1
+            className="
+              whitespace-pre-line
+              text-4xl
+              font-light
+              leading-[1.05]
+              tracking-tight
+              text-charcoal
+              sm:text-5xl
+              lg:text-6xl
+          "
+          >
+            {slide.headline}
+          </h1>
+
+          <p className="mt-6 max-w-md text-sm leading-6 text-charcoal/70 sm:text-base">
+            {slide.sub}
+          </p>
+
+          <Link
+            href={slide.cta.href}
+            className="
+              mt-8
+              inline-flex
+              items-center
+              border
+              border-charcoal
+              bg-charcoal
+              px-7
+              py-3
+              text-sm
+              font-medium
+              text-ivory
+              transition
+              hover:bg-transparent
+              hover:text-charcoal
+            "
+          >
+            {slide.cta.label}
+          </Link>
+
+        </div>
+      </div>
+    </div>
+  );
+})}
 
       {/* ── Prev / Next arrows ───────────────────────────────────────────────── */}
       <button
@@ -214,29 +270,130 @@ export default function HeroSlider() {
 
       {/* ── Dot indicators ───────────────────────────────────────────────────── */}
       <div className="absolute bottom-8 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2.5">
-        {slides.map((slide, idx) => (
-          <button
-            key={slide.id}
-            onClick={() => go(idx, idx > current ? "right" : "left")}
-            aria-label={`Go to slide ${idx + 1}`}
-            aria-current={idx === current ? "true" : undefined}
-            className="relative h-[3px] overflow-hidden rounded-full bg-ivory/30 transition-all duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ivory"
-            style={{ width: idx === current ? 32 : 14 }}
+{/* ── Slides ─────────────────────────────────────────────── */}
+{slides.map((slide, idx) => {
+  const isActive = idx === current;
+  const isPrev = idx === prev;
+
+  if (!isActive && !isPrev) return null;
+
+  const enterX =
+    direction === "right" ? "100%" : "-100%";
+
+  const exitX =
+    direction === "right" ? "-100%" : "100%";
+
+  return (
+    <div
+      key={slide.id}
+      aria-hidden={!isActive}
+      className="absolute inset-0 overflow-hidden"
+      style={{
+        backgroundColor: slide.panelColor,
+        transform: animating
+          ? isActive
+            ? "translateX(0)"
+            : `translateX(${exitX})`
+          : isActive
+            ? "translateX(0)"
+            : `translateX(${enterX})`,
+        transition: animating
+          ? "transform 600ms cubic-bezier(0.77,0,0.18,1)"
+          : "none",
+        willChange: "transform",
+        zIndex: isActive ? 2 : 1,
+      }}
+    >
+      {/* ─────────────── PNG IMAGE ─────────────── */}
+      <img
+        src={slide.image}
+        alt=""
+        aria-hidden="true"
+        draggable={false}
+        className="
+          absolute
+          bottom-0
+          right-[7%]
+          h-[98%]
+          w-auto
+          max-w-[68%]
+          object-contain
+          object-bottom
+        "
+      />
+
+      {/* ─────────────── SOFT LEFT GRADIENT ─────────────── */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: `linear-gradient(
+            90deg,
+            ${slide.panelColor} 0%,
+            ${slide.panelColor} 38%,
+            transparent 72%
+          )`,
+        }}
+      />
+
+      {/* ─────────────── CONTENT ─────────────── */}
+      <div className="relative z-[3] flex h-full items-center px-8 sm:px-12 lg:px-20">
+        <div className="max-w-xl">
+
+          <p
+            className="mb-4 text-xs font-semibold uppercase tracking-[0.25em]"
+            style={{
+              color: slide.accent,
+            }}
           >
-            {/* Progress fill on active dot */}
-            {idx === current && !paused && (
-              <span
-                className="absolute inset-y-0 left-0 rounded-full bg-ivory"
-                style={{
-                  animation: `progress ${AUTOPLAY_MS}ms linear forwards`,
-                }}
-              />
-            )}
-            {idx === current && paused && (
-              <span className="absolute inset-0 rounded-full bg-ivory" />
-            )}
-          </button>
-        ))}
+            {slide.eyebrow}
+          </p>
+
+          <h1
+            className="
+              whitespace-pre-line
+              text-4xl
+              font-light
+              leading-[1.05]
+              tracking-tight
+              text-charcoal
+              sm:text-5xl
+              lg:text-6xl
+            "
+          >
+            {slide.headline}
+          </h1>
+
+          <p className="mt-6 max-w-md text-sm leading-6 text-charcoal/70 sm:text-base">
+            {slide.sub}
+          </p>
+
+          <Link
+            href={slide.cta.href}
+            className="
+              mt-8
+              inline-flex
+              items-center
+              border
+              border-charcoal
+              bg-charcoal
+              px-7
+              py-3
+              text-sm
+              font-medium
+              text-ivory
+              transition
+              hover:bg-transparent
+              hover:text-charcoal
+            "
+          >
+            {slide.cta.label}
+          </Link>
+
+        </div>
+      </div>
+    </div>
+  );
+})}
       </div>
 
       {/* ── Slide counter ────────────────────────────────────────────────────── */}

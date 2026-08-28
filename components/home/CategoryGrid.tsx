@@ -5,17 +5,17 @@ const CATEGORIES = [
   {
     label: "oversized t-shirts",
     href: "/shop?category=t-shirts",
-    image: "https://picsum.photos/seed/cat-tshirts/400/500",
+    image: "/images/categories/tshirt.jpg",
   },
   {
     label: "hoodies",
     href: "/shop?category=hoodies",
-    image: "https://picsum.photos/seed/cat-hoodies/400/500",
+    image: "/images/categories/hoodie.jpg",
   },
   {
     label: "pyjama sets",
     href: "/shop?category=pyjamas",
-    image: "https://picsum.photos/seed/cat-pyjamas/400/500",
+    image: "/images/categories/pyjama.png",
   },
 ];
 
