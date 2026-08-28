@@ -30,7 +30,7 @@ const slides = [
       label: "Shop Hoodies",
       href: "/shop?category=hoodies",
     },
-    accent: "#C9A96E",
+    accent: "#C8A9A9",
   },
   {
     id: 3,
@@ -43,7 +43,7 @@ const slides = [
       label: "Shop Pyjamas",
       href: "/shop?category=pyjamas",
     },
-    accent: "#C9A96E",
+    accent: "#C9ACCC",
   },
 ];
 const AUTOPLAY_MS = 5000;
@@ -162,18 +162,20 @@ export default function HeroSlider() {
         zIndex: isActive ? 2 : 1,
       }}
     >
-    <img
+  <img
   src={slide.image}
   alt=""
   aria-hidden="true"
   draggable={false}
   className="
+    hidden
+    sm:block
     absolute
     bottom-0
-    right-0
-    h-full
+    right-[6%]
+    h-[98%]
     w-auto
-    max-w-[65%]
+    max-w-[68%]
     object-contain
     object-bottom
   "
@@ -305,22 +307,24 @@ export default function HeroSlider() {
       }}
     >
       {/* ─────────────── PNG IMAGE ─────────────── */}
-      <img
-        src={slide.image}
-        alt=""
-        aria-hidden="true"
-        draggable={false}
-        className="
-          absolute
-          bottom-0
-          right-[7%]
-          h-[98%]
-          w-auto
-          max-w-[68%]
-          object-contain
-          object-bottom
-        "
-      />
+    <img
+  src={slide.image}
+  alt=""
+  aria-hidden="true"
+  draggable={false}
+  className="
+    hidden
+    sm:block
+    absolute
+    bottom-0
+    right-[6%]
+    h-[98%]
+    w-auto
+    max-w-[68%]
+    object-contain
+    object-bottom
+  "
+/>
 
       {/* ─────────────── SOFT LEFT GRADIENT ─────────────── */}
       <div
