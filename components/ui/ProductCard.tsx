@@ -10,21 +10,19 @@ interface ProductCardProps {
   product: Product;
 }
 
-const formatINR = (value: number) =>
-  `₹${value.toLocaleString("en-IN")}`;
+const formatINR = (value: number) => `₹${value.toLocaleString("en-IN")}`;
 
 export default function ProductCard({ product }: ProductCardProps) {
   const { toggle, isWishlisted } = useWishlist();
   const wishlisted = isWishlisted(product._id);
-  console.log("wishlisted", wishlisted);
-  console.log(product.name, product._id);
+
+  const colors = product.colors ?? [];
+  const sizes = product.sizes ?? [];
+
   const discountPercent = product.originalPrice
-    ? Math.round(
-        ((product.originalPrice - product.price) / product.originalPrice) * 100
-      )
+    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : null;
 
-    console.log(product);
   return (
     <div className="group">
       <Link href={`/shop/${product.slug}`} className="block">
@@ -65,15 +63,34 @@ export default function ProductCard({ product }: ProductCardProps) {
         <p className="mt-2 truncate text-lg text-charcoal capitalize">{product.name}</p>
 
         <div className="mt-1 flex items-baseline gap-2">
-          <span className="text-lg font-medium capitalize text-pink">
-            {formatINR(product.price)}
-          </span>
+          <span className="text-lg font-medium capitalize text-pink">{formatINR(product.price)}</span>
           {product.originalPrice && (
-            <span className="text-sm text-charcoal/40 line-through">
-              {formatINR(product.originalPrice)}
-            </span>
+            <span className="text-sm text-charcoal/40 line-through">{formatINR(product.originalPrice)}</span>
           )}
         </div>
+
+        {(colors.length > 0 || sizes.length > 0) && (
+          <div className="mt-1.5 flex flex-col items-start gap-2">
+            {colors.length > 0 && (
+              <div className="flex items-center gap-1">
+                {colors.slice(0, 4).map((color) => (
+                  <span
+                    key={color}
+                    style={{ backgroundColor: color }}
+                    className="h-3.5 w-3.5 rounded-full border border-charcoal/20"
+                  />
+                ))}
+                {colors.length > 4 && (
+                  <span className="text-[10px] text-charcoal/40">+{colors.length - 4}</span>
+                )}
+              </div>
+            )}
+            
+            {sizes.length > 0 && (
+              <div className="text-[11px] text-charcoal/90">{sizes.join(" · ")}</div>
+            )}
+          </div>
+        )}
       </Link>
     </div>
   );

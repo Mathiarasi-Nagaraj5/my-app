@@ -74,14 +74,7 @@ export default function LoginForm() {
         <div className="h-px flex-1 bg-charcoal/15" />
       </div>
 
-      <Button
-        type="button"
-        variant="outline"
-        fullWidth
-        icon={<Smartphone size={16} />}
-      >
-        continue with OTP
-      </Button>
+      
 
       <p className="mt-3 text-center text-sm text-charcoal/70">
         new here?{" "}

@@ -1,13 +1,19 @@
-const messages = [
-  "Free delivery above ₹999",
-  "Cash on delivery available",
-  "Easy 7-day returns",
-];
+"use client";
 
-export default function AnnouncementBar() {
+interface AnnouncementBarProps {
+  items?: string[];
+}
+
+export default function AnnouncementBar({
+  items = [],
+}: AnnouncementBarProps) {
   return (
-    <div className="bg-charcoal py-2.5 text-center text-xs text-ivory">
-      {messages.join("  ·  ")}
+    <div className="bg-black text-white text-sm py-2 text-center">
+      {items.map((item, index) => (
+        <span key={index} className="mx-4">
+          {item}
+        </span>
+      ))}
     </div>
   );
 }

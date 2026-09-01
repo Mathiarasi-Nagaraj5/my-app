@@ -2,13 +2,13 @@
 
 import { ShopFilters } from "../../app/lib/types";
 import { useEffect, useState } from "react";
+
 interface Category {
   name: string;
   slug: string;
 }
 
-const ALL_SIZES = ["S", "M", "L", "XL", "XXL","3XL","4XL","5XL"];
-const ALL_COLORS = ["#1C1B19", "#F3EFE7", "#6B5B45"];
+const ALL_SIZES = ["S", "M", "L", "XL", "XXL", "3XL", "4XL", "5XL"];
 
 interface FilterSidebarProps {
   filters: ShopFilters;
@@ -16,20 +16,35 @@ interface FilterSidebarProps {
 }
 
 export default function FilterSidebar({ filters, onChange }: FilterSidebarProps) {
-    const [categories, setCategories] = useState<Category[]>([]); 
-  const toggleCategory = (cat: string) => {
-    const next = filters.categories.includes(cat)
-      ? filters.categories.filter((c) => c !== cat)
-      : [...filters.categories, cat];
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [availableColors, setAvailableColors] = useState<string[]>([]);
+
+  // Filter by slug — this is what Product.category actually stores (see
+  // ProductForm's <option value={category.slug ?? category.name}>). Filtering
+  // by `cat.name` here was the category-filter bug: whatever the checkbox
+  // sent never matched the slug saved on the product.
+  const toggleCategory = (slug: string) => {
+    const next = filters.categories.includes(slug)
+      ? filters.categories.filter((c) => c !== slug)
+      : [...filters.categories, slug];
     onChange({ ...filters, categories: next });
   };
+
   useEffect(() => {
-    fetch("/api/categories").then((res) => res.json()).then((data) => {
-      setCategories(data); // Assuming the API returns an array of category objects with a 'name' property
-    }).catch((err) => {
-      console.error("Failed to fetch categories:", err);
-    });
+    fetch("/api/categories")
+      .then((res) => res.json())
+      .then((data) => setCategories(data))
+      .catch((err) => console.error("Failed to fetch categories:", err));
+
+    // Colors are now driven by what products actually have, not a hardcoded
+    // 3-swatch list — a color only shows as a filter option if at least one
+    // product uses it.
+    fetch("/api/products/colors")
+      .then((res) => res.json())
+      .then((data) => setAvailableColors(data))
+      .catch((err) => console.error("Failed to fetch product colors:", err));
   }, []);
+
   const toggleSize = (size: string) => {
     const next = filters.sizes.includes(size)
       ? filters.sizes.filter((s) => s !== size)
@@ -51,14 +66,11 @@ export default function FilterSidebar({ filters, onChange }: FilterSidebarProps)
         <p className="mb-3 font-medium text-charcoal text-xl">Category</p>
         <div className="flex flex-col gap-2">
           {categories.map((cat) => (
-            <label
-              key={cat.name}
-              className="flex items-center gap-2 text-charcoal/75 text-lg"
-            >
+            <label key={cat.slug} className="flex items-center gap-2 text-charcoal/75 text-lg">
               <input
                 type="checkbox"
-                checked={filters.categories.includes(cat.name)}
-                onChange={() => toggleCategory(cat.name)}
+                checked={filters.categories.includes(cat.slug)}
+                onChange={() => toggleCategory(cat.slug)}
                 className="accent-pink"
               />
               {cat.name}
@@ -76,9 +88,7 @@ export default function FilterSidebar({ filters, onChange }: FilterSidebarProps)
           max={3000}
           step={100}
           value={filters.maxPrice}
-          onChange={(e) =>
-            onChange({ ...filters, maxPrice: Number(e.target.value) })
-          }
+          onChange={(e) => onChange({ ...filters, maxPrice: Number(e.target.value) })}
           className="w-full accent-pink"
         />
         <div className="flex justify-between text-md text-charcoal/55">
@@ -99,9 +109,7 @@ export default function FilterSidebar({ filters, onChange }: FilterSidebarProps)
                 type="button"
                 onClick={() => toggleSize(size)}
                 className={`flex h-8 w-8 items-center justify-center rounded border text-xs ${
-                  active
-                    ? "border-pink text-pink font-medium"
-                    : "border-charcoal/40 text-charcoal/70"
+                  active ? "border-pink text-pink font-medium" : "border-charcoal/40 text-charcoal/70"
                 }`}
               >
                 {size}
@@ -112,26 +120,26 @@ export default function FilterSidebar({ filters, onChange }: FilterSidebarProps)
       </div>
 
       {/* color */}
-      <div className="pt-5">
-        <p className="mb-3 font-medium text-charcoal text-xl">Color</p>
-        <div className="flex gap-2">
-          {ALL_COLORS.map((color) => {
-            const active = filters.colors.includes(color);
-            return (
-              <button
-                key={color}
-                type="button"
-                aria-label={`Filter by color ${color}`}
-                onClick={() => toggleColor(color)}
-                style={{ backgroundColor: color }}
-                className={`h-6 w-6 rounded-full border-2 ${
-                  active ? "border-pink" : "border-charcoal/20"
-                }`}
-              />
-            );
-          })}
+      {availableColors.length > 0 && (
+        <div className="pt-5">
+          <p className="mb-3 font-medium text-charcoal text-xl">Color</p>
+          <div className="flex flex-wrap gap-2">
+            {availableColors.map((color) => {
+              const active = filters.colors.includes(color);
+              return (
+                <button
+                  key={color}
+                  type="button"
+                  aria-label={`Filter by color ${color}`}
+                  onClick={() => toggleColor(color)}
+                  style={{ backgroundColor: color }}
+                  className={`h-6 w-6 rounded-full border-2 ${active ? "border-pink" : "border-charcoal/20"}`}
+                />
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
     </aside>
   );
 }

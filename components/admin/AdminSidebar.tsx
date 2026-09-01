@@ -6,6 +6,7 @@ import { LayoutDashboard, Package, Truck, LogOut, RotateCcw, Wallet, X,Star } fr
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  {label:"Site Content", href:"/admin/site-content", icon:Package},
   { label: "Products", href: "/admin/products", icon: Package },
   { label: "Customers", href: "/admin/customers", icon: Wallet },
   { label: "Categories", href: "/admin/categories", icon: Package },
@@ -13,6 +14,7 @@ const NAV_ITEMS = [
   { label: "Orders", href: "/admin/orders", icon: Truck },
   { label: "Returns", href: "/admin/returns", icon: RotateCcw },
   { label: "Ratings", href: "/admin/ratings", icon: Star },
+
 ];
 
 interface AdminSidebarProps {

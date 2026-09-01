@@ -11,10 +11,10 @@ export interface ProductFormValues {
   price: number;
   originalPrice?: number;
   stock: number;
-  imageUrls: string[];          // up to 5 uploaded URLs
+  imageUrls: string[];
   isBestseller: boolean;
   sizes: string;
-  colors: string;
+  colors: string[];
 }
 interface Category {
   _id?: string;
@@ -31,14 +31,31 @@ const EMPTY_VALUES: ProductFormValues = {
   stock: 1,
   imageUrls: [],
   isBestseller: false,
-  sizes: "S, M, L, XL",
-  colors: "",
+  sizes: "S, M, L, XL, XXL, 3XL, 4XL, 5XL",
+  colors: [],
 };
 
 interface ProductFormProps {
   initialValues?: Partial<ProductFormValues> & { _id?: string };
   onSubmit: (values: ProductFormValues) => Promise<void> | void;
   submitLabel?: string;
+}
+
+// Normalizes colors to a clean array regardless of what shape it arrives
+// in — a real array (current format), a legacy comma-separated string
+// (products saved before the API-layer normalization existed), or
+// undefined/null. This has to run BEFORE the first render, not just in a
+// useEffect after mount — a useEffect runs after the render commits, but
+// if the render itself tries to call .map on a raw string, it throws
+// before React ever gets to running effects. That's what was crashing:
+// editing a product whose colors were still saved in the old string
+// format hit this exact race.
+function normalizeColors(value: unknown): string[] {
+  if (Array.isArray(value)) return value;
+  if (typeof value === "string") {
+    return value.split(",").map((c) => c.trim()).filter(Boolean);
+  }
+  return [];
 }
 
 // ─── Image thumbnail with remove button ──────────────────────────────────────
@@ -62,9 +79,7 @@ function ImageThumb({
     <div className="relative group w-24 h-24 rounded border border-charcoal overflow-hidden flex-shrink-0">
       <img src={url} alt={`product image ${index + 1}`} className="w-full h-full object-cover" />
 
-      {/* overlay controls */}
       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-1">
-        {/* move arrows */}
         <div className="flex justify-between">
           <button
             type="button"
@@ -86,7 +101,6 @@ function ImageThumb({
           </button>
         </div>
 
-        {/* remove */}
         <button
           type="button"
           onClick={onRemove}
@@ -96,7 +110,6 @@ function ImageThumb({
         </button>
       </div>
 
-      {/* primary badge on first image */}
       {index === 0 && (
         <span className="absolute top-1 left-1 bg-brass text-white text-[10px] px-1 rounded leading-4">
           main
@@ -115,11 +128,13 @@ export default function ProductForm({
   onSubmit,
   submitLabel = "save product",
 }: ProductFormProps) {
-
   const [values, setValues] = useState<ProductFormValues>({
     ...EMPTY_VALUES,
     ...initialValues,
     imageUrls: initialValues?.imageUrls ?? [],
+    // Normalized here too, not just in the effect below — this is what
+    // guarantees the very first render never sees a raw string.
+    colors: normalizeColors(initialValues?.colors),
   });
   const [categories, setCategories] = useState<Category[]>([]);
 
@@ -127,19 +142,13 @@ export default function ProductForm({
     fetch("/api/categories")
       .then((res) => res.json())
       .then((data) => {
-        setCategories(data); // Assuming the API returns an array of category objects with a 'name' property
+        setCategories(data);
       })
       .catch((err) => {
         console.error("Failed to fetch categories:", err);
       });
   }, []);
 
-  // Only re-sync form state from initialValues when we're actually loading a
-  // *different* record (matched by _id, falling back to slug). Previously this
-  // effect re-ran on every render where the parent passed a new `initialValues`
-  // object reference (e.g. an inline object literal), which silently clobbered
-  // in-progress edits — including `stock` — back to the original server value
-  // right before submit. That's why stock changes looked like they "weren't saving."
   const loadedRecordIdRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
@@ -147,8 +156,6 @@ export default function ProductForm({
 
     const recordId = initialValues._id ?? initialValues.slug;
 
-    // Same record already loaded (or no stable id to compare) — don't overwrite
-    // whatever the user has typed so far.
     if (recordId !== undefined && recordId === loadedRecordIdRef.current) return;
 
     loadedRecordIdRef.current = recordId;
@@ -157,13 +164,13 @@ export default function ProductForm({
       ...EMPTY_VALUES,
       ...initialValues,
       imageUrls: initialValues.imageUrls ?? [],
+      colors: normalizeColors(initialValues.colors),
     });
   }, [initialValues]);
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  // Per-slot upload state
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
 
@@ -175,6 +182,17 @@ export default function ProductForm({
     field: K,
     value: ProductFormValues[K]
   ) => setValues((prev) => ({ ...prev, [field]: value }));
+
+  const [colorInput, setColorInput] = useState("#000000");
+
+  const addColor = () => {
+    if (values.colors.includes(colorInput)) return;
+    update("colors", [...values.colors, colorInput]);
+  };
+
+  const removeColor = (color: string) => {
+    update("colors", values.colors.filter((c) => c !== color));
+  };
 
   const handleNameChange = (name: string) => {
     update("name", name);
@@ -202,10 +220,8 @@ export default function ProductForm({
       return;
     }
 
-    // Slice to how many we can still accept
     const selected = Array.from(files).slice(0, remaining);
 
-    // Client-side validation
     for (const file of selected) {
       if (!file.type.startsWith("image/")) {
         setUploadError(`"${file.name}" is not an image file`);
@@ -241,7 +257,6 @@ export default function ProductForm({
       );
     } finally {
       setUploading(false);
-      // Reset input so same file can be re-selected after removal
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
@@ -402,7 +417,6 @@ export default function ProductForm({
           </span>
         </label>
 
-        {/* Thumbnails row */}
         {values.imageUrls.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-3">
             {values.imageUrls.map((url, idx) => (
@@ -419,7 +433,6 @@ export default function ProductForm({
           </div>
         )}
 
-        {/* Upload area */}
         {canAddMore && (
           <div
             onClick={() => fileInputRef.current?.click()}
@@ -453,7 +466,6 @@ export default function ProductForm({
           </div>
         )}
 
-        {/* Hidden multi-file input */}
         <input
           ref={fileInputRef}
           type="file"
@@ -487,17 +499,52 @@ export default function ProductForm({
             placeholder="S, M, L, XL, XXL"
           />
         </div>
+
         <div>
           <label className="mb-1.5 block text-sm font-medium text-charcoal">
-            Colors — hex codes{" "}
-            <span className="text-charcoal/50 font-normal">(optional)</span>
+            Colors <span className="text-charcoal/50 font-normal">(optional)</span>
           </label>
-          <input
-            className="h-10 w-full rounded border border-charcoal bg-ivory px-3 text-sm text-charcoal focus:outline-none focus:ring-1 focus:ring-brass"
-            value={values.colors}
-            onChange={(e) => update("colors", e.target.value)}
-            placeholder="#1C1B19, #6B5B45"
-          />
+
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              value={colorInput}
+              onChange={(e) => setColorInput(e.target.value)}
+              className="h-10 w-14 cursor-pointer rounded border border-charcoal p-0.5"
+            />
+            <button
+              type="button"
+              onClick={addColor}
+              className="h-10 rounded border border-charcoal px-3 text-sm text-charcoal hover:bg-charcoal hover:text-ivory transition-colors"
+            >
+              + Add color
+            </button>
+          </div>
+
+          {values.colors.length > 0 && (
+            <div className="mt-2.5 flex flex-wrap gap-2">
+              {values.colors.map((color) => (
+                <span
+                  key={color}
+                  className="flex items-center gap-1.5 rounded-full border border-charcoal/25 py-1 pl-1.5 pr-2 text-xs text-charcoal"
+                >
+                  <span
+                    className="h-4 w-4 rounded-full border border-charcoal/20"
+                    style={{ backgroundColor: color }}
+                  />
+                  {color}
+                  <button
+                    type="button"
+                    onClick={() => removeColor(color)}
+                    className="ml-0.5 text-charcoal/40 hover:text-red-600"
+                    aria-label={`remove ${color}`}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

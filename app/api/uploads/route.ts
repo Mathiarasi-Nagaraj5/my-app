@@ -2,18 +2,22 @@ import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { randomUUID } from "crypto";
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
-const ALLOWED_TYPES = [
+const PRODUCT_ALLOWED_TYPES = [
   "image/jpeg",
   "image/png",
   "image/webp",
   "image/gif",
 ];
 
+const HERO_ALLOWED_TYPES = ["image/png"];
+
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
+
+    const uploadType = formData.get("type")?.toString() ?? "product";
 
     const rawFiles = [
       ...formData.getAll("file"),
@@ -28,19 +32,35 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (rawFiles.length > 5) {
+    // Hero = only 1 PNG
+    if (uploadType === "hero" && rawFiles.length > 1) {
+      return NextResponse.json(
+        { error: "Only one hero image can be uploaded at a time" },
+        { status: 400 }
+      );
+    }
+
+    // Product = maximum 5
+    if (uploadType === "product" && rawFiles.length > 5) {
       return NextResponse.json(
         { error: "Maximum 5 images allowed per product" },
         { status: 400 }
       );
     }
 
-    // Validate files
+    const allowedTypes =
+      uploadType === "hero"
+        ? HERO_ALLOWED_TYPES
+        : PRODUCT_ALLOWED_TYPES;
+
     for (const file of rawFiles) {
-      if (!ALLOWED_TYPES.includes(file.type)) {
+      if (!allowedTypes.includes(file.type)) {
         return NextResponse.json(
           {
-            error: `File "${file.name}" is not a supported image type (jpg, png, webp, gif)`,
+            error:
+              uploadType === "hero"
+                ? `"${file.name}" is not a PNG image. Hero images must be PNG only.`
+                : `"${file.name}" is not a supported image type.`,
           },
           { status: 400 }
         );
@@ -49,7 +69,7 @@ export async function POST(req: NextRequest) {
       if (file.size > MAX_FILE_SIZE) {
         return NextResponse.json(
           {
-            error: `File "${file.name}" exceeds the 5 MB limit`,
+            error: `"${file.name}" exceeds the 5 MB limit`,
           },
           { status: 400 }
         );
@@ -59,10 +79,9 @@ export async function POST(req: NextRequest) {
     const imageUrls: string[] = [];
 
     for (const file of rawFiles) {
-      const ext =
-        file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-
-      const filename = `products/${randomUUID()}.${ext}`;
+      const filename = `${
+        uploadType === "hero" ? "hero" : "products"
+      }/${randomUUID()}.png`;
 
       const blob = await put(filename, file, {
         access: "public",
@@ -79,7 +98,7 @@ export async function POST(req: NextRequest) {
       { status: 200 }
     );
   } catch (err) {
-    console.error("POST /api/upload error:", err);
+    console.error("POST /api/uploads error:", err);
 
     return NextResponse.json(
       {

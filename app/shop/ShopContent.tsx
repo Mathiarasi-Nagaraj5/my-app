@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 import Breadcrumb from "../../components/ui/Breadcrumb";
 import Button from "../../components/ui/Button";
@@ -28,6 +28,8 @@ const URL_SORT_MAP: Record<string, SortOption> = {
 };
 
 export default function ShopContent() {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -44,13 +46,21 @@ export default function ShopContent() {
 
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
-  // Re-sync category + sort from the URL whenever it changes. Without this,
-  // clicking a Navbar link while already on /shop does nothing — Next.js
-  // reuses this same component instance instead of remounting it, so the
-  // useState initializers above only ever run once.
+  // Tracks the last category value WE applied to the URL via filter-driven
+  // updates below — lets the URL→filters effect tell the difference between
+  // "the URL changed because a filter changed" (ignore, we already have the
+  // right state) vs "the URL changed for an external reason, e.g. a Navbar
+  // link clicked while already on /shop" (do resync).
+  const lastAppliedUrlCategory = useRef(searchParams.get("category"));
+
+  // URL → filters: only reacts to EXTERNAL navigation changes, not the ones
+  // our own filters → URL effect below just caused.
   useEffect(() => {
     const categoryFromUrl = searchParams.get("category");
     const sortFromUrl = searchParams.get("sort");
+
+    if (categoryFromUrl === lastAppliedUrlCategory.current) return;
+    lastAppliedUrlCategory.current = categoryFromUrl;
 
     setFilters((prev) => ({
       ...prev,
@@ -62,6 +72,28 @@ export default function ShopContent() {
     }
   }, [searchParams]);
 
+  // filters → URL: keeps the address bar in sync whenever a filter changes
+  // (checkbox click, sort change) — this is what was missing entirely
+  // before; filter clicks only ever updated local state, never the URL.
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    filters.categories.forEach((cat) => params.append("category", cat));
+
+    const sortParam = Object.entries(URL_SORT_MAP).find(([, v]) => v === sort)?.[0];
+    if (sortParam && sortParam !== "featured") params.set("sort", sortParam);
+
+    const qs = params.toString();
+    const nextUrl = qs ? `${pathname}?${qs}` : pathname;
+
+    // Record what we're about to set, so the URL→filters effect above
+    // recognizes this change as self-caused and skips resyncing.
+    lastAppliedUrlCategory.current = filters.categories[0] ?? null;
+
+    router.replace(nextUrl, { scroll: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters, sort]);
+
   useEffect(() => {
     async function fetchProducts() {
       try {
@@ -69,9 +101,7 @@ export default function ShopContent() {
 
         const params = new URLSearchParams();
 
-        if (filters.categories.length) {
-          params.append("category", filters.categories[0]);
-        }
+        filters.categories.forEach((cat) => params.append("category", cat));
 
         switch (sort) {
           case "price-low-high":

@@ -5,7 +5,15 @@ import AnnouncementBar from "./AnnouncementBar";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 
-export default function SiteChrome({ children }: { children: React.ReactNode }) {
+interface SiteChromeProps {
+  children: React.ReactNode;
+  topBar?: string[];
+}
+
+export default function SiteChrome({
+  children,
+  topBar = [],
+}: SiteChromeProps) {
   const pathname = usePathname();
   const isAdmin = pathname?.startsWith("/admin");
 
@@ -13,7 +21,7 @@ export default function SiteChrome({ children }: { children: React.ReactNode }) 
 
   return (
     <>
-      <AnnouncementBar />
+      <AnnouncementBar items={topBar} />
       <Navbar />
       <main>{children}</main>
       <Footer />

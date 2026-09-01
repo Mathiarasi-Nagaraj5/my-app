@@ -75,7 +75,7 @@ export default function ProductInfo({ product, onSizeGuideClick }: ProductInfoPr
     });
     router.push("/checkout");
   };
-
+console.log(product);
   return (
     <div>
       {product.isBestseller && <Badge variant="neutral">bestseller</Badge>}
