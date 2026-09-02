@@ -91,20 +91,24 @@ export async function POST(req: NextRequest) {
       imageUrls.push(blob.url);
     }
 
-    return NextResponse.json(
-      {
-        imageUrls,
-      },
-      { status: 200 }
-    );
+   return NextResponse.json(
+  {
+    success: true,
+    imageUrls,           // ProductForm reads this
+    url: imageUrls[0],   // SiteContentEditor reads this
+  },
+  { status: 200 }
+);
   } catch (err) {
     console.error("POST /api/uploads error:", err);
 
-    return NextResponse.json(
-      {
-        error: "Upload failed. Please try again.",
-      },
-      { status: 500 }
-    );
+   return NextResponse.json(
+  {
+    success: false,
+    error: "Only one hero image can be uploaded at a time",   // ProductForm reads this
+    message: "Only one hero image can be uploaded at a time", // SiteContentEditor reads this
+  },
+  { status: 400 }
+);
   }
 }
