@@ -198,27 +198,6 @@ export default function HeroSlider({ slides = [] }: HeroSliderProps) {
               zIndex: isActive ? 2 : 1,
             }}
           >
-            {/* ─────────────── IMAGE ─────────────── */}
-
-            <img
-              src={slide.image}
-              alt=""
-              aria-hidden="true"
-              draggable={false}
-              className="
-                hidden
-                sm:block
-                absolute
-                bottom-0
-                right-[6%]
-                h-[98%]
-                w-auto
-                max-w-[68%]
-                object-contain
-                object-bottom
-              "
-            />
-
             {/* ─────────────── BACKGROUND ─────────────── */}
 
             <div
@@ -242,6 +221,32 @@ export default function HeroSlider({ slides = [] }: HeroSliderProps) {
                   )
                 `,
               }}
+            />
+
+            {/* ─────────────── IMAGE ───────────────
+                Rendered AFTER the background + gradient layers so it
+                paints on top of them instead of being covered by the
+                opaque background div. This was the bug: the image used
+                to render first, then the solid #EDE7DD div painted
+                directly over it. */}
+
+            <img
+              src={slide.image}
+              alt=""
+              aria-hidden="true"
+              draggable={false}
+              className="
+                hidden
+                sm:block
+                absolute
+                bottom-0
+                right-[6%]
+                h-[98%]
+                w-auto
+                max-w-[68%]
+                object-contain
+                object-bottom
+              "
             />
 
             {/* ─────────────── CONTENT ─────────────── */}
