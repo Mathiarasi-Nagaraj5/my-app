@@ -14,7 +14,7 @@ interface AuthContextValue {
   user: AuthUser | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<{ ok: boolean; message?: string }>;
-  adminLogin: (email: string, password: string) => Promise<{ ok: boolean; message?: string }>;
+  adminLogin: (fullName: string, password: string) => Promise<{ ok: boolean; message?: string }>;
   signup: (fullName: string, email: string, password: string, phone?: string) => Promise<{ ok: boolean; message?: string }>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
@@ -55,11 +55,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Separate call from `login` — hits /api/auth/admin-login, which never
   // issues a cookie unless the account's role is actually "admin". This is
   // what AdminLoginPage should call, not `login`.
-  const adminLogin: AuthContextValue["adminLogin"] = async (email, password) => {
+  const adminLogin: AuthContextValue["adminLogin"] = async (fullName, password) => {
     const res = await fetch("/api/auth/admin-login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ fullName, password }),
     });
     const data = await res.json();
     if (!res.ok || !data.success) return { ok: false, message: data.message ?? "login failed" };

@@ -8,7 +8,7 @@ import PasswordInput from "@/components/auth/PasswordInput";
 export default function AdminLoginPage() {
   const { adminLogin } = useAuth();
   const router = useRouter();
-  const [username, setUsername] = useState("");
+  const [fullName, setfullName] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -18,7 +18,7 @@ export default function AdminLoginPage() {
     setSubmitting(true);
     setError("");
 
-    const result = await adminLogin(username, password);
+    const result = await adminLogin(fullName, password);
     console.log("Admin login result:", result);
     if (!result.ok) {
       setError(result.message ?? "login failed");
@@ -38,9 +38,9 @@ console.log("Admin login successful, redirecting to /admin/orders");
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <input
           type="text"
-          placeholder="username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          placeholder="User Name"
+          value={fullName}
+          onChange={(e) => setfullName(e.target.value)}
           className="rounded-md border border-gray-300 px-3 py-2 text-sm"
           required
         />

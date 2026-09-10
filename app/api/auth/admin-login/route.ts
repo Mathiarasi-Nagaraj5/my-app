@@ -16,13 +16,14 @@ export async function POST(req: Request) {
 
   try {
     await connectDB();
-    const { username, password } = await req.json();
+    const { fullName, password } = await req.json();
 
-    if (!username || !password) {
-      return NextResponse.json({ success: false, message: "username and password are required" }, { status: 400 });
+    console.log("Admin login attempt:", { fullName, password: password ? "****" : undefined });
+    if (!fullName || !password) {
+      return NextResponse.json({ success: false, message: "fullName and password are required" }, { status: 400 });
     }
 
-    const user = await User.findOne({ username: username.trim().toLowerCase() });
+    const user = await User.findOne({ fullName: fullName.trim().toLowerCase() });
 
     // Same generic message regardless of which check fails — no account
     // enumeration, no "this account isn't an admin" leak either.
@@ -46,7 +47,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      data: { id: user._id, fullName: user.fullName, username: user.username, role: user.role },
+      data: { id: user._id, fullName: user.fullName, role: user.role },
     });
   } catch (error) {
     console.error("Admin Login Error:", error);
