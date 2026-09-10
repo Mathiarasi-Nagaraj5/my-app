@@ -34,8 +34,8 @@ const HeroSlideSchema = new Schema<IHeroSlide>(
 
 const SiteContentSchema = new Schema<ISiteContent>(
   {
-    topBar: { type: [String], default: ["Free delivery above ₹999", "Cash on delivery available", "Easy 7-day returns"] },
-    marquee: { type: [String], default: ["✨ Free Shipping Above ₹999", "💖 Premium Quality", "🚚 Fast Delivery", "🎁 New Collection Available"] },
+    topBar: { type: [String], default: ["Free Delivery on Online Payments", "Cash on delivery available", "Easy 7-day returns"] },
+    marquee: { type: [String], default: ["✨ Free Shipping on Online Payments", "💖 Premium Quality", "🚚 Fast Delivery", "🎁 New Collection Available"] },
     heroSlides: { type: [HeroSlideSchema], default: [] },
   },
   { timestamps: true }

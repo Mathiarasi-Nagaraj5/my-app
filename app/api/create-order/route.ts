@@ -65,7 +65,7 @@ export async function POST(req: Request) {
         price: product.price,
         quantity: item.quantity,
         size: item.size,
-        color: item.color,
+        color: item.color
       };
     });
 

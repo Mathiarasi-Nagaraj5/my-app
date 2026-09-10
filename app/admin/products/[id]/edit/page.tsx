@@ -36,6 +36,7 @@ useEffect(() => {
         isBestseller: product.isBestseller,
         sizes: (product.sizes ?? []).join(", "),
         colors: (product.colors ?? []).join(", "),
+        description: product.description, // Add this line to set the description
       });
     })
     .catch((err) => {

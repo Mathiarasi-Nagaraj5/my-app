@@ -5,7 +5,7 @@ const DETAILS = [
   { icon: Ruler, text: "true oversized, drop-shoulder fit" },
   { icon: Shirt, text: "ribbed crew neck" },
   { icon: Tag, text: "pre-shrunk fabric" },
-  { icon: MapPin, text: "made in india" },
+  { icon: MapPin, text: "Made in india" },
 ];
 
 export default function ProductDescription() {

@@ -7,6 +7,8 @@ import { useState, useRef, useEffect } from "react";
 export interface ProductFormValues {
   name: string;
   slug: string;
+  sku: string;
+  description: string;
   category: string[];
   price: number;
   originalPrice?: number;
@@ -25,6 +27,8 @@ interface Category {
 const EMPTY_VALUES: ProductFormValues = {
   name: "",
   slug: "",
+  sku: "",
+  description: "",
   category: ["t-shirts"],
   price: 0,
   originalPrice: undefined,
@@ -285,6 +289,7 @@ export default function ProductForm({
 
     if (!values.name.trim()) { setError("Product name is required"); return; }
     if (!values.slug.trim()) { setError("Slug is required"); return; }
+    if (!values.sku.trim()) { setError("SKU is required"); return; }
     if (values.price <= 0)   { setError("Enter a valid price"); return; }
     if (!values.stock || values.stock < 1) {
       setError("Stock must be at least 1");
@@ -338,25 +343,53 @@ export default function ProductForm({
         </div>
       </div>
 
-      {/* Category */}
+      {/* SKU + Category */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-charcoal">
+            SKU <span className="text-red-500">*</span>
+          </label>
+          <input
+            className="h-10 w-full rounded border border-charcoal bg-ivory px-3 text-sm text-charcoal focus:outline-none focus:ring-1 focus:ring-brass"
+            value={values.sku}
+            onChange={(e) => update("sku", e.target.value)}
+            placeholder="e.g. TSH-BLK-001"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-charcoal">
+            Category
+          </label>
+
+          <select
+            value={values.category?.[0] ?? ""}
+            onChange={(e) => update("category", [e.target.value])}
+            className="h-10 w-full rounded border border-charcoal bg-ivory px-3 text-sm text-charcoal focus:outline-none focus:ring-1 focus:ring-brass"
+          >
+            <option value="">Select a category</option>
+
+            {categories.map((category) => (
+              <option key={category._id ?? category.slug} value={category.slug ?? category.name}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Description */}
       <div>
         <label className="mb-1.5 block text-sm font-medium text-charcoal">
-          Category
+          Description
         </label>
-
-        <select
-          value={values.category?.[0] ?? ""}
-          onChange={(e) => update("category", [e.target.value])}
-          className="h-10 w-full rounded border border-charcoal bg-ivory px-3 text-sm text-charcoal focus:outline-none focus:ring-1 focus:ring-brass"
-        >
-          <option value="">Select a category</option>
-
-          {categories.map((category) => (
-            <option key={category._id ?? category.slug} value={category.slug ?? category.name}>
-              {category.name}
-            </option>
-          ))}
-        </select>
+        <textarea
+          rows={4}
+          className="w-full rounded border border-charcoal bg-ivory px-3 py-2 text-sm text-charcoal focus:outline-none focus:ring-1 focus:ring-brass resize-y"
+          value={values.description}
+          onChange={(e) => update("description", e.target.value)}
+          placeholder="Fabric, fit, care instructions, etc."
+        />
       </div>
 
       {/* Price + Original Price + Stock */}

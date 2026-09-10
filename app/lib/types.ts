@@ -6,6 +6,7 @@ export interface Product {
   price: number;
   originalPrice?: number; // present when the item is discounted
   rating: number;
+  description: string;
   reviewCount: number;
   imageUrls: string[];
   isBestseller?: boolean;

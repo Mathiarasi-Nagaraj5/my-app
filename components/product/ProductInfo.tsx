@@ -104,6 +104,13 @@ console.log(product);
       </div>
       <p className="mt-1 text-xs text-charcoal/55">inclusive of all taxes</p>
 
+      {/* description */}
+      {product.description && (
+        <p className="mt-4 text-sm leading-relaxed text-charcoal/70 whitespace-pre-line">
+          {product.description}
+        </p>
+      )}
+
       {/* color */}
       {product.colors && product.colors.length > 0 && (
         <div className="mt-6">

@@ -109,7 +109,7 @@ export default function SiteContentEditor() {
               <input
                 value={item}
                 onChange={(e) => updateListItem("topBar", idx, e.target.value)}
-                placeholder="e.g. Free delivery above ₹999"
+                placeholder="e.g. Free Delivery on Online Payments"
                 className="h-9 flex-1 rounded border border-charcoal/25 px-3 text-sm"
               />
               <button
