@@ -186,7 +186,7 @@ export default function ProductRail({
                   items-center
                   justify-center
                   rounded-full
-                  bg-white/90
+                  bg-pink/90
                   text-black
                   shadow-md
                   transition
@@ -213,7 +213,7 @@ export default function ProductRail({
                   items-center
                   justify-center
                   rounded-full
-                  bg-white/90
+                  bg-pink/90
                   text-black
                   shadow-md
                   transition
