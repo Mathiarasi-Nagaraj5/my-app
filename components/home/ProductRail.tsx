@@ -187,10 +187,12 @@ export default function ProductRail({
                   justify-center
                   rounded-full
                   bg-pink/90
-                  text-black
+                  text-lg
+                  text-white
                   shadow-md
                   transition
                   hover:bg-white
+                  hover:text-black
                 "
               >
                 ←
@@ -213,11 +215,13 @@ export default function ProductRail({
                   items-center
                   justify-center
                   rounded-full
+                  text-lg
                   bg-pink/90
-                  text-black
+                  text-white
                   shadow-md
                   transition
                   hover:bg-white
+                  hover:text-black
                 "
               >
                 →
