@@ -6,6 +6,7 @@ import { Search, User, ShoppingBag, Heart, Menu, X } from "lucide-react";
 import { useCart } from "@/app/lib/context/CartContext";
 import { useWishlist } from "@/app/lib/context/WishlistContext";
 import { useAuth } from "../../app/lib/context/AuthContext";
+import Image from "next/image";
 
 
 interface Category {
@@ -37,7 +38,7 @@ export default function Navbar() {
     <header className="bg-ivory">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
         <Link href="/" className="text-3xl font-stretch-50% tracking-wide text-charcoal">
-          ELITE SOUL
+          <Image src="/images/logo.png" alt="Elite Soul" width={180} height={80} />
         </Link>
 
         {/* desktop links */}
