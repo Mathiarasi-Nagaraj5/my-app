@@ -1,3 +1,4 @@
+// File: app/api/uploads/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { randomUUID } from "crypto";
@@ -12,6 +13,18 @@ const PRODUCT_ALLOWED_TYPES = [
 ];
 
 const HERO_ALLOWED_TYPES = ["image/png"];
+
+const REVIEW_ALLOWED_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+];
+
+const MAX_PER_TYPE: Record<string, number> = {
+  hero: 1,
+  product: 5,
+  review: 3,
+};
 
 export async function POST(req: NextRequest) {
   try {
@@ -32,18 +45,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Hero = only 1 PNG
-    if (uploadType === "hero" && rawFiles.length > 1) {
+    const max = MAX_PER_TYPE[uploadType] ?? 5;
+    if (rawFiles.length > max) {
       return NextResponse.json(
-        { error: "Only one hero image can be uploaded at a time" },
-        { status: 400 }
-      );
-    }
-
-    // Product = maximum 5
-    if (uploadType === "product" && rawFiles.length > 5) {
-      return NextResponse.json(
-        { error: "Maximum 5 images allowed per product" },
+        {
+          error:
+            uploadType === "hero"
+              ? "Only one hero image can be uploaded at a time"
+              : `Maximum ${max} images allowed`,
+        },
         { status: 400 }
       );
     }
@@ -51,6 +61,8 @@ export async function POST(req: NextRequest) {
     const allowedTypes =
       uploadType === "hero"
         ? HERO_ALLOWED_TYPES
+        : uploadType === "review"
+        ? REVIEW_ALLOWED_TYPES
         : PRODUCT_ALLOWED_TYPES;
 
     for (const file of rawFiles) {
@@ -76,12 +88,13 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const folder =
+      uploadType === "hero" ? "hero" : uploadType === "review" ? "reviews" : "products";
+
     const imageUrls: string[] = [];
 
     for (const file of rawFiles) {
-      const filename = `${
-        uploadType === "hero" ? "hero" : "products"
-      }/${randomUUID()}.png`;
+      const filename = `${folder}/${randomUUID()}.png`;
 
       const blob = await put(filename, file, {
         access: "public",
@@ -91,24 +104,24 @@ export async function POST(req: NextRequest) {
       imageUrls.push(blob.url);
     }
 
-   return NextResponse.json(
-  {
-    success: true,
-    imageUrls,           // ProductForm reads this
-    url: imageUrls[0],   // SiteContentEditor reads this
-  },
-  { status: 200 }
-);
+    return NextResponse.json(
+      {
+        success: true,
+        imageUrls, // ProductForm / ReviewForm read this
+        url: imageUrls[0], // SiteContentEditor reads this
+      },
+      { status: 200 }
+    );
   } catch (err) {
     console.error("POST /api/uploads error:", err);
 
-   return NextResponse.json(
-  {
-    success: false,
-    error: "Only one hero image can be uploaded at a time",   // ProductForm reads this
-    message: "Only one hero image can be uploaded at a time", // SiteContentEditor reads this
-  },
-  { status: 400 }
-);
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Upload failed. Please try again.",
+        message: "Upload failed. Please try again.",
+      },
+      { status: 400 }
+    );
   }
 }

@@ -1,17 +1,22 @@
+// File: app/api/reviews/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/app/lib/mongodb";
 import Review from "@/app/models/Review";
-import Order from "@/app/models/Order";
+
+// ⚠️ SECURITY TODO: same as /api/reviews/admin/route.ts — swap this for your
+// real admin-session verification helper. As written this import will not
+// resolve. Without a real check, the isAdmin branches below trust a plain
+// boolean from the request body, which is NOT safe to ship.
+import { requireAdmin } from "@/app/lib/auth/requireAdmin";
 
 type Params = { params: Promise<{ id: string }> };
 
 /**
  * PATCH /api/reviews/:id
  *
- * Customer edits their own review (rating + comment).
- * Only the original reviewer can edit. Order must still be delivered.
- *
- * Body: { userId: string, rating?: number, comment?: string }
+ * Two modes:
+ *  - Customer editing their own review: body { userId, rating?, comment?, images? }
+ *  - Admin moderating: body { isAdmin: true, isVisible?, rating?, comment?, images? }
  */
 export async function PATCH(req: NextRequest, { params }: Params) {
   try {
@@ -19,14 +24,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
     const { id } = await params;
     const body = await req.json();
-    const { userId, rating, comment } = body;
-
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, message: "userId is required" },
-        { status: 400 }
-      );
-    }
+    const { userId, rating, comment, images, isVisible, isAdmin } = body;
 
     const review = await Review.findById(id);
     if (!review) {
@@ -36,15 +34,26 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       );
     }
 
-    // Only the original reviewer can edit
-    if (review.userId?.toString() !== userId) {
-      return NextResponse.json(
-        { success: false, message: "You are not authorised to edit this review" },
-        { status: 403 }
-      );
+    if (isAdmin) {
+      const admin = await requireAdmin();
+      if (!admin) {
+        return NextResponse.json({ success: false, message: "unauthorized" }, { status: 401 });
+      }
+    } else {
+      if (!userId) {
+        return NextResponse.json(
+          { success: false, message: "userId is required" },
+          { status: 400 }
+        );
+      }
+      if (review.userId?.toString() !== userId) {
+        return NextResponse.json(
+          { success: false, message: "You are not authorised to edit this review" },
+          { status: 403 }
+        );
+      }
     }
 
-    // Validate fields if provided
     if (rating !== undefined) {
       if (typeof rating !== "number" || rating < 1 || rating > 5) {
         return NextResponse.json(
@@ -65,6 +74,15 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       review.comment = comment.trim();
     }
 
+    if (images !== undefined) {
+      review.images = Array.isArray(images) ? images.slice(0, 3) : [];
+    }
+
+    // Only an admin request can flip visibility
+    if (isAdmin && typeof isVisible === "boolean") {
+      review.isVisible = isVisible;
+    }
+
     await review.save();
 
     return NextResponse.json({ success: true, data: review });
@@ -79,9 +97,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
 /**
  * DELETE /api/reviews/:id
- *
- * Customer deletes their own review.
- * Body: { userId: string }
+ * body: { userId } for a customer deleting their own review, or { isAdmin: true } for admin
  */
 export async function DELETE(req: NextRequest, { params }: Params) {
   try {
@@ -89,14 +105,7 @@ export async function DELETE(req: NextRequest, { params }: Params) {
 
     const { id } = await params;
     const body = await req.json();
-    const { userId } = body;
-
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, message: "userId is required" },
-        { status: 400 }
-      );
-    }
+    const { userId, isAdmin } = body;
 
     const review = await Review.findById(id);
     if (!review) {
@@ -106,15 +115,27 @@ export async function DELETE(req: NextRequest, { params }: Params) {
       );
     }
 
-    if (review.userId?.toString() !== userId) {
-      return NextResponse.json(
-        { success: false, message: "You are not authorised to delete this review" },
-        { status: 403 }
-      );
+    if (isAdmin) {
+      const admin = await requireAdmin();
+      if (!admin) {
+        return NextResponse.json({ success: false, message: "unauthorized" }, { status: 401 });
+      }
+    } else {
+      if (!userId) {
+        return NextResponse.json(
+          { success: false, message: "userId is required" },
+          { status: 400 }
+        );
+      }
+      if (review.userId?.toString() !== userId) {
+        return NextResponse.json(
+          { success: false, message: "You are not authorised to delete this review" },
+          { status: 403 }
+        );
+      }
     }
 
     await review.deleteOne();
-
 
     return NextResponse.json({
       success: true,
