@@ -5,7 +5,7 @@ import ProductDetailShell from "@/components/product/ProductDetailShell";
 import ProductDescription from "@/components/product/ProductDescription";
 import ProductReviews from "@/components/product/ProductReviews";
 import RelatedProducts from "@/components/product/RelatedProducts";
-
+import { CONTACT_NUMBER } from "@/app/lib/contact";
 import { getProductBySlug } from "@/services/product.service";
 
 export default async function ProductDetailPage({
@@ -43,8 +43,7 @@ export default async function ProductDetailPage({
         ]}
       />
 
-      <ProductDetailShell product={product} />
-
+       <ProductDetailShell product={product} whatsappNumber={CONTACT_NUMBER} />
       <ProductDescription />
 
       <ProductReviews />

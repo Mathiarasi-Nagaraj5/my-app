@@ -9,7 +9,7 @@ import StarRating from "@/components/ui/StarRating";
 import QuantityStepper from "@/components/ui/QuantityStepper";
 import { useCart } from "@/app/lib/context/CartContext";
 import { Truck, Wallet } from "lucide-react";
-
+import { buildWhatsAppLink } from "@/app/lib/contact";
 const formatINR = (value: number) => `₹${value.toLocaleString("en-IN")}`;
 
 interface ProductInfoProps {
@@ -17,7 +17,7 @@ interface ProductInfoProps {
   onSizeGuideClick: () => void;
 }
 
-export default function ProductInfo({ product, onSizeGuideClick }: ProductInfoProps) {
+export default function ProductInfo({ product, onSizeGuideClick, whatsappNumber }: ProductInfoProps & { whatsappNumber: string }) {
   const router = useRouter();
   const { addItem } = useCart();
   const [selectedColor, setSelectedColor] = useState(product.colors?.[0]);
@@ -76,6 +76,21 @@ export default function ProductInfo({ product, onSizeGuideClick }: ProductInfoPr
     router.push("/checkout");
   };
 console.log(product);
+
+const handleCustomizeRequest = () => {
+  const lines = [
+    `Hi! I'd like to ask about customizing this product:`,
+    ``,
+    `${product.name}`,
+    selectedColor ? `Color: ${selectedColor}` : null,
+    selectedSize ? `Size: ${selectedSize}` : null,
+    typeof window !== "undefined" ? window.location.href : "",
+    ``,
+    `I'm interested in custom fit / size / embroidery options.`,
+  ].filter(Boolean).join("\n");
+
+  window.open(buildWhatsAppLink(lines, whatsappNumber), "_blank");
+};
   return (
     <div>
       {product.isBestseller && <Badge variant="neutral">bestseller</Badge>}
@@ -190,6 +205,14 @@ console.log(product);
       <Button variant="secondary" fullWidth className="mt-3" onClick={handleBuyNow}>
         Buy now
       </Button>
+      <Button
+  variant="customize"
+  fullWidth
+  className="mt-3"
+  onClick={handleCustomizeRequest}
+>
+  Customize on WhatsApp
+</Button>
 
       {/* delivery check */}
       <div className="mt-6 border-t border-charcoal/15 pt-5">

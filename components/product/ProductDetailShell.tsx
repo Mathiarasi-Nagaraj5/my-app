@@ -6,7 +6,7 @@ import Gallery from "./Gallery";
 import ProductInfo from "./ProductInfo";
 import SizeGuideModal from "./SizeGuideModal";
 
-export default function ProductDetailShell({ product }: { product: Product }) {
+export default function ProductDetailShell({ product, whatsappNumber }: { product: Product; whatsappNumber: string }) {
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
 
   return (
@@ -15,6 +15,7 @@ export default function ProductDetailShell({ product }: { product: Product }) {
         <Gallery imageUrls={product.imageUrls} productName={product.name} />
         <ProductInfo
           product={product}
+          whatsappNumber={whatsappNumber}
           onSizeGuideClick={() => setSizeGuideOpen(true)}
         />
       </div>
