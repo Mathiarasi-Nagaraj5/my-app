@@ -46,7 +46,7 @@ export default async function ProductDetailPage({
        <ProductDetailShell product={product} whatsappNumber={CONTACT_NUMBER} />
       <ProductDescription />
 
-      <ProductReviews />
+      <ProductReviews productId={product._id} />
 
       <RelatedProducts products={relatedProducts} />
     </>
