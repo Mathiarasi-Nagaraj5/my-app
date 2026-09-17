@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import ReviewComposer, { ComposedReview } from "@/components/admin/Reviewcomposer";
+import ReviewComposer, { ComposedReview } from "@/components/admin/ReviewComposer";
 import ProductReviewsManager from "@/components/admin/ProductsReviewsManager";
 
 // ─── Types ────────────────────────────────────────────────────────────────────

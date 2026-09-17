@@ -3,7 +3,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import ReviewStars from "@/components/ui/ReviewStars";
-import ReviewComposer, { ComposedReview } from "@/components/admin/Reviewcomposer";
+import ReviewComposer, { ComposedReview } from "@/components/admin/ReviewComposer";
 
 interface AdminReview {
   _id: string;
