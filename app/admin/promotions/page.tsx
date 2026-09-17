@@ -1,23 +1,10 @@
+import connectDB from "@/app/lib/mongodb";
+import PromoCode from "@/app/models/Promocode";
 import PromosPageClient from "@/components/admin/PromoPageClient";
-import { PromoCodeRecord } from "@/components/admin/PromoTable";
-
-async function getPromos(): Promise<PromoCodeRecord[]> {
-  const baseUrl = process.env.NEXT_API_URL || "http://localhost:3000";
-
-  const res = await fetch(`${baseUrl}/api/promo`, {
-    cache: "no-store",
-  });
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch promo codes");
-  }
-
-  const json = await res.json();
-  return json.data as PromoCodeRecord[];
-}
 
 export default async function PromosPage() {
-  const promos = await getPromos();
+  await connectDB();
+  const promos = await PromoCode.find().sort({ createdAt: -1 }).lean();
 
   return (
     <div className="p-6">
@@ -28,7 +15,7 @@ export default async function PromosPage() {
         </p>
       </div>
 
-      <PromosPageClient initialPromos={promos} />
+      <PromosPageClient initialPromos={JSON.parse(JSON.stringify(promos))} />
     </div>
   );
 }
