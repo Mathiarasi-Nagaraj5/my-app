@@ -1,3 +1,4 @@
+// File: app/(shop)/product/[slug]/page.tsx  (adjust path to match your actual route)
 import { notFound } from "next/navigation";
 
 import Breadcrumb from "@/components/ui/Breadcrumb";
@@ -43,9 +44,11 @@ export default async function ProductDetailPage({
         ]}
       />
 
-       <ProductDetailShell product={product} whatsappNumber={CONTACT_NUMBER} />
+      <ProductDetailShell product={product} whatsappNumber={CONTACT_NUMBER} />
       <ProductDescription />
 
+      {/* ProductReviews fetches this product's own reviews and renders
+          nothing if there are none — see components/product/ProductReviews.tsx */}
       <ProductReviews productId={product._id} />
 
       <RelatedProducts products={relatedProducts} />
