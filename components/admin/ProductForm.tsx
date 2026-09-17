@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import ReviewComposer, { ComposedReview } from "@/components/admin/Reviewcomposer";
+import ProductReviewsManager from "@/components/admin/ProductsReviewsManager";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -41,7 +43,14 @@ const EMPTY_VALUES: ProductFormValues = {
 
 interface ProductFormProps {
   initialValues?: Partial<ProductFormValues> & { _id?: string };
-  onSubmit: (values: ProductFormValues) => Promise<void> | void;
+  // For a brand-new product, onSubmit must resolve with the created
+  // document's id — that's the only way this form learns the id needed to
+  // attach the reviews staged below to the right product. If you're
+  // editing an existing product, the return value is ignored (initialValues._id
+  // is used instead).
+  onSubmit: (
+    values: ProductFormValues
+  ) => Promise<{ _id?: string } | void> | { _id?: string } | void;
   submitLabel?: string;
 }
 
@@ -175,6 +184,28 @@ export default function ProductForm({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
+  // ── Staged reviews (create-mode only) ────────────────────────────────────
+  // A brand-new product has no _id yet, so reviews added here can't be
+  // saved to the DB until the product itself is created. They're held
+  // locally and flushed to /api/reviews/admin right after a successful
+  // submit, using the newly-created product's id.
+  const isEditing = Boolean(initialValues?._id);
+  const [pendingReviews, setPendingReviews] = useState<
+    (ComposedReview & { localId: string })[]
+  >([]);
+  const [reviewFlushError, setReviewFlushError] = useState("");
+
+  const stageReview = (review: ComposedReview) => {
+    setPendingReviews((prev) => [
+      ...prev,
+      { ...review, localId: `${Date.now()}-${Math.random()}` },
+    ]);
+  };
+
+  const removeStagedReview = (localId: string) => {
+    setPendingReviews((prev) => prev.filter((r) => r.localId !== localId));
+  };
+
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
 
@@ -301,8 +332,33 @@ export default function ProductForm({
     }
 
     setSaving(true);
+    setReviewFlushError("");
     try {
-      await onSubmit(values);
+      const result = await onSubmit(values);
+      const productId = initialValues?._id ?? result?._id;
+
+      if (productId && pendingReviews.length > 0) {
+        const failures: string[] = [];
+        for (const { localId: _localId, ...review } of pendingReviews) {
+          try {
+            const res = await fetch("/api/reviews/admin", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ productId, ...review }),
+            });
+            if (!res.ok) failures.push(review.customerName);
+          } catch {
+            failures.push(review.customerName);
+          }
+        }
+        if (failures.length > 0) {
+          setReviewFlushError(
+            `Product saved, but these reviews failed to save: ${failures.join(", ")}`
+          );
+        } else {
+          setPendingReviews([]);
+        }
+      }
     } catch {
       setError("Something went wrong while saving. Please try again.");
     } finally {
@@ -579,6 +635,53 @@ export default function ProductForm({
             </div>
           )}
         </div>
+      </div>
+
+      {/* Reviews */}
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-charcoal">
+          Reviews
+        </label>
+
+        {isEditing ? (
+          <ProductReviewsManager productId={initialValues!._id!} />
+        ) : (
+          <div className="flex flex-col gap-2">
+            <ReviewComposer onAdd={stageReview} submitLabel="+ Stage review" />
+
+            {pendingReviews.length > 0 && (
+              <div className="flex flex-col gap-2">
+                <p className="text-xs text-charcoal/50">
+                  {pendingReviews.length} review(s) will be saved once the product is created:
+                </p>
+                {pendingReviews.map((r) => (
+                  <div
+                    key={r.localId}
+                    className="flex items-start justify-between gap-3 rounded border border-charcoal/15 p-2.5"
+                  >
+                    <div>
+                      <p className="text-xs font-medium text-charcoal">
+                        {r.customerName} · {r.rating}★
+                      </p>
+                      <p className="mt-0.5 text-xs text-charcoal/60">{r.comment}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeStagedReview(r.localId)}
+                      className="shrink-0 text-xs text-charcoal/40 hover:text-red-600"
+                    >
+                      remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {reviewFlushError && (
+          <p className="mt-1.5 text-xs text-red-600">{reviewFlushError}</p>
+        )}
       </div>
 
       {/* Bestseller toggle */}

@@ -1,7 +1,9 @@
+// File: app/models/Product.ts
 import mongoose, { Schema, models, model } from "mongoose";
 
 export interface ProductDocument extends mongoose.Document {
   slug: string;
+  sku: string;
   name: string;
   category: string[];
   price: number;
@@ -21,6 +23,7 @@ export interface ProductDocument extends mongoose.Document {
 const ProductSchema = new Schema<ProductDocument>(
   {
     slug: { type: String, required: true, unique: true, index: true },
+    sku: { type: String, required: true, unique: true, index: true },
     name: { type: String, required: true },
     category: {
       type: [String],

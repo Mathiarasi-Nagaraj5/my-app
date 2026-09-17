@@ -2,13 +2,6 @@
 import { NextResponse } from "next/server";
 import connectDB from "@/app/lib/mongodb";
 import Review from "@/app/models/Review";
-
-// ⚠️ SECURITY TODO: wire in your real admin-session check here (the same
-// helper protecting your other /api/admin/* routes — e.g. reading the
-// cookie set by app/api/auth/admin-login/route.ts and verifying it). As
-// written this import will not resolve; replace it with your actual
-// session-verification function before deploying. Without it, this route
-// lets ANYONE create reviews for any product.
 import { requireAdmin } from "@/app/lib/auth/requireAdmin";
 
 // POST /api/reviews/admin

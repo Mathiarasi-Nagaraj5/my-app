@@ -2,11 +2,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/app/lib/mongodb";
 import Review from "@/app/models/Review";
-
-// ⚠️ SECURITY TODO: same as /api/reviews/admin/route.ts — swap this for your
-// real admin-session verification helper. As written this import will not
-// resolve. Without a real check, the isAdmin branches below trust a plain
-// boolean from the request body, which is NOT safe to ship.
 import { requireAdmin } from "@/app/lib/auth/requireAdmin";
 
 type Params = { params: Promise<{ id: string }> };
@@ -35,7 +30,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     }
 
     if (isAdmin) {
-      const admin = await requireAdmin();
+      const admin =  await requireAdmin();
       if (!admin) {
         return NextResponse.json({ success: false, message: "unauthorized" }, { status: 401 });
       }
