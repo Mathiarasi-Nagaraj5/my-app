@@ -2,7 +2,7 @@ import PromosPageClient from "@/components/admin/PromoPageClient";
 import { PromoCodeRecord } from "@/components/admin/PromoTable";
 
 async function getPromos(): Promise<PromoCodeRecord[]> {
-  const baseUrl = process.env.NEXT_APP_URL || "http://localhost:3000";
+  const baseUrl = process.env.NEXT_API_URL || "http://localhost:3000";
 
   const res = await fetch(`${baseUrl}/api/promo`, {
     cache: "no-store",

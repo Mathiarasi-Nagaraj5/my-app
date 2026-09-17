@@ -39,7 +39,7 @@ const ReviewSchema: Schema = new Schema(
 // admin-added reviews (no orderId) never collide with each other here.
 ReviewSchema.index(
   { orderId: 1, productId: 1 },
-  { unique: true, partialFilterExpression: { orderId: { $exists: true } } }
+  { unique: true, partialFilterExpression: { orderId: { $exists: true, $ne: null } } }
 );
 
 const Review: Model<IReview> =
