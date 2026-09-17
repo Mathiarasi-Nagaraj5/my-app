@@ -187,13 +187,26 @@ export default function ProductForm({
   // ── Staged reviews (create-mode only) ────────────────────────────────────
   // A brand-new product has no _id yet, so reviews added here can't be
   // saved to the DB until the product itself is created. They're held
-  // locally and flushed to /api/reviews/admin right after a successful
+  // locally and flushed to /api/admin/reviews right after a successful
   // submit, using the newly-created product's id.
   const isEditing = Boolean(initialValues?._id);
   const [pendingReviews, setPendingReviews] = useState<
     (ComposedReview & { localId: string })[]
   >([]);
   const [reviewFlushError, setReviewFlushError] = useState("");
+
+  // DEBUG AID: if this ever logs `false` while you believe you're editing
+  // an existing product, the parent page isn't passing `_id` into
+  // initialValues correctly — that's why reviews silently weren't saving.
+  useEffect(() => {
+    if (initialValues && !initialValues._id) {
+      console.warn(
+        "ProductForm: initialValues was given but has no _id — the form will " +
+          "treat this as creating a NEW product. Reviews added here will be " +
+          "staged locally and only flushed if onSubmit resolves with an _id."
+      );
+    }
+  }, [initialValues]);
 
   const stageReview = (review: ComposedReview) => {
     setPendingReviews((prev) => [
@@ -335,28 +348,40 @@ export default function ProductForm({
     setReviewFlushError("");
     try {
       const result = await onSubmit(values);
-      const productId = initialValues?._id ?? result?._id;
+      const productId =
+        initialValues?._id ??
+        result?._id ??
+        (result as { id?: string } | undefined)?.id;
 
-      if (productId && pendingReviews.length > 0) {
-        const failures: string[] = [];
-        for (const { localId: _localId, ...review } of pendingReviews) {
-          try {
-            const res = await fetch("/api/reviews/admin", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ productId, ...review }),
-            });
-            if (!res.ok) failures.push(review.customerName);
-          } catch {
-            failures.push(review.customerName);
-          }
-        }
-        if (failures.length > 0) {
+      if (pendingReviews.length > 0) {
+        if (!productId) {
+          // This is the silent-drop case: reviews were staged but we never
+          // got an id to attach them to. Surface it instead of eating it.
           setReviewFlushError(
-            `Product saved, but these reviews failed to save: ${failures.join(", ")}`
+            "Product saved, but no product id was returned so the staged reviews couldn't be sent. " +
+              "Make sure onSubmit resolves with the created/updated product (including its _id)."
           );
         } else {
-          setPendingReviews([]);
+          const failures: string[] = [];
+          for (const { localId: _localId, ...review } of pendingReviews) {
+            try {
+              const res = await fetch("/api/admin/reviews", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ productId, ...review }),
+              });
+              if (!res.ok) failures.push(review.customerName);
+            } catch {
+              failures.push(review.customerName);
+            }
+          }
+          if (failures.length > 0) {
+            setReviewFlushError(
+              `Product saved, but these reviews failed to save: ${failures.join(", ")}`
+            );
+          } else {
+            setPendingReviews([]);
+          }
         }
       }
     } catch {

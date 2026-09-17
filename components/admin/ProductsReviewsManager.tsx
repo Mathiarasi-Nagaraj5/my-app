@@ -38,7 +38,7 @@ export default function ProductReviewsManager({ productId }: { productId: string
   }, [load]);
 
   const handleAdd = async (review: ComposedReview) => {
-    const res = await fetch("/api/reviews/admin", {
+    const res = await fetch("/api/admin/reviews", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ productId, ...review }),

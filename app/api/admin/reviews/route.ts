@@ -1,10 +1,10 @@
-// File: app/api/reviews/admin/route.ts
+// File: app/api/admin/reviews/route.ts
 import { NextResponse } from "next/server";
 import connectDB from "@/app/lib/mongodb";
 import Review from "@/app/models/Review";
 import { requireAdmin } from "@/app/lib/auth/requireAdmin";
 
-// POST /api/reviews/admin
+// POST /api/admin/reviews
 // body: { productId, customerName, rating, comment, images?, isVisible? }
 export async function POST(req: Request) {
   try {
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, data: review }, { status: 201 });
   } catch (err) {
-    console.error("POST /api/reviews/admin error:", err);
+    console.error("POST /api/admin/reviews error:", err);
     return NextResponse.json(
       { success: false, message: "Failed to create review" },
       { status: 500 }
