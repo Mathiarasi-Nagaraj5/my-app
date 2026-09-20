@@ -1,8 +1,6 @@
 import Link from "next/link";
-import { Truck, RotateCcw, Wallet, Shirt } from "lucide-react";
-import Input from "../ui/Input";
+import { Truck, RotateCcw, Wallet, Shirt, Phone, Mail, MapPin } from "lucide-react";
 import Button from "../ui/Button";
-import PolicyLinks from "./PolicyLinks";
 
 const FOOTER_LINKS = {
   Shop: [
@@ -13,11 +11,13 @@ const FOOTER_LINKS = {
   Company: [
     { label: "About us", href: "/about" },
     { label: "Contact", href: "/contact" },
+     {label:"Policy", href:"/policy"}
   ],
   Account: [
     { label: "Your orders", href: "/orders" },
     { label: "Wishlist", href: "/wishlist" },
-    { label: "Login", href: "/login" },
+    { label: "Login", href: "/login" }
+   
   ],
 };
 
@@ -27,13 +27,10 @@ const TRUST_ITEMS = [
   { icon: Wallet, label: "Cash on delivery" },
   { icon: Shirt, label: "Premium cotton" },
 ];
-const POLICY_LINKS = [
-  { href: "/privacy-policy", label: "Privacy Policy" },
-  { href: "/terms-and-conditions", label: "Terms & Conditions" },
-  { href: "/refund-policy", label: "Refund & Return Policy" },
-  { href: "/shipping-policy", label: "Shipping Policy" },
-];
 
+interface FooterProps {
+  contact?: { phone?: string; email?: string; address?: string };
+}
 
 export default function Footer() {
   return (
@@ -68,24 +65,38 @@ export default function Footer() {
 
       {/* link columns */}
       <div className="mx-auto grid max-w-7xl grid-cols-2 gap-8 px-6 py-10 text-sm md:grid-cols-4">
-        {/* <div>
+        <div>
           <p className="mb-3 font-medium">ELITE SOUL</p>
-          <p className="text-sm text-ivory/55 leading-relaxed">
-            Oversized t-shirts, hoodies and pyjama sets made for everyday
-            comfort.
-          </p>
-        </div> */}
+          {process.env.NEXT_PUBLIC_CONTACT_PHONE || process.env.NEXT_PUBLIC_CONTACT_EMAIL || process.env.NEXT_PUBLIC_CONTACT_ADDRESS ? (
+            <div className="flex flex-col gap-1.5 text-sm text-ivory/70">
+              {process.env.NEXT_PUBLIC_CONTACT_PHONE && (
+                <a href={`tel:${process.env.NEXT_PUBLIC_CONTACT_PHONE}`} className="flex items-center gap-1.5 hover:text-pink">
+                  <Phone size={13} /> {process.env.NEXT_PUBLIC_CONTACT_PHONE}
+                </a>
+              )}
+              {process.env.NEXT_PUBLIC_CONTACT_EMAIL && (
+                <a href={`mailto:${process.env.NEXT_PUBLIC_CONTACT_EMAIL}`} className="flex items-center gap-1.5 hover:text-pink">
+                  <Mail size={13} /> {process.env.NEXT_PUBLIC_CONTACT_EMAIL}
+                </a>
+              )}
+              {process.env.NEXT_PUBLIC_CONTACT_ADDRESS && (
+                <span className="flex items-start gap-1.5">
+                  <MapPin size={13} className="mt-0.5 flex-shrink-0" /> {process.env.NEXT_PUBLIC_CONTACT_ADDRESS}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+
         <FooterColumn title="Shop" links={FOOTER_LINKS.Shop} />
         <FooterColumn title="Company" links={FOOTER_LINKS.Company} />
         <FooterColumn title="Account" links={FOOTER_LINKS.Account} />
-        <FooterColumn title="Policies" links={POLICY_LINKS} />
       </div>
 
-      <div className="border-t border-ivory/10 px-6 py-4 text-center text-sm text-ivory/40">
-        © {new Date().getFullYear()} Elite Soul. All rights reserved.
-
+      <div className="flex flex-col items-center gap-3 border-t border-ivory/10 px-6 py-4 text-center text-sm text-ivory/40 sm:flex-row sm:justify-between">
+        <span>© {new Date().getFullYear()} Elite Soul. All rights reserved.</span>
+       
       </div>
-
     </footer>
   );
 }
