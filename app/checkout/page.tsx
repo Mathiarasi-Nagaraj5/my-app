@@ -61,25 +61,31 @@ export default function CheckoutSteps() {
       .finally(() => setLoadingAddresses(false));
   }, [user]);
 
+ useEffect(() => {
+  if (selectedAddressId === "new") {
+    setShippingAddress(EMPTY_ADDRESS);
+    return;
+  }
+  const match = savedAddresses.find((a) => a._id === selectedAddressId);
+  if (match) {
+    setShippingAddress({
+      fullName: match.fullName,
+      phone: match.phone,
+      email: match.email || user?.email || "",
+      addressLine: match.addressLine,
+      city: match.city,
+      state: match.state,
+      pincode: match.pincode,
+    });
+    setErrors({});
+  }
+}, [selectedAddressId, savedAddresses, user]);
+  // Reset serviceability whenever the active address (saved or new) or its
+  // pincode changes, so a stale true/false from a previous address can never
+  // leak into validate() for the newly selected one.
   useEffect(() => {
-    if (selectedAddressId === "new") {
-      setShippingAddress(EMPTY_ADDRESS);
-      return;
-    }
-    const match = savedAddresses.find((a) => a._id === selectedAddressId);
-    if (match) {
-      setShippingAddress({
-        fullName: match.fullName,
-        phone: match.phone,
-        email: match.email,
-        addressLine: match.addressLine,
-        city: match.city,
-        state: match.state,
-        pincode: match.pincode,
-      });
-      setErrors({});
-    }
-  }, [selectedAddressId, savedAddresses]);
+    setPincodeServiceable(null);
+  }, [selectedAddressId, shippingAddress.pincode]);
 
   useEffect(() => {
     if (!hydrated || !promoCode || subtotal === 0) {
@@ -141,6 +147,7 @@ export default function CheckoutSteps() {
     if (!shippingAddress.state) next.state = "required";
     if (!shippingAddress.pincode || shippingAddress.pincode.length !== 6) next.pincode = "enter a valid 6-digit pincode";
     else if (pincodeServiceable === false) next.pincode = "we don't deliver to this pincode yet";
+    console.log("Checkout validation - missing or invalid fields:", Object.keys(next));
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -160,9 +167,9 @@ export default function CheckoutSteps() {
 
   const handlePlaceOrder = async () => {
     setOrderError("");
-    if (!validate()){
+    if (!validate()) {
       alert("Please fix the errors in the shipping address form before placing the order.");
-       return;
+      return;
     }
 
     if (payment === "cod") {
@@ -319,28 +326,25 @@ export default function CheckoutSteps() {
                   onSelect={setSelectedAddressId}
                 />
                 {selectedAddressId === "new" && (
-                  <div>
-                    <ShippingForm value={shippingAddress} onChange={setShippingAddress} errors={errors} />
-                    <PincodeCheck
-                      pincode={shippingAddress.pincode}
-                      itemCount={items.reduce((sum, i) => sum + i.quantity, 0)}
-                      cod={payment === "cod"}
-                      onServiceabilityChange={setPincodeServiceable}
-                    />
-                  </div>
+                  <ShippingForm value={shippingAddress} onChange={setShippingAddress} errors={errors} />
                 )}
               </>
             ) : (
-              <div>
-                <ShippingForm value={shippingAddress} onChange={setShippingAddress} errors={errors} />
-                <PincodeCheck
-                  pincode={shippingAddress.pincode}
-                  itemCount={items.reduce((sum, i) => sum + i.quantity, 0)}
-                  cod={payment === "cod"}
-                  onServiceabilityChange={setPincodeServiceable}
-                />
-              </div>
+              <ShippingForm value={shippingAddress} onChange={setShippingAddress} errors={errors} />
             )}
+
+            {/*
+              Always mounted, for both saved and new addresses, so
+              pincodeServiceable actually reflects the currently active
+              shippingAddress.pincode instead of going stale/null when a
+              saved address is selected.
+            */}
+            <PincodeCheck
+              pincode={shippingAddress.pincode}
+              itemCount={items.reduce((sum, i) => sum + i.quantity, 0)}
+              cod={payment === "cod"}
+              onServiceabilityChange={setPincodeServiceable}
+            />
 
             <PaymentMethodSelector value={payment} onChange={setPayment} />
           </div>
