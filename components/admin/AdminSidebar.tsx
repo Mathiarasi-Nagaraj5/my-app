@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Package, Truck, LogOut, RotateCcw, Wallet, X,Star ,  Users, Icon, Image,
+import { LayoutDashboard, Package, Truck, LogOut, RotateCcw, Wallet, X, Star, Users, Image,
   Tag,
-  Percent,} from "lucide-react";
-
-
+  Percent,
+  UserCircle,
+} from "lucide-react";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
@@ -30,7 +30,7 @@ export default function AdminSidebar({ open, onClose }: AdminSidebarProps) {
   const router = useRouter();
 
   const handleLogout = async () => {
-    await fetch("/api/admin/logout", { method: "POST" });
+    await fetch("/api/auth/logout", { method: "POST" });
     router.push("/admin/login");
   };
 
@@ -81,13 +81,26 @@ export default function AdminSidebar({ open, onClose }: AdminSidebarProps) {
           })}
         </nav>
 
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-2.5 border-t border-ivory/10 pt-4 text-xl text-ivory/70 hover:text-ivory"
-        >
-          <LogOut size={16} />
-          logout
-        </button>
+        <div className="flex flex-col gap-1 border-t border-ivory/10 pt-4">
+          <Link
+            href="/admin/profile"
+            onClick={onClose}
+            className={`flex items-center gap-2.5 rounded px-3 py-2.5 text-xl ${
+              pathname === "/admin/profile" ? "bg-pink font-medium text-black" : "text-ivory/70 hover:bg-ivory/5"
+            }`}
+          >
+            <UserCircle size={18} />
+            Profile
+          </Link>
+
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2.5 px-3 py-2.5 text-xl text-ivory/70 hover:text-ivory"
+          >
+            <LogOut size={16} />
+            logout
+          </button>
+        </div>
       </aside>
     </>
   );

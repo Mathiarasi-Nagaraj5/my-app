@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Truck, ExternalLink } from "lucide-react";
 import OrderStatusSelect from "./OrderStatusSelect";
 import ShipmentPanel from "./ShipmentPanel";
+import { useModal } from "@/components/ui/ModalProvider";
 
 export interface AdminOrder {
   _id: string;
@@ -35,6 +36,7 @@ interface OrderTableProps {
 }
 
 export default function OrderTable({ orders, onStatusChanged, onShipped }: OrderTableProps) {
+  const { alert } = useModal();
   const [shippingId, setShippingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -45,14 +47,14 @@ export default function OrderTable({ orders, onStatusChanged, onShipped }: Order
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.error ?? "failed to ship order");
+        await alert({ title: "Couldn't ship order", message: data.error ?? "failed to ship order", variant: "error" });
         return;
       }
 
       onShipped?.(order._id, data.shipment);
       onStatusChanged(order._id, "Out for Delivery");
     } catch {
-      alert("something went wrong while creating the shipment");
+      await alert({ title: "Something went wrong", message: "something went wrong while creating the shipment", variant: "error" });
     } finally {
       setShippingId(null);
     }

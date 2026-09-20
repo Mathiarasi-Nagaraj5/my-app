@@ -8,12 +8,25 @@ import { computeDelivery } from "@/app/lib/pricing";
 import { decrementStock, restoreStock } from "@/app/lib/inventory/stock";
 import { sendOrderConfirmationEmail } from "@/app/lib/email/send";
 
-export async function GET() {
+export async function GET(
+  req: Request,
+  context?: { params?: Promise<{ userId: string }> | { userId: string } }
+) {
   try {
     await connectDB();
-    const orders = await Order.find().sort({ createdAt: -1 });
+    const params = context?.params ? await context.params : undefined;
+    const userId = params?.userId ?? new URL(req.url).searchParams.get("userId");
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, message: "userId is required" },
+        { status: 400 }
+      );
+    }
+    console.log("Fetching all orders..."); // Debugging log
+    const orders = await Order.find({ userId }).sort({ createdAt: -1 });
     return NextResponse.json({ success: true, data: orders });
-  } catch {
+  } catch(error) {
+    console.error("Fetch Orders Error:", error);
     return NextResponse.json({ success: false, message: "Failed to fetch orders" }, { status: 500 });
   }
 }

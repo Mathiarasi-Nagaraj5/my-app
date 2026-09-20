@@ -18,6 +18,7 @@ interface AuthContextValue {
   signup: (fullName: string, email: string, password: string, phone?: string) => Promise<{ ok: boolean; message?: string }>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
+   changePassword: (currentPassword: string, newPassword: string) => Promise<{ ok: boolean; message?: string }>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -84,8 +85,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
+  // add inside AuthProvider, alongside login/signup/logout:
+const changePassword: AuthContextValue["changePassword"] = async (currentPassword, newPassword) => {
+  const res = await fetch("/api/auth/change-password", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+  const data = await res.json();
+  if (!res.ok || !data.success) return { ok: false, message: data.message ?? "failed to change password" };
+  return { ok: true };
+};
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, adminLogin, signup, logout, refresh }}>
+    <AuthContext.Provider value={{ user, loading, login, adminLogin, signup, logout, refresh, changePassword }}>
       {children}
     </AuthContext.Provider>
   );

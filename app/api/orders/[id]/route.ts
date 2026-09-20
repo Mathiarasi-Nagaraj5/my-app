@@ -11,6 +11,7 @@ export async function GET(
     await connectDB();
     const { id } = await params;
     const order = await Order.findById(id);
+    console.log("Fetched order:", order); // Debugging log
 
     if (!order) {
       return NextResponse.json({ success: false, message: "Order not found" }, { status: 404 });

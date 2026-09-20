@@ -2,8 +2,11 @@
 
 import { useEffect, useState, useCallback } from "react";
 import CategoryTable, { AdminCategory } from "@/components/admin/CategoryTable";
+import { useModal } from "@/components/ui/ModalProvider";
 
 export default function AdminCategoriesPage() {
+  const { confirm } = useModal();
+
   const [categories, setCategories] = useState<AdminCategory[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -37,7 +40,14 @@ export default function AdminCategoriesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete this category?")) return;
+    const confirmed = await confirm({
+      title: "Delete category",
+      message: "Delete this category? This can't be undone.",
+      confirmLabel: "Delete",
+      variant: "danger",
+    });
+    if (!confirmed) return;
+
     await fetch(`/api/categories/${id}`, { method: "DELETE" });
     await fetchCategories();
   };

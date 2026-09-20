@@ -7,6 +7,7 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import RequireAuth from "../../../components/auth/RequireAuth";
 import { useAuth } from "../../lib/context/AuthContext";
+import { useModal } from "@/components/ui/ModalProvider";
 
 interface Address {
   _id: string;
@@ -33,6 +34,7 @@ const EMPTY_FORM = {
 
 function AddressesContent() {
   const { user } = useAuth();
+  const { confirm, alert } = useModal();
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -116,13 +118,19 @@ function AddressesContent() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("delete this address?")) return;
+    const confirmed = await confirm({
+      title: "Delete address",
+      message: "Delete this address?",
+      confirmLabel: "Delete",
+      variant: "danger",
+    });
+    if (!confirmed) return;
 
     const res = await fetch(`/api/addresses/${id}`, { method: "DELETE" });
     if (res.ok) {
       setAddresses((prev) => prev.filter((a) => a._id !== id));
     } else {
-      alert("failed to delete address");
+      await alert({ title: "Couldn't delete address", message: "failed to delete address", variant: "error" });
     }
   };
 

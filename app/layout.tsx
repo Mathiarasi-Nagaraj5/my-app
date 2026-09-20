@@ -6,6 +6,8 @@ import { WishlistProvider } from "./lib/context/WishlistContext";
 import { AuthProvider } from "./lib/context/AuthContext";
 import connectDB from "@/app/lib/mongodb";
 import SiteContent from "@/app/models/SiteContent";
+import { ModalProvider } from "@/components/ui/ModalProvider";
+
 export const metadata: Metadata = {
   title: "Elite Soul — Oversized T-Shirts, Hoodies & Pyjamas",
   description:
@@ -17,7 +19,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-   await connectDB();
+  await connectDB();
 
   const siteContentDoc = await SiteContent.findOne().lean();
 
@@ -28,11 +30,13 @@ export default async function RootLayout({
     <html lang="en">
       <body className="bg-ivory font-sans text-charcoal antialiased">
         <AuthProvider>
-        <CartProvider>
-          <WishlistProvider>
-            <SiteChrome  topBar={siteContent.topBar}>{children}</SiteChrome>
-          </WishlistProvider>
-        </CartProvider>
+          <CartProvider>
+            <WishlistProvider>
+              <ModalProvider>
+                <SiteChrome topBar={siteContent.topBar}>{children}</SiteChrome>
+              </ModalProvider>
+            </WishlistProvider>
+          </CartProvider>
         </AuthProvider>
       </body>
     </html>

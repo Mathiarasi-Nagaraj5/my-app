@@ -13,6 +13,7 @@ import ReviewForm, { ReviewRecord } from "@/components/review/ReviewForm";
 import CancellationPolicy from "@/components/orders/Cancellationpolicy";
 import ReturnButton from "@/components/orders/ReturnButton";
 import TrackingTimeline from "@/components/orders/TrackingTimeline";
+import { useModal } from "@/components/ui/ModalProvider";
 
 const formatINR = (v: number) => `₹${v.toLocaleString("en-IN")}`;
 const formatDate = (iso: string) =>
@@ -60,6 +61,7 @@ function OrderDetailContent() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { user } = useAuth();
+  const { confirm } = useModal();
 
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -118,7 +120,14 @@ function OrderDetailContent() {
   };
 
   const handleCancel = async () => {
-    if (!confirm("cancel this order? if you've already paid, a refund will be issued.")) return;
+    const confirmed = await confirm({
+      title: "Cancel this order?",
+      message: "If you've already paid, a refund will be issued.",
+      confirmLabel: "Cancel order",
+      cancelLabel: "Keep order",
+      variant: "danger",
+    });
+    if (!confirmed) return;
 
     setCancelling(true);
     setError("");

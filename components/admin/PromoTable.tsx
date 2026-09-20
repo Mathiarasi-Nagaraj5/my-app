@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useModal } from "@/components/ui/ModalProvider";
 
 export interface PromoCodeRecord {
   _id: string;
@@ -27,6 +28,7 @@ function isExpired(promo: PromoCodeRecord) {
 }
 
 export default function PromoTable({ promos, onPromosChange, pageSize = 10 }: PromoTableProps) {
+  const { confirm } = useModal();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -66,7 +68,14 @@ export default function PromoTable({ promos, onPromosChange, pageSize = 10 }: Pr
   };
 
   const remove = async (promo: PromoCodeRecord) => {
-    if (!confirm(`delete promo code "${promo.code}"? this can't be undone.`)) return;
+    const confirmed = await confirm({
+      title: "Delete promo code",
+      message: `Delete promo code "${promo.code}"? This can't be undone.`,
+      confirmLabel: "Delete",
+      variant: "danger",
+    });
+    if (!confirmed) return;
+
     setBusyId(promo._id);
     try {
       const res = await fetch(`/api/promo/${promo._id}`, { method: "DELETE" });

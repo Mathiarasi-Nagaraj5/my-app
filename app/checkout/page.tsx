@@ -160,7 +160,10 @@ export default function CheckoutSteps() {
 
   const handlePlaceOrder = async () => {
     setOrderError("");
-    if (!validate()) return;
+    if (!validate()){
+      alert("Please fix the errors in the shipping address form before placing the order.");
+       return;
+    }
 
     if (payment === "cod") {
       setPlacing(true);

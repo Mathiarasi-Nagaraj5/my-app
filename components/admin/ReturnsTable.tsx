@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useModal } from "@/components/ui/ModalProvider";
 
 export interface ReturnRecord {
   _id: string;
@@ -31,6 +32,7 @@ const REFUND_STYLES: Record<string, string> = {
 };
 
 export default function ReturnsTable({ returns, onReturnsChange }: ReturnsTableProps) {
+  const { confirm, alert } = useModal();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "Pending" | "Accepted" | "Rejected">("all");
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -57,7 +59,7 @@ export default function ReturnsTable({ returns, onReturnsChange }: ReturnsTableP
       if (res.ok && data.success) {
         onReturnsChange(returns.map((x) => (x._id === r._id ? data.data : x)));
       } else {
-        alert(data.message ?? "failed to update return");
+        await alert({ message: data.message ?? "failed to update return", variant: "error" });
       }
     } finally {
       setBusyId(null);
@@ -65,7 +67,13 @@ export default function ReturnsTable({ returns, onReturnsChange }: ReturnsTableP
   };
 
   const markRefunded = async (r: ReturnRecord) => {
-    if (!confirm(`Confirm you've completed the bank transfer for order #${r.orderNumber}?`)) return;
+    const confirmed = await confirm({
+      title: "Confirm refund",
+      message: `Confirm you've completed the bank transfer for order #${r.orderNumber}?`,
+      confirmLabel: "Confirm",
+    });
+    if (!confirmed) return;
+
     setBusyId(r._id);
     try {
       const res = await fetch(`/api/returns/${r._id}/mark-refunded`, { method: "POST" });
@@ -73,7 +81,7 @@ export default function ReturnsTable({ returns, onReturnsChange }: ReturnsTableP
       if (res.ok && data.success) {
         onReturnsChange(returns.map((x) => (x._id === r._id ? data.data : x)));
       } else {
-        alert(data.message ?? "failed to mark as refunded");
+        await alert({ message: data.message ?? "failed to mark as refunded", variant: "error" });
       }
     } finally {
       setBusyId(null);
@@ -88,7 +96,7 @@ export default function ReturnsTable({ returns, onReturnsChange }: ReturnsTableP
       if (res.ok && data.success) {
         onReturnsChange(returns.map((x) => (x._id === r._id ? data.data : x)));
       } else {
-        alert(data.message ?? "failed to retry pickup");
+        await alert({ message: data.message ?? "failed to retry pickup", variant: "error" });
       }
     } finally {
       setBusyId(null);

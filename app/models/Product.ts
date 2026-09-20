@@ -1,65 +1,147 @@
-// File: app/models/Product.ts
 import mongoose, { Schema, models, model } from "mongoose";
 
 export interface ProductDocument extends mongoose.Document {
   slug: string;
   sku: string;
   name: string;
+
   category: string[];
+
+  description?: string;
+
+  material?: string;
+  style?: string;
+
   price: number;
   originalPrice?: number;
+
   stock: number;
-  rating: number;
-  reviewCount: number;
-  imageUrls?: string[]; // gallery imageUrls, replaces the derived-from-slug placeholder
-  isBestseller?: boolean;
+
+  imageUrls: string[];
+
   colors?: string[];
   sizes?: string[];
-  description?: string;
+
+  rating: number;
+  reviewCount: number;
+
+  isBestseller?: boolean;
+
   createdAt: Date;
   updatedAt: Date;
 }
 
 const ProductSchema = new Schema<ProductDocument>(
   {
-    slug: { type: String, required: true, unique: true, index: true },
-    sku: { type: String, required: true, unique: true, index: true },
-    name: { type: String, required: true },
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+    },
+
+    sku: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+    },
+
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
     category: {
       type: [String],
       required: true,
       index: true,
     },
-    price: { type: Number, required: true },
-    originalPrice: { type: Number },
-    stock: { type: Number, required: true, default: 0 },
-    rating: { type: Number, default: 0 },
-    reviewCount: { type: Number, default: 0 },
-   imageUrls: {
+
+    description: {
+      type: String,
+      trim: true,
+    },
+
+    material: {
+      type: String,
+      trim: true,
+    },
+
+    style: {
+      type: String,
+      trim: true,
+    },
+
+    price: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+
+    originalPrice: {
+      type: Number,
+      min: 0,
+    },
+
+    stock: {
+      type: Number,
+      required: true,
+      default: 0,
+      min: 0,
+    },
+
+    imageUrls: {
       type: [String],
       required: true,
       validate: {
-        validator: (arr: string[]) => arr.length >= 1 && arr.length <= 5,
+        validator: (arr: string[]) =>
+          arr.length >= 1 && arr.length <= 5,
         message: "A product must have between 1 and 5 imageUrls",
       },
     },
-    isBestseller: { type: Boolean, default: false },
-    colors: [{ type: String }],
-    sizes: [{ type: String }],
-    description: { type: String },
+
+    colors: {
+      type: [String],
+      default: [],
+    },
+
+    sizes: {
+      type: [String],
+      default: [],
+    },
+
+    rating: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5,
+    },
+
+    reviewCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    isBestseller: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
-    // THE FIX: Mongoose automatically gives every document an `id` virtual
-    // (a string version of _id), but it's excluded from JSON output by
-    // default — only _id is included. Setting toJSON/toObject virtuals to
-    // true includes it, so anywhere this document gets sent as JSON
-    // (API responses, NextResponse.json(), etc.) it now has a real `id`
-    // field your frontend's Product type already expects.
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true },
+
+    toJSON: {
+      virtuals: true,
+    },
+
+    toObject: {
+      virtuals: true,
+    },
   }
 );
 
-// Prevents "Cannot overwrite model" errors from Next.js hot-reloading this file
-export default models.Product || model<ProductDocument>("Product", ProductSchema);
+export default models.Product ||
+  model<ProductDocument>("Product", ProductSchema);

@@ -6,10 +6,13 @@ import { Plus, Search } from "lucide-react";
 import Button from "@/components/ui/Button";
 import ProductTable, { AdminProduct } from "@/components/admin/ProductTable";
 import Pagination from "@/components/admin/Pagination";
+import { useModal } from "@/components/ui/ModalProvider";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50];
 
 export default function AdminProductsPage() {
+  const { confirm, alert } = useModal();
+
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -30,13 +33,19 @@ export default function AdminProductsPage() {
   }, []);
 
   const handleDelete = async (id: string) => {
-    if (!confirm("delete this product? this cannot be undone.")) return;
+    const confirmed = await confirm({
+      title: "Delete product",
+      message: "Delete this product? This cannot be undone.",
+      confirmLabel: "Delete",
+      variant: "danger",
+    });
+    if (!confirmed) return;
 
     const res = await fetch(`/api/admin/products/${id}`, { method: "DELETE" });
     if (res.ok) {
       setProducts((prev) => prev.filter((p) => p._id !== id));
     } else {
-      alert("failed to delete product");
+      await alert({ title: "Couldn't delete product", message: "failed to delete product", variant: "error" });
     }
   };
 

@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useState } from "react";
 import ReviewStars from "@/components/ui/ReviewStars";
 import ReviewComposer, { ComposedReview } from "@/components/admin/ReviewComposer";
+import { useModal } from "@/components/ui/ModalProvider";
 
 interface AdminReview {
   _id: string;
@@ -16,6 +17,7 @@ interface AdminReview {
 }
 
 export default function ProductReviewsManager({ productId }: { productId: string }) {
+  const { confirm } = useModal();
   const [reviews, setReviews] = useState<AdminReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -60,7 +62,14 @@ export default function ProductReviewsManager({ productId }: { productId: string
   };
 
   const remove = async (review: AdminReview) => {
-    if (!confirm("Delete this review?")) return;
+    const confirmed = await confirm({
+      title: "Delete review",
+      message: "Delete this review? This can't be undone.",
+      confirmLabel: "Delete",
+      variant: "danger",
+    });
+    if (!confirmed) return;
+
     const res = await fetch(`/api/reviews/${review._id}`, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
