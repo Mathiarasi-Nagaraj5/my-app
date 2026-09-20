@@ -86,9 +86,9 @@ export default function PolicyPage() {
         <section>
           <h2 className="mb-2 text-lg font-medium text-charcoal">Contact Us</h2>
           <p className="space-y-1">
-            <span className="block">Phone: [PHONE NUMBER]</span>
-            <span className="block">Email: [EMAIL ADDRESS]</span>
-            <span className="block">Address: [BUSINESS ADDRESS], Tiruppur, Tamil Nadu</span>
+            <span className="block">Phone: {process.env.NEXT_PUBLIC_CONTACT_NUMBER}</span>
+            <span className="block">Email: {process.env.NEXT_PUBLIC_CONTACT_EMAIL}</span>
+            <span className="block">Address: {process.env.NEXT_PUBLIC_CONTACT_ADDRESS}, Tiruppur, Tamil Nadu</span>
           </p>
         </section>
       </div>
