@@ -114,24 +114,25 @@ export async function POST(request: NextRequest) {
     // comma-separated strings from the form become real arrays — rather
     // than relying on Mongoose's implicit (and sometimes silently wrong)
     // casting behavior.
-    const productData = {
-      name: body.name,
-      slug: body.slug,
-      category: toStringArray(body.category),
-      price: Number(body.price),
-      originalPrice:
-        body.originalPrice !== undefined && body.originalPrice !== null && body.originalPrice !== ""
-          ? Number(body.originalPrice)
-          : undefined,
-      stock: body.stock !== undefined && body.stock !== null && body.stock !== ""
-        ? Number(body.stock)
-        : 0,
-      imageUrls: Array.isArray(body.imageUrls) ? body.imageUrls : [],
-      isBestseller: Boolean(body.isBestseller),
-      sizes: toStringArray(body.sizes),
-      colors: toStringArray(body.colors),
-      description: body.description,
-    };
+  const productData = {
+  name: body.name,
+  slug: body.slug,
+  sku: body.sku ? String(body.sku).trim().toUpperCase() : undefined,
+  category: toStringArray(body.category),
+  price: Number(body.price),
+  originalPrice:
+    body.originalPrice !== undefined && body.originalPrice !== null && body.originalPrice !== ""
+      ? Number(body.originalPrice)
+      : undefined,
+  stock: body.stock !== undefined && body.stock !== null && body.stock !== ""
+    ? Number(body.stock)
+    : 0,
+  imageUrls: Array.isArray(body.imageUrls) ? body.imageUrls : [],
+  isBestseller: Boolean(body.isBestseller),
+  sizes: toStringArray(body.sizes),
+  colors: toStringArray(body.colors),
+  description: body.description,
+};
 
     const product = await Product.create(productData);
 
