@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/lib/context/AuthContext";
 import PasswordInput from "@/components/auth/PasswordInput";
+import Image from "next/image";
+import Link from "next/link";
 
 export default function AdminLoginPage() {
   const { adminLogin } = useAuth();
@@ -34,7 +36,10 @@ console.log("Admin login successful, redirecting to /admin/orders");
 
   return (
     <div className="mx-auto max-w-sm px-6 py-16">
-      <h1 className="mb-6 text-xl font-semibold text-gray-900">Admin Login</h1>
+      <Link href="/" className="flex justify-center text-3xl font-stretch-50% tracking-wide text-charcoal">
+          <Image src="/images/logo.png" alt="Elite Soul" width={180} height={80} />
+        </Link>
+      <h1 className="mb-6 mt-10 text-xl font-semibold text-gray-700">Admin Login</h1>
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <input
           type="text"

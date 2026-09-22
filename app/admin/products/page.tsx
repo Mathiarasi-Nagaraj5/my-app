@@ -7,6 +7,7 @@ import Button from "@/components/ui/Button";
 import ProductTable, { AdminProduct } from "@/components/admin/ProductTable";
 import Pagination from "@/components/admin/Pagination";
 import { useModal } from "@/components/ui/ModalProvider";
+import RequireAdmin from "@/components/auth/RequireAdmin";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50];
 
@@ -71,9 +72,15 @@ export default function AdminProductsPage() {
   }, [search, pageSize]);
 
   return (
+      <RequireAdmin>
     <div>
       <div className="mb-5 flex items-center justify-between">
-        <h1 className="text-2xl font-medium text-charcoal">Products</h1>
+        <div>
+          <h1 className="mb-1 text-2xl font-medium text-charcoal">Products</h1>
+          <p className="text-sm text-gray-500">
+            View and manage all products available in the store.
+          </p>
+        </div>
         <Link href="/admin/products/new">
           <Button variant="primary" size="lg" icon={<Plus size={14} />}>
             Add product
@@ -125,5 +132,6 @@ export default function AdminProductsPage() {
         </>
       )}
     </div>
+    </RequireAdmin>
   );
 }

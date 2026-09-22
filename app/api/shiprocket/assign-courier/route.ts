@@ -35,7 +35,7 @@ export async function POST(req: Request) {
     });
 
     if (result.awb_assign_status !== 1) {
-      return NextResponse.json({ success: false, message: "courier failed to accept the assignment" }, { status: 502 });
+      return NextResponse.json({ success: false, message: "courier failed to accept the assignment." }, { status: 502 });
     }
 
     const { awb_code, courier_name, courier_company_id } = result.response.data;

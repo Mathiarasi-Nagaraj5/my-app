@@ -4,8 +4,11 @@ import SiteContentEditor from "@/components/admin/SiteContentEditor";
 export default function SiteContentPage() {
   return (
     <RequireAdmin>
-      <div className="mx-auto max-w-4xl px-6 py-8">
-        <h1 className="mb-6 text-xl font-semibold text-charcoal">Homepage Content</h1>
+      <div >
+        <h1 className="mb-1 text-2xl font-medium text-charcoal">Homepage Content</h1>
+          <p className="text-sm mb-2 text-gray-500">
+            Edit the content displayed on the homepage of the website.
+        </p>
         <SiteContentEditor />
       </div>
     </RequireAdmin>

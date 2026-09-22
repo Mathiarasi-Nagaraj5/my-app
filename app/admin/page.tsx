@@ -6,6 +6,7 @@ import SalesOverviewChart, { SalesPoint } from "@/components/admin/Salesoverview
 import TopCategoriesChart, { CategorySlice } from "@/components/admin/Topcategorieschart";
 import RecentOrdersList, { RecentOrderRow } from "@/components/admin/Recentorderslist";
 import ActivityFeed, { ActivityEvent } from "@/components/admin/Activityfeed";
+import RequireAdmin from "@/components/auth/RequireAdmin";
 
 
 
@@ -64,6 +65,7 @@ export default function AdminDashboardPage() {
   }, [range, customFrom, customTo]);
 
   return (
+    <RequireAdmin>
     <div className="overflow-y-hidden">
       <h1 className="mb-1 text-2xl font-medium text-charcoal">Dashboard</h1>
       <p className="mb-5 text-lg text-charcoal/55">
@@ -163,5 +165,6 @@ export default function AdminDashboardPage() {
         </div>
       )}
     </div>
+    </RequireAdmin>
   );
 }

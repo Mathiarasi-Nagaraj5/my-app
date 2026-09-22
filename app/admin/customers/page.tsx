@@ -1,6 +1,7 @@
 "use client";
 
 import CustomerTable, { Customer } from "@/components/admin/CustomerTable";
+import RequireAdmin from "@/components/auth/RequireAdmin";
 import { useEffect, useState } from "react";
 
 
@@ -14,15 +15,17 @@ export default function CustomersPage() {
     }, []);
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Customers</h1>
-        <p className="text-sm text-gray-500">
-          View and manage all registered customers.
+    <RequireAdmin>
+      <div >
+        <div className="mb-6">
+          <h1 className="mb-1 text-2xl font-medium text-charcoal">Customers</h1>
+          <p className="text-sm text-gray-500">
+            View and manage all registered customers.
         </p>
       </div>
 
       <CustomerTable customers={customers} />
     </div>
+    </RequireAdmin>
   );
 }

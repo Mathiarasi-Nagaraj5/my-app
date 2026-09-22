@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useModal } from "@/components/ui/ModalProvider";
+import PromoEditModal from "./PromoEditModal";
 
 export interface PromoCodeRecord {
   _id: string;
@@ -32,6 +33,7 @@ export default function PromoTable({ promos, onPromosChange, pageSize = 10 }: Pr
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [busyId, setBusyId] = useState<string | null>(null);
+const [editingPromo, setEditingPromo] = useState<PromoCodeRecord | null>(null);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -165,12 +167,20 @@ export default function PromoTable({ promos, onPromosChange, pageSize = 10 }: Pr
                     </td>
                     <td className="px-4 py-3 text-right whitespace-nowrap">
                       <button
+  onClick={() => setEditingPromo(p)}
+  disabled={busyId === p._id}
+  className="mr-3 text-xs font-medium text-gray-700 hover:underline disabled:opacity-40"
+>
+  Edit
+</button>
+                      <button
                         onClick={() => toggleActive(p)}
                         disabled={busyId === p._id}
                         className="mr-3 text-xs font-medium text-blue-600 hover:underline disabled:opacity-40"
                       >
                         {p.isActive ? "Disable" : "Enable"}
                       </button>
+
                       <button
                         onClick={() => remove(p)}
                         disabled={busyId === p._id}
@@ -208,6 +218,15 @@ export default function PromoTable({ promos, onPromosChange, pageSize = 10 }: Pr
           </button>
         </div>
       )}
+      {editingPromo && (
+  <PromoEditModal
+    promo={editingPromo}
+    onClose={() => setEditingPromo(null)}
+    onSaved={(updated) =>
+      onPromosChange(promos.map((p) => (p._id === updated._id ? updated : p)))
+    }
+  />
+)}
     </div>
   );
 }

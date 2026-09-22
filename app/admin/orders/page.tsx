@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import OrderTable, { AdminOrder } from "@/components/admin/OrderTable";
+import RequireAdmin from "@/components/auth/RequireAdmin";
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
@@ -27,9 +28,12 @@ export default function AdminOrdersPage() {
   };
 
   return (
+    <RequireAdmin>
     <div>
-      <h1 className="mb-5 text-2xl font-medium text-charcoal">Orders</h1>
-
+      <h1 className="mb-1 text-2xl font-medium text-charcoal">Orders</h1>
+      <p className="text-sm text-gray-500 mb-4">
+        View and manage all orders placed by customers.
+      </p>
       {loading ? (
         <p className="text-sm text-charcoal/55">loading orders...</p>
       ) : (
@@ -40,5 +44,6 @@ export default function AdminOrdersPage() {
         />
       )}
     </div>
+    </RequireAdmin>
   );
 }

@@ -86,7 +86,7 @@ export default function EditProductPage() {
 
   return (
     <div className="max-w-2xl">
-      <h1 className="mb-5 text-lg font-medium text-charcoal">Edit Product</h1>
+      <h1 className="mb-1 text-2xl font-medium text-charcoal">Edit Product</h1>
       <ProductForm
         initialValues={initialValues}
         onSubmit={handleSubmit}

@@ -20,7 +20,7 @@ export default function RequireAdmin({ children }: { children: React.ReactNode }
   }, [loading, user, router]);
 
   if (loading || !user || user.role !== "admin") {
-    return <p className="px-6 py-16 text-center text-sm text-charcoal/55">checking access...</p>;
+    return <p className="px-6 py-16 text-center text-md text-charcoal/75">Checking Access...</p>;
   }
 
   return <>{children}</>;

@@ -1,5 +1,6 @@
 "use client";
 import RatingsTable, { Review } from "@/components/admin/RatingsTable";
+import RequireAdmin from "@/components/auth/RequireAdmin";
 import { useEffect, useState } from "react";
 
 
@@ -14,9 +15,10 @@ export default  function RatingsPage() {
     
 
   return (
-    <div className="p-6">
+    <RequireAdmin>
+    <div >
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Ratings</h1>
+        <h1 className="mb-1 text-2xl font-medium text-charcoal">Ratings</h1>
         <p className="text-sm text-gray-500">
           Reviews left by customers after their orders are delivered.
         </p>
@@ -24,5 +26,6 @@ export default  function RatingsPage() {
 
       <RatingsTable reviews={reviews} />
     </div>
+    </RequireAdmin>
   );
 }
