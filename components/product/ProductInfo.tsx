@@ -10,6 +10,7 @@ import QuantityStepper from "@/components/ui/QuantityStepper";
 import { useCart } from "@/app/lib/context/CartContext";
 import { Truck, Wallet } from "lucide-react";
 import { buildWhatsAppLink } from "@/app/lib/contact";
+import { getColorName } from "@/app/lib/colorNames"; // adjust path to wherever you put colorNames.ts
 const formatINR = (value: number) => `₹${value.toLocaleString("en-IN")}`;
 
 interface ProductInfoProps {
@@ -75,14 +76,13 @@ export default function ProductInfo({ product, onSizeGuideClick, whatsappNumber 
     });
     router.push("/checkout");
   };
-console.log(product);
 
 const handleCustomizeRequest = () => {
   const lines = [
     `Hi! I'd like to ask about customizing this product:`,
     ``,
     `${product.name}`,
-    selectedColor ? `Color: ${selectedColor}` : null,
+    selectedColor ? `Color: ${getColorName(selectedColor)}` : null,
     selectedSize ? `Size: ${selectedSize}` : null,
     typeof window !== "undefined" ? window.location.href : "",
     ``,
@@ -130,7 +130,7 @@ const handleCustomizeRequest = () => {
       {product.colors && product.colors.length > 0 && (
         <div className="mt-6">
           <p className="mb-2 text-sm font-medium text-charcoal">
-            color{selectedColor ? ` — ${selectedColor}` : ""}
+            color{selectedColor ? ` — ${getColorName(selectedColor)}` : ""}
           </p>
           <div className="flex gap-2">
             {product.colors.map((color) => (

@@ -16,6 +16,7 @@ export interface ISiteContent extends Document {
   marquee: string[];
   heroSlides: IHeroSlide[];
   updatedAt: Date;
+  policy: string; // Markdown content for the policy page
 }
 
 const HeroSlideSchema = new Schema<IHeroSlide>(
@@ -37,6 +38,7 @@ const SiteContentSchema = new Schema<ISiteContent>(
     topBar: { type: [String], default: ["Free Delivery on Online Payments", "Cash on delivery available", "Easy 7-day returns"] },
     marquee: { type: [String], default: ["✨ Free Shipping on Online Payments", "💖 Premium Quality", "🚚 Fast Delivery", "🎁 New Collection Available"] },
     heroSlides: { type: [HeroSlideSchema], default: [] },
+    policy: { type: String, default: "" },
   },
   { timestamps: true }
 );

@@ -45,7 +45,7 @@ export default async function ProductDetailPage({
       />
 
       <ProductDetailShell product={product} whatsappNumber={CONTACT_NUMBER} />
-      <ProductDescription />
+      {/* <ProductDescription /> */}
 
       {/* ProductReviews fetches this product's own reviews and renders
           nothing if there are none — see components/product/ProductReviews.tsx */}

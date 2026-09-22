@@ -13,14 +13,14 @@ export default function NewProductPage() {
       body: JSON.stringify({
         name: values.name,
         slug: values.slug,
+        sku: values.sku,
+        description: values.description,
         category: values.category,
         price: values.price,
         originalPrice: values.originalPrice,
         stock: values.stock,
-        // imageUrls is already an array of uploaded URLs from the form
         imageUrls: values.imageUrls,
         isBestseller: values.isBestseller,
-        // pass as comma strings — route.ts splits them
         sizes: values.sizes,
         colors: values.colors,
       }),
@@ -32,13 +32,18 @@ export default function NewProductPage() {
       throw new Error(data.error || "Failed to create product");
     }
 
+    // ProductForm needs the created product's _id back to flush any
+    // reviews staged during creation (see stageReview/pendingReviews in
+    // ProductForm.tsx) — without returning this, staged reviews were
+    // silently dropped with only an in-form error message to notice it.
     router.push("/admin/products");
+    return data.data ?? data;
   };
 
   return (
     <div className="max-w-2xl">
-        <h1 className="mb-5 text-2xl font-bold text-pink">Add Product</h1>
-        <ProductForm onSubmit={handleSubmit} submitLabel="Create product" />
-      </div>
+      <h1 className="mb-5 text-2xl font-bold text-pink">Add Product</h1>
+      <ProductForm onSubmit={handleSubmit} submitLabel="Create product" />
+    </div>
   );
 }

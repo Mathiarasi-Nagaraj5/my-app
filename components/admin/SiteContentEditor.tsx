@@ -8,6 +8,8 @@ interface SiteContentValues {
   topBar: string[];
   marquee: string[];
   heroSlides: IHeroSlide[];
+  // interface
+policy: string;
 }
 
 const EMPTY_SLIDE: IHeroSlide = {
@@ -22,7 +24,7 @@ const EMPTY_SLIDE: IHeroSlide = {
 };
 
 export default function SiteContentEditor() {
-  const [values, setValues] = useState<SiteContentValues>({ topBar: [], marquee: [], heroSlides: [] });
+  const [values, setValues] = useState<SiteContentValues>({ topBar: [], marquee: [], heroSlides: [] , policy: "" });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -37,26 +39,56 @@ export default function SiteContentEditor() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleSave = async () => {
-    setSaving(true);
-    setSaved(false);
-    setError("");
-    try {
-      const res = await fetch("/api/site-content", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        setError(data.message ?? "failed to save");
-        return;
-      }
-      setSaved(true);
-    } finally {
-      setSaving(false);
+const handleSave = async () => {
+  console.log("Saving site content:", values);
+  console.log("Policy being sent:", JSON.stringify(values.policy));
+
+  setSaving(true);
+  setSaved(false);
+  setError("");
+
+  try {
+    const res = await fetch("/api/site-content", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        topBar: values.topBar,
+        marquee: values.marquee,
+        heroSlides: values.heroSlides,
+        policy: values.policy,
+      }),
+    });
+
+    const data = await res.json();
+
+    console.log("PUT RESPONSE:", data);
+    console.log(
+      "Policy returned from server:",
+      JSON.stringify(data.data?.policy)
+    );
+
+    if (!res.ok || !data.success) {
+      setError(data.message ?? "failed to save");
+      return;
     }
-  };
+
+    setValues({
+      topBar: data.data.topBar ?? [],
+      marquee: data.data.marquee ?? [],
+      heroSlides: data.data.heroSlides ?? [],
+      policy: data.data.policy ?? "",
+    });
+
+    setSaved(true);
+  } catch (error) {
+    console.error("Save error:", error);
+    setError("Failed to save site content");
+  } finally {
+    setSaving(false);
+  }
+};
 
   // ── list-of-strings helpers (topBar, marquee) ──
   const updateListItem = (key: "topBar" | "marquee", idx: number, value: string) => {
@@ -305,6 +337,21 @@ export default function SiteContentEditor() {
         </div>
       </section>
 
+{/* Policy */}
+<section>
+  <h2 className="mb-3 text-lg font-medium text-charcoal">Policy Page</h2>
+  <p className="mb-3 text-xs text-charcoal/50">
+    Supports Markdown: use <code># Heading</code>, <code>## Subheading</code>, blank lines for
+    paragraphs, and lines starting with <code>-</code> for bullet lists. Shown at /policy.
+  </p>
+  <textarea
+    value={values.policy}
+    onChange={(e) => setValues((v) => ({ ...v, policy: e.target.value }))}
+    rows={16}
+    placeholder={"## Shipping & Delivery\n\n- Free delivery on orders of ₹999 or more\n- COD orders carry an additional ₹15 convenience fee\n\n## Returns & Refunds\n\n..."}
+    className="w-full rounded border border-charcoal/25 px-3 py-2 font-mono text-sm"
+  />
+</section>
       <div className="flex items-center gap-3 border-t border-charcoal/15 pt-4">
         <button
           type="button"
