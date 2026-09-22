@@ -45,9 +45,10 @@ export default function OrderTable({ orders, onStatusChanged, onShipped }: Order
     try {
       const res = await fetch(`/api/admin/orders/${order._id}/ship`, { method: "POST" });
       const data = await res.json();
+      console.log("ship response", data);
 
       if (!res.ok) {
-        await alert({ title: "Couldn't ship order", message: data.error ?? "failed to ship order", variant: "error" });
+        await alert({ title: "Couldn't ship order", message: data.error ?? `failed to ship order${data.error ? `: ${data.error}` : ""}`, variant: "error" });
         return;
       }
 

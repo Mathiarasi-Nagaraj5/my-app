@@ -158,8 +158,9 @@ export async function POST(req: Request, { params }: Params) {
     await order.save();
 
     return NextResponse.json({ shipment: order.shipment });
-  } catch (error) {
+  }  catch (error) {
     console.error("Ship Order Error:", error);
-    return NextResponse.json({ error: "failed to ship order" }, { status: 500 });
-  }
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: `failed to ship order, ${message}` }, { status: 500 });
+}
 }
