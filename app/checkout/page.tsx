@@ -147,7 +147,7 @@ export default function CheckoutSteps() {
     if (!shippingAddress.state) next.state = "required";
     if (!shippingAddress.pincode || shippingAddress.pincode.length !== 6) next.pincode = "enter a valid 6-digit pincode";
     else if (pincodeServiceable === false) next.pincode = "we don't deliver to this pincode yet";
-    console.log("Checkout validation - missing or invalid fields:", Object.keys(next));
+ 
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -216,7 +216,7 @@ export default function CheckoutSteps() {
       });
 
       const data = await res.json();
-      console.log("Create order response:", data);
+   
       if (!res.ok || !data.success) {
         throw new Error(data.message || "Failed to create Razorpay order");
       }

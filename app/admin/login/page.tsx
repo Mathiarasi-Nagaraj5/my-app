@@ -21,13 +21,11 @@ export default function AdminLoginPage() {
     setError("");
 
     const result = await adminLogin(fullName, password);
-    console.log("Admin login result:", result);
     if (!result.ok) {
       setError(result.message ?? "login failed");
       setSubmitting(false);
       return;
     }
-console.log("Admin login successful, redirecting to /admin/orders");
     // adminLogin only ever succeeds for a real admin account (role checked
     // server-side before any cookie was issued) — no follow-up role check
     // needed here, unlike the earlier version.

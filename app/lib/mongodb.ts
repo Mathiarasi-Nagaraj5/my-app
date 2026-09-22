@@ -1,8 +1,7 @@
 import mongoose from "mongoose";
 import dns from 'node:dns';
 const MONGODB_URI = process.env.MONGODB_URI || "";
-console.log("URI exists:", !!process.env.MONGODB_URI);
-console.log("Starts with SRV:", process.env.MONGODB_URI?.startsWith("mongodb+srv://"));
+
 if (!MONGODB_URI) {
   throw new Error("Please define the MONGODB_URI environment variable.");
 }

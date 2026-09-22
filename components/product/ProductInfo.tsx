@@ -45,7 +45,7 @@ export default function ProductInfo({ product, onSizeGuideClick, whatsappNumber 
 
   const handleAddToCart = () => {
     if (!requireSize()) return;
-    console.log(product);
+  
     addItem({
       id: product._id,
       productId: product._id,

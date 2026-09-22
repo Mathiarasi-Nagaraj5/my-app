@@ -16,7 +16,6 @@ export default function CartItemRow({
   onQuantityChange,
   onRemove,
 }: CartItemRowProps) {
-  console.log("Rendering CartItemRow for item:", item); // Debugging line
   return (
     <div className="flex gap-4 border-b border-charcoal/15 py-4">
       <Link href={`/shop/${item.slug}`} className="relative h-[100px] w-20 flex-shrink-0 overflow-hidden rounded bg-charcoal">

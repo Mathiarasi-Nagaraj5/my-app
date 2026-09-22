@@ -21,7 +21,7 @@ const variantStyles: Record<BadgeVariant, string> = {
 };
 
 export default function Badge({ children, variant = "neutral" }: BadgeProps) {
-  console.log("Badge variant:", variant); // Debugging line to check the variant value
+
   return (
     <span
       className={[

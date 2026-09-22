@@ -19,7 +19,7 @@ export default function ForgotPasswordPage() {
     }
     setError("");
     // TODO: call your real password-reset API here
-    console.log("send reset link to", identifier);
+   
     setSent(true);
   };
 

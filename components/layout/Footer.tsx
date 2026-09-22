@@ -32,7 +32,6 @@ const contactPhone = process.env.NEXT_PUBLIC_CONTACT_PHONE;
 const contactEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL;
 const contactAddress = process.env.NEXT_PUBLIC_CONTACT_ADDRESS;
 const hasContact = Boolean(contactPhone || contactEmail || contactAddress);
-  console.log("contactPhone", hasContact, contactPhone, contactEmail, contactAddress  );
   return (
     <footer className="bg-charcoal text-ivory">
       {/* trust strip */}

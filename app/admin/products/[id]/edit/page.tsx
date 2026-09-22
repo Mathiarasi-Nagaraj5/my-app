@@ -21,12 +21,12 @@ export default function EditProductPage() {
         if (!res.ok) throw new Error("not found");
 
         const product = await res.json();
-        console.log("Fetched product data:", product);
+
 
         return product.data;
       })
       .then((product) => {
-        console.log("Setting initial values:", product);
+
 
         setInitialValues({
           // THE FIX: this object was picking out individual fields and
@@ -55,7 +55,7 @@ export default function EditProductPage() {
   }, [id]);
 
   const handleSubmit = async (values: ProductFormValues) => {
-    console.log("Submitting updated product values:", values);
+ 
     const res = await fetch(`/api/products/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },

@@ -15,7 +15,7 @@ export async function getProducts(
   const url = params
     ? `${API}/api/products?${params.toString()}`
     : `${API}/api/products`;
-    console.log("Fetching products from URL:", url); // Log the URL being fetched
+
 
   const res = await fetch(url, {
     cache: "no-store",
@@ -27,7 +27,6 @@ export async function getProducts(
   }
 
   const result: ApiResponse<Product[]> = await res.json();
-  console.log("Fetched products:", result.data); // Log the fetched products
   return result.data;
 }
 

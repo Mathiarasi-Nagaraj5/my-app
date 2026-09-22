@@ -39,7 +39,7 @@ export default function RegisterForm() {
     const result = await signup(form.name, form.email, form.phone, form.password);
     setLoading(false);
 
-    console.log("signup result:", result);
+    
     if (!result.ok) {
       setError(result.message ?? "registration failed");
       return;

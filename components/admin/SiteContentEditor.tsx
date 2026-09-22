@@ -40,8 +40,6 @@ export default function SiteContentEditor() {
   }, []);
 
 const handleSave = async () => {
-  console.log("Saving site content:", values);
-  console.log("Policy being sent:", JSON.stringify(values.policy));
 
   setSaving(true);
   setSaved(false);
@@ -63,11 +61,7 @@ const handleSave = async () => {
 
     const data = await res.json();
 
-    console.log("PUT RESPONSE:", data);
-    console.log(
-      "Policy returned from server:",
-      JSON.stringify(data.data?.policy)
-    );
+
 
     if (!res.ok || !data.success) {
       setError(data.message ?? "failed to save");

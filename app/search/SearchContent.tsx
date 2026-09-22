@@ -17,7 +17,7 @@ export default  function SearchContent() {
     useEffect(() => {
     async function loadProducts() {
       const products = await getProducts();
-      console.log("Fetched products:", products); // Log the fetched products
+    
       setAllProducts(products);
     }
     loadProducts();

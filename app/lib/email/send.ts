@@ -43,10 +43,9 @@ async function safeSend(params: {
 }
 
 export async function sendOrderConfirmationEmail(order: IOrder) {
-  console.log("Preparing to send order confirmation email for order:", order.orderNumber);
+
   if (!order.shippingAddress.email) return;
   const { subject, html } = orderConfirmationEmail(order);
-  console.log("Email subject:", subject);
   const invoice = await getInvoiceAttachment(order);
   return safeSend({
     to: order.shippingAddress.email,

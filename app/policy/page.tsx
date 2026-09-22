@@ -41,14 +41,14 @@ export default async function PolicyPage() {
   await connectDB();
   const siteContentDoc = await SiteContent.findOne().lean();
   const siteContent = JSON.parse(JSON.stringify(siteContentDoc ?? {}));
-  console.log("Fetched site content for policy page:", siteContent);
+
   const markdown =
     typeof siteContent.policy === "string" && siteContent.policy.trim()
       ? siteContent.policy
       : DEFAULT_POLICY_MARKDOWN;
 
   const html = await marked.parse(markdown);
-  console.log("Rendering PolicyPage with HTML content:", html);
+  
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-12 text-sm text-charcoal/80">
