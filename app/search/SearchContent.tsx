@@ -1,60 +1,70 @@
 "use client";
 
-import { useMemo, useState ,useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Search as SearchIcon } from "lucide-react";
 import ProductCard from "@/components/ui/ProductCard";
 import SortSelect from "@/components/shop/Sortselect";
 import { SortOption } from "@/app/lib/types";
-import {
-  getProducts,
-} from "@/services/product.service";
-export default  function SearchContent() {
+import { getProducts } from "@/services/product.service";
+
+const getCategoryText = (category: unknown): string => {
+  if (typeof category === "string") return category;
+  if (Array.isArray(category)) {
+    return category
+      .map((c) => (typeof c === "string" ? c : (c as { name?: string })?.name ?? ""))
+      .join(" ");
+  }
+  if (category && typeof category === "object") {
+    return (category as { name?: string }).name ?? "";
+  }
+  return "";
+};
+
+export default function SearchContent() {
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(searchParams.get("q") ?? "");
   const [sort, setSort] = useState<SortOption>("featured");
-    const [allProducts, setAllProducts] = useState<any[]>([]);// Fetch all products (you may want to filter this based on the search query)
-    useEffect(() => {
+  const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
     async function loadProducts() {
-      const products = await getProducts();
-    
-      setAllProducts(products);
+      try {
+        const products = await getProducts();
+        if (!cancelled) setAllProducts(Array.isArray(products) ? products : []);
+      } catch (err) {
+        console.error("Failed to load products:", err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     }
+
     loadProducts();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const results = useMemo(() => {
-  const q = query.trim().toLowerCase();
+    const q = query.trim().toLowerCase();
 
-  const getCategoryText = (category: unknown): string => {
-    if (typeof category === "string") return category;
-    if (Array.isArray(category)) {
-      return category
-        .map((c) => (typeof c === "string" ? c : (c as { name?: string })?.name ?? ""))
-        .join(" ");
-    }
-    if (category && typeof category === "object") {
-      return (category as { name?: string }).name ?? "";
-    }
-    return "";
-  };
-
-  let filtered = q
-    ? allProducts.filter((p) => {
-        const name = typeof p.name === "string" ? p.name.toLowerCase() : "";
-        const category = getCategoryText(p.category).toLowerCase();
-        return name.includes(q) || category.includes(q);
-      })
-    : allProducts;
-
-  // ...rest of your logic (sorting, etc.) continues unchanged
+    let filtered = q
+      ? allProducts.filter((p) => {
+          const name = typeof p.name === "string" ? p.name.toLowerCase() : "";
+          const category = getCategoryText(p.category).toLowerCase();
+          return name.includes(q) || category.includes(q);
+        })
+      : allProducts;
 
     if (sort === "price-low-high") filtered = [...filtered].sort((a, b) => a.price - b.price);
     if (sort === "price-high-low") filtered = [...filtered].sort((a, b) => b.price - a.price);
     if (sort === "newest") filtered = [...filtered].reverse();
 
     return filtered;
-  }, [query, sort]);
+  }, [allProducts, query, sort]); // <-- allProducts was missing
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
@@ -73,14 +83,16 @@ export default  function SearchContent() {
 
       <div className="mb-5 flex items-center justify-between">
         <p className="text-lg text-charcoal/70">
-          {query
+          {loading
+            ? "Loading products..."
+            : query
             ? `${results.length} results for "${query}"`
             : `Showing all ${results.length} products`}
         </p>
         <SortSelect value={sort} onChange={setSort} />
       </div>
 
-      {results.length === 0 ? (
+      {loading ? null : results.length === 0 ? (
         <p className="py-16 text-center text-sm text-charcoal/55">
           no products found. try a different search term.
         </p>
