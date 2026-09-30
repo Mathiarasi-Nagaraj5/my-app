@@ -4,7 +4,7 @@ import Order from "@/app/models/Order";
 import Product from "@/app/models/Product";
 import PromoCode from "@/app/models/Promocode";
 import { computeDiscount } from "@/app/lib/promo";
-import { computeDelivery } from "@/app/lib/pricing";
+import { computeDelivery, COD_FEE } from "@/app/lib/pricing";
 import {
   decrementStock,
   restoreStock,
@@ -259,13 +259,7 @@ export async function POST(req: Request) {
     // Total
     // ─────────────────────────────────────────────
 
-    const total = Math.max(
-      subtotal +
-        delivery -
-        discount,
-      0
-    );
-
+const total = Math.max(subtotal + delivery + COD_FEE - discount, 0);
     // ─────────────────────────────────────────────
     // Create order
     // ─────────────────────────────────────────────
@@ -292,6 +286,7 @@ export async function POST(req: Request) {
           reservedPromoCode,
 
         discount,
+        codFee: COD_FEE,
 
         total,
       });

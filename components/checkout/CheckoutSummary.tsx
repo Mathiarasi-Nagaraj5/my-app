@@ -12,6 +12,7 @@ interface CheckoutSummaryProps {
   total: number;
   onPlaceOrder: () => void;
   placing: boolean;
+  codFee?: number;
 }
 
 export default function CheckoutSummary({
@@ -22,6 +23,7 @@ export default function CheckoutSummary({
   total,
   onPlaceOrder,
   placing,
+  codFee = 0,
 }: CheckoutSummaryProps) {
   return (
     <div className="rounded-card bg-charcoal p-6">
@@ -56,6 +58,12 @@ export default function CheckoutSummary({
         )}
       </div>
 
+        {codFee > 0 && (
+      <div className="flex justify-between text-sm">
+        <span>COD convenience fee</span>
+        <span>₹{codFee}</span>
+      </div>
+    )}
       <div className="mt-3.5 flex justify-between border-t border-ivory/15 pt-3.5 text-base font-medium text-ivory">
         <span>Total</span>
         <span>{formatINR(total)}</span>

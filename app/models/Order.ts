@@ -70,6 +70,7 @@ export interface IOrder extends Document {
   createdAt: Date;
   updatedAt: Date;
   deliveredAt?: Date;
+  codFee?: number; // optional — only present for COD orders  
 }
 
 const OrderItemSchema: Schema = new Schema(

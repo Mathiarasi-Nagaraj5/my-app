@@ -1,37 +1,71 @@
 "use client";
 
 import Link from "next/link";
-import { useState,useEffect } from "react";
+import Image from "next/image";
+import { Suspense, useState, useEffect } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Search, User, ShoppingBag, Heart, Menu, X } from "lucide-react";
 import { useCart } from "@/app/lib/context/CartContext";
 import { useWishlist } from "@/app/lib/context/WishlistContext";
 import { useAuth } from "../../app/lib/context/AuthContext";
-import Image from "next/image";
-
 
 interface Category {
   name: string;
   slug: string;
 }
 
-export default function Navbar() {
+function CategoryLink({
+  category,
+  isActive,
+  onClick,
+}: {
+  category: Category;
+  isActive: boolean;
+  onClick?: () => void;
+}) {
+  return (
+    <Link
+      href={`/shop?category=${encodeURIComponent(category.slug)}`}
+      onClick={onClick}
+      aria-current={isActive ? "page" : undefined}
+      data-label={category.name}
+      // The invisible bold copy in ::after reserves the bold width,
+      // so links don't shift when one becomes active.
+      className={`inline-flex flex-col items-center hover:text-pink after:invisible after:h-0 after:overflow-hidden after:font-bold after:content-[attr(data-label)] ${
+        isActive ? "font-bold text-pink" : ""
+      }`}
+    >
+      {category.name}
+    </Link>
+  );
+}
+
+function NavbarContent() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { itemCount: cartCount } = useCart();
   const { count: wishlistCount } = useWishlist();
-  const [categories, setCategories] = useState<Category[]>([]); // State to hold categories
+  const [categories, setCategories] = useState<Category[]>([]);
   const { user } = useAuth();
+
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const activeCategory =
+    pathname === "/shop" ? searchParams.get("category") : null;
 
   // logged in → account icon goes to the profile page
   // logged out → goes to login
   const accountHref = user ? "/profile" : "/login";
   const accountLabel = user ? `Account — ${user.fullName}` : "Login";
-   
+
   useEffect(() => {
-    fetch("/api/categories").then((res) => res.json()).then((data) => {
-      setCategories(data); // Assuming the API returns an array of category objects with a 'name' property
-    }).catch((err) => {
-      console.error("Failed to fetch categories:", err);
-    });
+    fetch("/api/categories")
+      .then((res) => res.json())
+      .then((data) => {
+        setCategories(data);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch categories:", err);
+      });
   }, []);
 
   return (
@@ -43,11 +77,12 @@ export default function Navbar() {
 
         {/* desktop links */}
         <nav className="hidden gap-7 text-lg text-charcoal/85 md:flex">
-          
           {categories.map((category) => (
-            <Link key={category.name} href={`/shop?category=${encodeURIComponent(category.slug)}`} className="hover:text-pink">
-              {category.name}  
-            </Link>
+            <CategoryLink
+              key={category.slug}
+              category={category}
+              isActive={activeCategory === category.slug}
+            />
           ))}
         </nav>
 
@@ -89,20 +124,26 @@ export default function Navbar() {
 
       {/* mobile dropdown */}
       {menuOpen && (
-        <nav className="flex flex-col gap-4 border-t border-charcoal/10 px-6 py-5 text-sm text-charcoal/85 md:hidden">
-         
-            {categories.map((category) => (
-           <Link
-              key={category.name}
-              href={`/shop?category=${encodeURIComponent(category.slug)}`}
+        <nav className="flex flex-col items-start gap-4 border-t border-charcoal/10 px-6 py-5 text-sm text-charcoal/85 md:hidden">
+          {categories.map((category) => (
+            <CategoryLink
+              key={category.slug}
+              category={category}
+              isActive={activeCategory === category.slug}
               onClick={() => setMenuOpen(false)}
-              className="hover:text-pink"
-            >
-              {category.name}  
-            </Link>
+            />
           ))}
         </nav>
       )}
     </header>
+  );
+}
+
+// Suspense is required because useSearchParams is used inside a layout-level component.
+export default function Navbar() {
+  return (
+    <Suspense fallback={null}>
+      <NavbarContent />
+    </Suspense>
   );
 }

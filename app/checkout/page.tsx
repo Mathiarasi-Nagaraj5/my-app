@@ -12,7 +12,7 @@ import CheckoutSummary from "@/components/checkout/CheckoutSummary";
 import PincodeCheck from "@/components/checkout/PincodeCheck";
 import { useCart } from "@/app/lib/context/CartContext";
 import { useAuth } from "@/app/lib/context/AuthContext";
-import { computeDelivery } from "@/app/lib/pricing";
+import { computeDelivery,computeCodFee } from "@/app/lib/pricing";
 
 const EMPTY_ADDRESS: ShippingAddress = {
   fullName: "",
@@ -44,7 +44,8 @@ export default function CheckoutSteps() {
   const [pincodeServiceable, setPincodeServiceable] = useState<boolean | null>(null);
 
   const delivery = computeDelivery(subtotal);
-  const total = Math.max(subtotal + delivery - previewDiscount, 0);
+  const codFee = computeCodFee(payment);
+  const total = Math.max(subtotal + delivery + codFee - previewDiscount, 0);
 
   useEffect(() => {
     if (!user) {
@@ -357,6 +358,7 @@ export default function CheckoutSteps() {
             total={total}
             onPlaceOrder={handlePlaceOrder}
             placing={placing}
+            codFee={codFee}
           />
         </div>
       </div>
