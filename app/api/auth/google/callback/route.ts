@@ -71,21 +71,34 @@ export async function GET(req: Request) {
       }
     }
 
-    if (!user) {
-      user = await User.create({
-        fullName: profile.name || profile.email.split("@")[0],
-        email: profile.email.toLowerCase(),
-        googleId: profile.sub,
-        provider: "google",
-        role: "customer", // Google sign-in can never create an admin, same rule as the credentials signup route
-      });
-    }
+ // inside the callback, in the "user not found → create" branch:
+if (!user) {
+  user = await User.create({
+    fullName: profile.name || profile.email.split("@")[0],
+    email: profile.email.toLowerCase(),
+    googleId: profile.sub,
+    provider: "google",
+    role: "customer",
+  });
 
-    const token = signSession(String(user._id));
-    await setSessionCookie(token);
+  const token = signSession(String(user._id));
+  await setSessionCookie(token);
 
-    return NextResponse.redirect(`${origin}${next}`);
-  } catch (err) {
+  // New Google account has no phone — send them to complete it before
+  // continuing wherever they were headed.
+  return NextResponse.redirect(`${origin}/complete-profile?next=${encodeURIComponent(next)}`);
+}
+
+// existing user (returning Google login, or linked account) — existing behavior unchanged:
+const token = signSession(String(user._id));
+await setSessionCookie(token);
+
+if (!user.phone) {
+  return NextResponse.redirect(`${origin}/complete-profile?next=${encodeURIComponent(next)}`);
+}
+
+return NextResponse.redirect(`${origin}${next}`);}
+ catch (err) {
     console.error("Google OAuth callback error:", err);
     return failRedirect("google_auth_failed");
   }

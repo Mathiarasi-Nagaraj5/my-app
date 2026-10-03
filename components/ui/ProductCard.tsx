@@ -50,9 +50,9 @@ export default function ProductCard({ product }: ProductCardProps) {
           <button
             type="button"
             aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
-            onClick={(e) => {
+           onClick={(e) => {
               e.preventDefault();
-              toggle(product._id);
+              toggle(product._id, product.name);
             }}
             className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-ivory/90"
           >

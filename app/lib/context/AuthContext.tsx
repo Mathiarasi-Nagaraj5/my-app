@@ -10,15 +10,22 @@ export interface AuthUser {
   role: "customer" | "admin";
 }
 
+interface UpdateProfileInput {
+  name?: string;
+  phone?: string;
+  email?: string;
+}
+
 interface AuthContextValue {
   user: AuthUser | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<{ ok: boolean; message?: string }>;
   adminLogin: (fullName: string, password: string) => Promise<{ ok: boolean; message?: string }>;
   signup: (fullName: string, email: string, password: string, phone?: string) => Promise<{ ok: boolean; message?: string }>;
+  updateProfile: (input: UpdateProfileInput) => Promise<{ ok: boolean; message?: string }>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<{ ok: boolean; message?: string }>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
-   changePassword: (currentPassword: string, newPassword: string) => Promise<{ ok: boolean; message?: string }>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -80,25 +87,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { ok: true };
   };
 
+  const updateProfile: AuthContextValue["updateProfile"] = async (input) => {
+    const res = await fetch("/api/auth/profile", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) return { ok: false, message: data.message ?? "failed to save changes" };
+    setUser(data.data); // reflects the saved values immediately, e.g. the phone number just added
+    return { ok: true };
+  };
+
+  const changePassword: AuthContextValue["changePassword"] = async (currentPassword, newPassword) => {
+    const res = await fetch("/api/auth/change-password", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) return { ok: false, message: data.message ?? "failed to change password" };
+    return { ok: true };
+  };
+
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     setUser(null);
   };
 
-  // add inside AuthProvider, alongside login/signup/logout:
-const changePassword: AuthContextValue["changePassword"] = async (currentPassword, newPassword) => {
-  const res = await fetch("/api/auth/change-password", {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ currentPassword, newPassword }),
-  });
-  const data = await res.json();
-  if (!res.ok || !data.success) return { ok: false, message: data.message ?? "failed to change password" };
-  return { ok: true };
-};
-
   return (
-    <AuthContext.Provider value={{ user, loading, login, adminLogin, signup, logout, refresh, changePassword }}>
+    <AuthContext.Provider
+      value={{ user, loading, login, adminLogin, signup, updateProfile, changePassword, logout, refresh }}
+    >
       {children}
     </AuthContext.Provider>
   );

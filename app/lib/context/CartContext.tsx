@@ -8,6 +8,7 @@ import {
   ReactNode,
 } from "react";
 import { CartItem } from "@/app/lib/types";
+import { useAuth } from "./AuthContext";
 
 interface CartContextValue {
   items: CartItem[];
@@ -27,6 +28,7 @@ const STORAGE_KEY = "elite-soul-cart";
 const PROMO_STORAGE_KEY = "elite-soul-promo";
 
 export function CartProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [items, setItems] = useState<CartItem[]>([]);
   const [promoCode, setPromoCodeState] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
@@ -74,8 +76,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const updateQuantity = (id: string, quantity: number) =>
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, quantity } : i)));
 
-  const removeItem = (id: string) =>
+  const removeItem = (id: string) => {
+    const removedItem = items.find((i) => i.id === id);
     setItems((prev) => prev.filter((i) => i.id !== id));
+
+    // Best-effort WhatsApp notification — never blocks the actual removal,
+    // never throws into the caller, and silently no-ops if the user has
+    // no phone on file (handled server-side) or isn't logged in at all.
+    if (removedItem && user?.id) {
+      fetch("/api/notifications/cart-removed", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id, productName: removedItem.name }),
+      }).catch(() => {
+        /* notification is non-critical — swallow network errors */
+      });
+    }
+  };
 
   const clearCart = () => {
     setItems([]);

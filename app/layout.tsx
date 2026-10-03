@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import SiteChrome from "@/components/layout/SiteChrome";
+import ChatWidget from "@/components/ui/ChatWidget"; // NEW
 import { CartProvider } from "./lib/context/CartContext";
 import { WishlistProvider } from "./lib/context/WishlistContext";
 import { AuthProvider } from "./lib/context/AuthContext";
@@ -23,9 +24,8 @@ export default async function RootLayout({
 
   const siteContentDoc = await SiteContent.findOne().lean();
 
-  const siteContent = JSON.parse(
-    JSON.stringify(siteContentDoc ?? {})
-  );
+  const siteContent = JSON.parse(JSON.stringify(siteContentDoc ?? {}));
+
   return (
     <html lang="en">
       <body className="bg-ivory font-sans text-charcoal antialiased">
@@ -34,10 +34,13 @@ export default async function RootLayout({
             <WishlistProvider>
               <ModalProvider>
                 <SiteChrome topBar={siteContent.topBar}>{children}</SiteChrome>
+                <ChatWidget /> {/* NEW */}
               </ModalProvider>
             </WishlistProvider>
           </CartProvider>
         </AuthProvider>
+
+        
       </body>
     </html>
   );
