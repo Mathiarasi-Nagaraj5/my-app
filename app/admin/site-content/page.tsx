@@ -5,9 +5,9 @@ export default function SiteContentPage() {
   return (
     <RequireAdmin>
       <div >
-        <h1 className="mb-1 text-2xl font-medium text-charcoal">Homepage Content</h1>
+        <h1 className="mb-1 text-2xl font-medium text-charcoal">Site Content</h1>
           <p className="text-sm mb-2 text-gray-500">
-            Edit the content displayed on the homepage of the website.
+            View and manage all site content for your store, including the home page, categories, and policy.
         </p>
         <SiteContentEditor />
       </div>

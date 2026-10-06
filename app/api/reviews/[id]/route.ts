@@ -1,15 +1,36 @@
 // File: app/api/reviews/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
+import mongoose from "mongoose";
 import connectDB from "@/app/lib/mongodb";
 import Review from "@/app/models/Review";
+import Product from "@/app/models/Product"; // adjust path if different
 import { requireAdmin } from "@/app/lib/auth/requireAdmin";
 
 type Params = { params: Promise<{ id: string }> };
 
+// recalculates rating + reviewCount on the product from its visible reviews
+async function syncProductRating(productId: string) {
+  if (!mongoose.Types.ObjectId.isValid(productId)) return;
+  const pid = new mongoose.Types.ObjectId(productId);
+
+  const [stats] = await Review.aggregate([
+    {
+      $match: {
+        productId: { $in: [pid, String(productId)] },
+        isVisible: true,
+      },
+    },
+    { $group: { _id: null, avg: { $avg: "$rating" }, count: { $sum: 1 } } },
+  ]);
+
+  await Product.findByIdAndUpdate(productId, {
+    rating: stats ? Math.round(stats.avg * 10) / 10 : 0,
+    reviewCount: stats ? stats.count : 0,
+  });
+}
+
 /**
  * PATCH /api/reviews/:id
- *
- * Two modes:
  *  - Customer editing their own review: body { userId, rating?, comment?, images? }
  *  - Admin moderating: body { isAdmin: true, isVisible?, rating?, comment?, images? }
  */
@@ -30,7 +51,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     }
 
     if (isAdmin) {
-      const admin =  await requireAdmin();
+      const admin = await requireAdmin();
       if (!admin) {
         return NextResponse.json({ success: false, message: "unauthorized" }, { status: 401 });
       }
@@ -70,7 +91,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     }
 
     if (images !== undefined) {
-      review.images = Array.isArray(images) ? images.slice(0, 3) : [];
+      review.images = Array.isArray(images) ? images.slice(0, 5) : [];
     }
 
     // Only an admin request can flip visibility
@@ -79,6 +100,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     }
 
     await review.save();
+
+    // rating or visibility may have changed
+    await syncProductRating(String(review.productId));
 
     return NextResponse.json({ success: true, data: review });
   } catch (err) {
@@ -130,7 +154,11 @@ export async function DELETE(req: NextRequest, { params }: Params) {
       }
     }
 
+    const productId = String(review.productId);
     await review.deleteOne();
+
+    // recount after the review is gone
+    await syncProductRating(productId);
 
     return NextResponse.json({
       success: true,

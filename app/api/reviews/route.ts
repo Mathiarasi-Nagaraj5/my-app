@@ -1,8 +1,31 @@
 // File: app/api/reviews/route.ts
 import { NextResponse } from "next/server";
+import mongoose from "mongoose";
 import connectDB from "@/app/lib/mongodb";
 import Review from "@/app/models/Review";
 import Order from "@/app/models/Order";
+import Product from "@/app/models/Product"; // adjust path if different
+
+// recalculates rating + reviewCount on the product from its visible reviews
+async function syncProductRating(productId: string) {
+  if (!mongoose.Types.ObjectId.isValid(productId)) return;
+  const pid = new mongoose.Types.ObjectId(productId);
+
+  const [stats] = await Review.aggregate([
+    {
+      $match: {
+        productId: { $in: [pid, String(productId)] },
+        isVisible: true,
+      },
+    },
+    { $group: { _id: null, avg: { $avg: "$rating" }, count: { $sum: 1 } } },
+  ]);
+
+  await Product.findByIdAndUpdate(productId, {
+    rating: stats ? Math.round(stats.avg * 10) / 10 : 0,
+    reviewCount: stats ? stats.count : 0,
+  });
+}
 
 // GET /api/reviews                                -> all reviews, newest first (admin table)
 // GET /api/reviews?orderId=..                      -> reviews for a single order (order detail page)
@@ -21,8 +44,6 @@ export async function GET(req: Request) {
     if (orderId) filter.orderId = orderId;
     if (productId) {
       filter.productId = productId;
-      // Public product-page requests never see hidden reviews. Admin panel
-      // passes includeHidden=true to see everything for that product.
       if (!includeHidden) filter.isVisible = { $ne: false };
     }
 
@@ -51,6 +72,12 @@ export async function POST(req: Request) {
     if (!orderId || !productId || !userId || !customerName || !rating || !comment) {
       return NextResponse.json(
         { success: false, message: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+    if (typeof rating !== "number" || rating < 1 || rating > 5) {
+      return NextResponse.json(
+        { success: false, message: "Rating must be between 1 and 5" },
         { status: 400 }
       );
     }
@@ -96,25 +123,17 @@ export async function POST(req: Request) {
       userId,
       customerName,
       rating,
-      comment,
-      images: Array.isArray(images) ? images.slice(0, 3) : [],
+      comment: String(comment).trim(),
+      images: Array.isArray(images) ? images.slice(0, 5) : [],
       source: "customer",
     });
 
-    return NextResponse.json({ success: true, data: review }, { status: 201 });
-  } catch (err: unknown) {
-    if (
-      typeof err === "object" &&
-      err !== null &&
-      "code" in err &&
-      (err as { code?: number }).code === 11000
-    ) {
-      return NextResponse.json(
-        { success: false, message: "You've already reviewed this item" },
-        { status: 409 }
-      );
-    }
+    // update the product's rating + review count right after saving
+    await syncProductRating(String(productId));
 
+    return NextResponse.json({ success: true, data: review }, { status: 201 });
+  } catch (err) {
+    console.error("POST /api/reviews error:", err);
     return NextResponse.json(
       { success: false, message: "Failed to submit review" },
       { status: 500 }

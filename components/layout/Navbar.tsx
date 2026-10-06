@@ -69,14 +69,14 @@ function NavbarContent() {
   }, []);
 
   return (
-    <header className="bg-ivory">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
+<header className="sticky top-0 z-50 border-b border-charcoal/10 bg-ivory">  
+    <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
         <Link href="/" className="text-3xl font-stretch-50% tracking-wide text-charcoal">
           <Image src="/images/logo.png" alt="Elite Soul" width={180} height={80} />
         </Link>
 
         {/* desktop links */}
-        <nav className="hidden gap-7 text-lg text-charcoal/85 md:flex">
+        <nav className="hidden gap-7 text-lg text-charcoal/85 md:flex [&_a]:first-letter:uppercase">
           {categories.map((category) => (
             <CategoryLink
               key={category.slug}
@@ -91,9 +91,21 @@ function NavbarContent() {
           <Link href="/search" aria-label="Search">
             <Search size={19} />
           </Link>
-          <Link href={accountHref} aria-label={accountLabel}>
-            <User size={19} />
-          </Link>
+        
+<Link
+  href={accountHref}
+  aria-label={accountLabel}
+  className="flex items-center justify-center"
+>
+  {user ? (
+    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-pink text-sm font-semibold uppercase text-white">
+      {user.fullName?.trim().charAt(0) || "U"}
+    </span>
+  ) : (
+    <User size={19} />
+  )}
+</Link>
+
           <Link href="/wishlist" aria-label="Wishlist" className="relative">
             <Heart size={19} />
             {wishlistCount > 0 && (
@@ -124,7 +136,7 @@ function NavbarContent() {
 
       {/* mobile dropdown */}
       {menuOpen && (
-        <nav className="flex flex-col items-start gap-4 border-t border-charcoal/10 px-6 py-5 text-sm text-charcoal/85 md:hidden">
+       <nav className="flex flex-col items-start gap-4 border-t border-charcoal/10 px-6 py-5 text-sm text-charcoal/85 md:hidden [&_a]:first-letter:uppercase">
           {categories.map((category) => (
             <CategoryLink
               key={category.slug}

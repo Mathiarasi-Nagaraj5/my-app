@@ -2,9 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { Star } from "lucide-react";
 import { Product } from "@/app/lib/types";
 import Badge from "./Badge";
 import { useWishlist } from "@/app/lib/context/WishlistContext";
+import StarRating from "./StarRating";
 
 interface ProductCardProps {
   product: Product;
@@ -23,10 +25,17 @@ export default function ProductCard({ product }: ProductCardProps) {
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : null;
 
+    console.log("ProductCard product:", product); // Debugging line
+  // adjust these two field names to match your Product type
+  const rating = product.rating ?? 0;
+  const reviewCount = product.reviewCount ?? 0;
+  const hasReviews = reviewCount > 0 && rating > 0;
+
   return (
     <div className="group">
       <Link href={`/shop/${product.slug}`} className="block">
-        <div className="relative aspect-[3/4] overflow-hidden rounded bg-charcoal">
+        {/* aspect-[4/5] makes the image shorter than the old 3/4 */}
+        <div className="relative aspect-[4/5] overflow-hidden rounded bg-charcoal">
           <Image
             src={product.imageUrls[0]}
             alt={product.name}
@@ -50,13 +59,15 @@ export default function ProductCard({ product }: ProductCardProps) {
           <button
             type="button"
             aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
-           onClick={(e) => {
+            onClick={(e) => {
               e.preventDefault();
               toggle(product._id, product.name);
             }}
             className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-ivory/90"
           >
-            <span className={wishlisted ? "text-pink" : "text-charcoal"}>{wishlisted ? "♥" : "♡"}</span>
+            <span className={wishlisted ? "text-pink" : "text-charcoal"}>
+              {wishlisted ? "♥" : "♡"}
+            </span>
           </button>
         </div>
 
@@ -68,6 +79,21 @@ export default function ProductCard({ product }: ProductCardProps) {
             <span className="text-sm text-charcoal/40 line-through">{formatINR(product.originalPrice)}</span>
           )}
         </div>
+            
+        
+
+        {/* rating + reviews: only shown if the product has any */}
+        {hasReviews && (
+          <div className="mt-1.5 flex items-center gap-2">
+            <span className="flex items-center gap-1 rounded-full bg-green-700 px-2 py-0.5 text-xs font-semibold text-white">
+              {rating.toFixed(1)}
+              <Star size={11} className="fill-white" />
+            </span>
+            <span className="text-xs text-charcoal/60">
+              {reviewCount.toLocaleString("en-IN")} {reviewCount === 1 ? "Review" : "Reviews"}
+            </span>
+          </div>
+        )}
 
         {(colors.length > 0 || sizes.length > 0) && (
           <div className="mt-1.5 flex flex-col items-start gap-2">
@@ -85,7 +111,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                 )}
               </div>
             )}
-            
+
             {sizes.length > 0 && (
               <div className="text-[11px] text-charcoal/90">{sizes.join(" · ")}</div>
             )}

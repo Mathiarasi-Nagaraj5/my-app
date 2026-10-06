@@ -93,19 +93,19 @@ export const FAQ_CATEGORIES: FaqCategory[] = [
     tag: "Money matters",
     items: [
       {
-        q: "Do you offer cash on delivery?",
+        q: "Do you offer Cash on Delivery?",
         a: [
           "Yes, you can pay when your order reaches you. Online payments also qualify for free delivery.",
         ],
       },
       {
-        q: "What is your return policy?",
+        q: "What is your Return Policy?",
         a: [
           "We offer 7-day easy returns. The item should be unused and in its original condition. Full details are on our Policy page.",
         ],
       },
       {
-        q: "How long do refunds take?",
+        q: "How long do Refunds take?",
         a: [
           "Once we receive and check the returned item, the refund is processed to your original payment method. Contact us if you haven't received it in a reasonable time.",
         ],

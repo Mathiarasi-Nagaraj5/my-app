@@ -11,6 +11,7 @@ import { enforceRateLimit } from "@/app/lib/rateLimitResponse";
 // from this route at all (unlike calling generic login then checking role
 // client-side afterward, which briefly issues a real cookie either way).
 export async function POST(req: Request) {
+  console.log("Admin login request received");
   const limited = enforceRateLimit(req, "auth-admin-login", 5, 60 * 1000); // tighter than customer login
   if (limited) return limited;
 

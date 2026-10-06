@@ -53,7 +53,7 @@ const FALLBACK: Review[] = [
   },
 ];
 
-export default async function Testimonials() {
+export default async function Testimonials(title: string) {
   const dbReviews = await getFeaturedReviews();
   const reviews = dbReviews.length > 0 ? dbReviews : FALLBACK;
 
@@ -88,8 +88,8 @@ function ReviewCard({ review }: { review: Review }) {
       <p className="mt-3 flex-1 text-sm leading-relaxed text-charcoal/80">
         "{review.comment}"
       </p>
-      <p className="mt-4 text-xs text-charcoal/50">
-        {review.customerName} · verified buyer
+      <p className="mt-4 text-xs text-charcoal/50 bg-pink-300/10 text-pink-700">
+        {review.customerName} · <span className="font-medium">verified buyer</span>
       </p>
     </div>
   );

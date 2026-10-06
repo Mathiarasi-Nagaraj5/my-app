@@ -59,7 +59,7 @@ export default function CheckoutSummary({
       </div>
 
         {codFee > 0 && (
-      <div className="flex justify-between text-sm">
+      <div className="flex justify-between text-sm text-ivory/75 pt-3.5">
         <span>COD convenience fee</span>
         <span>₹{codFee}</span>
       </div>

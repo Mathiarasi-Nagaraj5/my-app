@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import OrderTable, { AdminOrder } from "@/components/admin/OrderTable";
+import type { ReturnRecord } from "@/components/admin/ReturnsTable"; // adjust path
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
@@ -26,6 +27,19 @@ export default function AdminOrdersPage() {
     );
   };
 
+const [returns, setReturns] = useState<ReturnRecord[]>([]);
+
+useEffect(() => {
+  fetch("/api/admin/returns") // use whatever endpoint ReturnsTable's parent uses
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.success) setReturns(data.data);
+    });
+}, []);
+
+const handleReturnChanged = (updated: ReturnRecord) => {
+  setReturns((prev) => prev.map((r) => (r._id === updated._id ? updated : r)));
+};
   return (
     <div>
       <h1 className="mb-5 text-lg font-medium text-charcoal">orders</h1>
@@ -33,11 +47,13 @@ export default function AdminOrdersPage() {
       {loading ? (
         <p className="text-sm text-charcoal/55">loading orders...</p>
       ) : (
-        <OrderTable
-          orders={orders}
-          onStatusChanged={handleStatusChanged}
-          onShipped={handleShipped}
-        />
+       <OrderTable
+  orders={orders}
+  returns={returns}
+  onReturnChanged={handleReturnChanged}
+  onStatusChanged={handleStatusChanged}
+  onShipped={handleShipped}
+/>
       )}
     </div>
   );

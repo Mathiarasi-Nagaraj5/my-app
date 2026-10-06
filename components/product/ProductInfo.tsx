@@ -11,6 +11,7 @@ import { useCart } from "@/app/lib/context/CartContext";
 import { Truck, Wallet } from "lucide-react";
 import { buildWhatsAppLink } from "@/app/lib/contact";
 import { getColorName } from "@/app/lib/colorNames"; // adjust path to wherever you put colorNames.ts
+import { ShoppingBag, Zap, MessageCircle } from "lucide-react";
 const formatINR = (value: number) => `₹${value.toLocaleString("en-IN")}`;
 
 interface ProductInfoProps {
@@ -91,6 +92,7 @@ const handleCustomizeRequest = () => {
 
   window.open(buildWhatsAppLink(lines, whatsappNumber), "_blank");
 };
+console.log(product, "product");
   return (
     <div>
       {product.isBestseller && <Badge variant="neutral">bestseller</Badge>}
@@ -196,23 +198,44 @@ const handleCustomizeRequest = () => {
       </div>
 
       {/* CTAs */}
-      <div className="mt-6 flex gap-3">
-        <Button variant="primary" fullWidth onClick={
-          handleAddToCart}>
-          {added ? "Added to bag ✓" : "Add to bag"}
-        </Button>
-      </div>
-      <Button variant="secondary" fullWidth className="mt-3" onClick={handleBuyNow}>
-        Buy now
-      </Button>
-      <Button
+  
+<div className="mt-6 flex gap-3">
+  <Button
+    variant="primary"
+    fullWidth
+    onClick={handleAddToCart}
+  >
+    {added ? (
+      <>Added to bag ✓</>
+    ) : (
+      <>
+        <ShoppingBag size={18} className="mr-2 inline" />
+        Add to bag
+      </>
+    )}
+  </Button>
+</div>
+
+<Button
+  variant="secondary"
+  fullWidth
+  className="mt-3"
+  onClick={handleBuyNow}
+>
+  <Zap size={18} className="mr-2 inline" />
+  Buy now
+</Button>
+
+<Button
   variant="customize"
   fullWidth
   className="mt-3"
   onClick={handleCustomizeRequest}
 >
+  <MessageCircle size={18} className="mr-2 inline" />
   Customize on WhatsApp
 </Button>
+
 
       {/* delivery check */}
       <div className="mt-6 border-t border-charcoal/15 pt-5">

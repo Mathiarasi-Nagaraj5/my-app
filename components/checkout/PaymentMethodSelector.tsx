@@ -4,8 +4,8 @@ export type PaymentMethod = "upi" | "card" | "cod";
 
 const OPTIONS: { value: PaymentMethod; label: string }[] = [
   { value: "upi", label: "UPI (Google Pay, PhonePe, Paytm)" },
-  { value: "card", label: "credit / debit card" },
-  { value: "cod", label: "cash on delivery" },
+  { value: "card", label: "Credit / Debit Card" },
+  { value: "cod", label: "Cash on Delivery" },
 ];
 
 export default function PaymentMethodSelector({

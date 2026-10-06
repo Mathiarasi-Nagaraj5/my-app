@@ -51,25 +51,8 @@ export default function Footer() {
   const instagramUrl = process.env.NEXT_PUBLIC_INSTAGRAM_URL;
 
   return (
-    <footer className="border-t border-charcoal/10 bg-ivory font-sans text-charcoal">
-      {/* newsletter */}
-      <div className="border-b border-charcoal/10 px-6 py-10 text-center">
-        <p className="mb-1 font-serif text-2xl">Get updates on new arrivals</p>
-        <p className="mb-4 text-sm text-charcoal/60">
-          Be the first to know when we launch new styles.
-        </p>
-        <form className="mx-auto flex max-w-sm overflow-hidden rounded border border-pink bg-white">
-          <input
-            type="email"
-            placeholder="your email"
-            aria-label="Email address"
-            className="h-10 flex-1 bg-transparent px-3 text-sm text-charcoal placeholder:text-charcoal/40 focus:outline-none"
-          />
-          <Button variant="primary" size="lg" className="h-10 rounded-none">
-            Subscribe
-          </Button>
-        </form>
-      </div>
+    <footer className="border-t border-ivory/10 bg-charcoal font-sans text-ivory">
+    
 
       {/* main columns */}
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-6 pb-24 pt-14 sm:grid-cols-2 lg:grid-cols-4 lg:pb-14">
@@ -78,11 +61,11 @@ export default function Footer() {
           <p className="font-serif text-3xl font-semibold uppercase tracking-[0.18em] text-pink">
             Elite Soul
           </p>
-          <p className="mt-4 text-sm font-medium text-charcoal/60">
+          <p className="mt-4 text-sm font-medium text-ivory/75">
             Heavyweight comfort <span className="mx-1 text-pink">•</span> Everyday style
           </p>
 
-          <p className="mt-8 text-sm leading-relaxed text-charcoal/60">
+          <p className="mt-8 text-sm leading-relaxed text-ivory/75">
             © {new Date().getFullYear()} Elite Soul.
             <br />
             All rights reserved.
@@ -172,7 +155,7 @@ export default function Footer() {
               </a>
             )}
             {contactAddress && (
-              <p className="mt-1 flex items-start gap-2 text-sm leading-relaxed text-charcoal/60">
+              <p className="mt-1 flex items-start gap-2 text-sm leading-relaxed text-ivory/75">
                 <MapPin size={15} className="mt-0.5 shrink-0 text-pink" />
                 {contactAddress}
               </p>
@@ -193,8 +176,8 @@ export default function Footer() {
                     <Icon size={17} className="text-pink" />
                   </span>
                   <span className="flex flex-col leading-tight">
-                    <span className="text-sm font-medium">{title}</span>
-                    <span className="text-xs text-charcoal/55">{note}</span>
+                    <span className="text-sm font-medium text-charcoal">{title}</span>
+                    <span className="text-xs text-charcoal/75">{note}</span>
                   </span>
                 </li>
               ))}

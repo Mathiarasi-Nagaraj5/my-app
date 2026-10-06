@@ -113,6 +113,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     setUser(null);
+      setUser(null);
+  localStorage.removeItem("elite-soul-cart");
+  localStorage.removeItem("elite-soul-wishlist");
+  window.location.href = "/"; 
   };
 
   return (

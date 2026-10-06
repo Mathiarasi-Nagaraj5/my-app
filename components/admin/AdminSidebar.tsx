@@ -10,14 +10,12 @@ import { LayoutDashboard, Package, Truck, LogOut, RotateCcw, Wallet, X, Star, Us
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
+    { label: "Orders", href: "/admin/orders", icon: Truck },
   { label: "Site Content", href: "/admin/site-content", icon: Image },
-  { label: "Products", href: "/admin/products", icon: Package },
+  { label: "Inventory", href: "/admin/products", icon: Package },
   { label: "Customers", href: "/admin/customers", icon: Users },
-  { label: "Categories", href: "/admin/categories", icon: Tag },
   { label: "Promotions", href: "/admin/promotions", icon: Percent },
-  { label: "Orders", href: "/admin/orders", icon: Truck },
-  { label: "Returns", href: "/admin/returns", icon: RotateCcw },
-  { label: "Ratings", href: "/admin/ratings", icon: Star },
+    { label: "Ratings", href: "/admin/ratings", icon: Star },
 ];
 
 interface AdminSidebarProps {

@@ -44,10 +44,64 @@ export async function PUT(req: Request) {
 
     const body = await req.json();
 
-    const { topBar, marquee, heroSlides, contact, policy } = body;
-
+const { topBar, marquee, heroSlides, contact, policy, instagramHandle, instagramPosts, home } = body;
+console.log("PUT BODY:", body);
     const update: Record<string, unknown> = {};
 
+    if (home && typeof home === "object") {
+  const str = (v: unknown, max = 200) => (typeof v === "string" ? v.trim().slice(0, max) : "");
+  const bool = (v: unknown) => v !== false;
+  const clean: Record<string, unknown> = {};
+
+  if (home.categories) {
+    clean.categories = {
+      enabled: bool(home.categories.enabled),
+      title: str(home.categories.title),
+      items: (Array.isArray(home.categories.items) ? home.categories.items : [])
+        .filter((i: any) => i && str(i.image) && str(i.name))
+        .slice(0, 6)
+        .map((i: any) => ({ name: str(i.name, 60), image: str(i.image, 500), href: str(i.href, 300) || "/shop" })),
+    };
+  }
+
+  if (home.products) {
+    const ids = ["new", "best", "trending"];
+    clean.products = {
+      enabled: bool(home.products.enabled),
+      tabs: (Array.isArray(home.products.tabs) ? home.products.tabs : [])
+        .filter((t: any) => t && ids.includes(t.id))
+        .map((t: any) => ({
+          id: t.id,
+          label: str(t.label, 40) || t.id,
+          enabled: bool(t.enabled),
+          count: Math.min(Math.max(Number(t.count) || 8, 3), 12),
+        })),
+    };
+  }
+
+  if (home.why) {
+    clean.why = {
+      enabled: bool(home.why.enabled),
+      items: (Array.isArray(home.why.items) ? home.why.items : [])
+        .filter((i: any) => i && str(i.title))
+        .slice(0, 4)
+        .map((i: any) => ({ icon: str(i.icon, 20), title: str(i.title, 40), sub: str(i.sub, 80) })),
+    };
+  }
+
+  if (home.testimonials) {
+    clean.testimonials = {
+      enabled: bool(home.testimonials.enabled),
+      title: str(home.testimonials.title),
+      minRating: Math.min(Math.max(Number(home.testimonials.minRating) || 0, 0), 5),
+      limit: Math.min(Math.max(Number(home.testimonials.limit) || 6, 1), 12),
+    };
+  }
+
+  if (home.instagram) clean.instagram = { enabled: bool(home.instagram.enabled) };
+
+  update.home = clean;
+}
     if (Array.isArray(topBar)) {
       update.topBar = topBar.filter(
         (s) => typeof s === "string" && s.trim()
@@ -73,6 +127,27 @@ export async function PUT(req: Request) {
       update.policy = policy;
     }
 
+    if (typeof instagramHandle === "string") {
+  update.instagramHandle = instagramHandle.trim().replace(/^@/, "");
+}
+
+if (Array.isArray(instagramPosts)) {
+  update.instagramPosts = instagramPosts
+    .filter(
+      (p: any) =>
+        p &&
+        typeof p.imageUrl === "string" &&
+        p.imageUrl.trim() &&
+        typeof p.postUrl === "string" &&
+        /^https?:\/\//.test(p.postUrl.trim())
+    )
+    .slice(0, 6)
+    .map((p: any) => ({
+      imageUrl: p.imageUrl.trim(),
+      postUrl: p.postUrl.trim(),
+      alt: typeof p.alt === "string" ? p.alt.trim() : "",
+    }));
+}
     console.log("UPDATE OBJECT:", update);
     console.log("POLICY:", JSON.stringify(policy));
 

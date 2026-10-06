@@ -1,10 +1,8 @@
-// File: components/product/ProductReviews.tsx
 "use client";
 
-import { useEffect, useState } from "react";
 import ReviewStars from "@/components/ui/ReviewStars";
 
-interface ReviewItem {
+export interface ReviewItem {
   _id: string;
   customerName: string;
   rating: number;
@@ -12,33 +10,11 @@ interface ReviewItem {
   images?: string[];
 }
 
-export default function ProductReviews({ productId }: { productId: string }) {
-  const [reviews, setReviews] = useState<ReviewItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    fetch(`/api/reviews?productId=${productId}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (!cancelled && data.success) setReviews(data.data);
-      })
-      .catch((err) => console.error("Failed to load reviews:", err))
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [productId]);
-
-  if (loading) return null;
+export default function ProductReviews({ reviews }: { reviews: ReviewItem[] }) {
   if (reviews.length === 0) return null;
 
   return (
-    <section className="mx-auto max-w-4xl px-6 py-10">
+    <section className="mx-auto max-w-4xl px-6 py-10 md:col-span-2">
       <h2 className="mb-5 font-serif text-xl font-medium text-charcoal">
         Customer Reviews
       </h2>
@@ -65,8 +41,11 @@ export default function ProductReviews({ productId }: { productId: string }) {
               </div>
             )}
 
-            <p className="mt-3 text-xs text-charcoal/50">
-              {review.customerName} · verified buyer
+            <p className="mt-3 text-xs text-charcoal/90">
+              {review.customerName} ·{" "}
+              <span className="rounded bg-pink-200 px-2 py-1 text-pink-700">
+                verified buyer
+              </span>
             </p>
           </div>
         ))}

@@ -1,25 +1,61 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Product } from "@/app/lib/types";
 import Gallery from "./Gallery";
 import ProductInfo from "./ProductInfo";
 import SizeGuideModal from "./SizeGuideModal";
+import ProductReviews, { ReviewItem } from "./ProductReviews";
 
-export default function ProductDetailShell({ product, whatsappNumber }: { product: Product; whatsappNumber: string }) {
+export default function ProductDetailShell({
+  product,
+  whatsappNumber,
+}: {
+  product: Product;
+  whatsappNumber: string;
+}) {
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
+  const [reviews, setReviews] = useState<ReviewItem[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch(`/api/reviews?productId=${product._id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!cancelled && data.success) setReviews(data.data);
+      })
+      .catch((err) => console.error("Failed to load reviews:", err));
+
+    return () => {
+      cancelled = true;
+    };
+  }, [product._id]);
+
+  const { rating, reviewCount } = useMemo(() => {
+    const count = reviews.length;
+    const avg = count
+      ? reviews.reduce((sum, r) => sum + r.rating, 0) / count
+      : 0;
+    return { rating: Math.round(avg * 10) / 10, reviewCount: count };
+  }, [reviews]);
 
   return (
     <>
       <div className="mx-auto grid max-w-5xl grid-cols-1 gap-10 px-6 py-6 md:grid-cols-2">
         <Gallery imageUrls={product.imageUrls} productName={product.name} />
         <ProductInfo
-          product={product}
+          product={{ ...product, rating, reviewCount }}
           whatsappNumber={whatsappNumber}
           onSizeGuideClick={() => setSizeGuideOpen(true)}
         />
+     
       </div>
-      <SizeGuideModal open={sizeGuideOpen} onClose={() => setSizeGuideOpen(false)} />
+      <SizeGuideModal
+        open={sizeGuideOpen}
+        onClose={() => setSizeGuideOpen(false)}
+      />
+         <ProductReviews reviews={reviews} />
     </>
   );
 }

@@ -3,13 +3,15 @@ import CategoryGrid from "../components/home/CategoryGrid";
 import ProductRail from "../components/home/ProductRail";
 import WhyChooseUs from "../components/home/WhyChooseUs";
 import Testimonials from "../components/home/Testimonials";
-
+import InstagramFeed from "../components/home/InstagramFeed";
 import { getProducts, getBestsellers } from "@/services/product.service";
 import Marquee from "@/components/ui/Marquee";
-
+import ProductTab from "../components/home/ProductTab";
 import connectDB from "@/app/lib/mongodb";
 import SiteContent from "@/app/models/SiteContent";
-
+import CategoryTiles from "../components/home/CategoryTiles";
+import WhyChooseUsSection from "../components/home/WhyChooseUsSection";
+import { withHomeDefaults } from "@/app/lib/homeDefaults";
 export default async function HomePage() {
   /*
    * Get products for all homepage sections
@@ -44,53 +46,58 @@ export default async function HomePage() {
   const siteContent = JSON.parse(
     JSON.stringify(siteContentDoc ?? {})
   );
+  console.log("siteContent", siteContent);
 
+  const home = withHomeDefaults(siteContent.home);
+
+const tabData = {
+  new: { products: newArrivals, href: "/shop?sort=newest" },
+  best: { products: bestSellers, href: "/shop?bestseller=true" },
+  trending: { products: trending, href: "/shop?sort=popular" },
+};
+const tabs = home.products.tabs
+  .filter((t) => t.enabled)
+  .map((t) => ({
+    id: t.id,
+    label: t.label,
+    products: tabData[t.id].products.slice(0, t.count),
+    viewAllHref: tabData[t.id].href,
+  }));
+
+  console.log(home,'homeee')
   return (
-    <>
-      {/* Hero */}
-      <Hero slides={siteContent.heroSlides} />
+ <>
+  <Hero slides={siteContent.heroSlides} />
 
-      {/* Marquee */}
-      <Marquee className="bg-pink py-2 text-white">
-        <>
-          {(siteContent.marquee ?? []).map(
-            (text: string, i: number) => (
-              <span key={i}>{text}</span>
-            )
-          )}
-        </>
-      </Marquee>
+  <Marquee className="bg-pink py-2 text-white">
+    <>{(siteContent.marquee ?? []).map((text: string, i: number) => <span key={i}>{text}</span>)}</>
+  </Marquee>
 
-      {/* Categories */}
+  {home.categories.enabled &&
+    (home.categories.items.length > 0 ? (
+      <CategoryTiles title={home.categories.title} items={home.categories.items} />
+    ) : (
       <CategoryGrid />
+    ))}
 
-      {/* New Arrivals */}
-      <ProductRail
-        title="New Arrivals"
-        products={newArrivals.slice(0, 8)}
-        viewAllHref="/shop?sort=newest"
-        tone="charcoal-tint"
-      />
+  {home.products.enabled && <ProductTab tabs={tabs} />}
 
-      {/* Best Sellers */}
-      <ProductRail
-        title="Best Sellers"
-        products={bestSellers.slice(0, 8)}
-        viewAllHref="/shop?bestseller=true"
-      />
 
-      {/* Trending Now */}
-      <ProductRail
-        title="Trending Now"
-        products={trending.slice(0, 8)}
-        viewAllHref="/shop?sort=popular"
-        tone="charcoal-tint"
-      />
+    {home.instagram.enabled  && (
+    <InstagramFeed handle={siteContent.instagramHandle} posts={siteContent.instagramPosts} />
+  )}
+    {home.why.enabled && <WhyChooseUsSection items={home.why.items} />}
 
-      {/* Other Sections */}
-      <WhyChooseUs />
+{/* 
+  {home.testimonials.enabled && (
+    // <Testimonials
+    //   title={home.testimonials.title}
+    //   minRating={home.testimonials.minRating}
+    //   limit={home.testimonials.limit}
+    // />
+  )} */}
 
-      <Testimonials />
-    </>
+
+</>
   );
 }

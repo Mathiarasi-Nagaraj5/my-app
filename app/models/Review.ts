@@ -23,7 +23,14 @@ const ReviewSchema: Schema = new Schema(
     customerName: { type: String, required: true },
     rating: { type: Number, required: true, min: 1, max: 5 },
     comment: { type: String, required: true, maxlength: 1000 },
-    images: { type: [String], default: [] },
+  images: {
+  type: [String],
+  default: [],
+  validate: {
+    validator: (arr: string[]) => arr.length <= 5,
+    message: "A review can have at most 5 images",
+  },
+},
     isVisible: { type: Boolean, default: true },
     source: { type: String, enum: ["customer", "admin"], default: "customer" },
   },
@@ -34,13 +41,6 @@ const ReviewSchema: Schema = new Schema(
   }
 );
 
-// One review per (order, product) pair — stops a customer reviewing the same
-// purchased item twice. Only enforced when orderId actually exists, so
-// admin-added reviews (no orderId) never collide with each other here.
-ReviewSchema.index(
-  { orderId: 1, productId: 1 },
-  { unique: true, partialFilterExpression: { orderId: { $exists: true, $ne: null } } }
-);
 
 const Review: Model<IReview> =
   mongoose.models.Review || mongoose.model<IReview>("Review", ReviewSchema);
