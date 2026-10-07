@@ -27,6 +27,11 @@ export default function ProductTabs({ tabs }: ProductTabsProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [visibleCount, setVisibleCount] = useState(3);
   const [paused, setPaused] = useState(false);
+  const [selectedId, setSelectedId] = useState(available[0]?.id); // tab highlight, instant
+const [fading, setFading] = useState(false);
+const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+useEffect(() => () => clearTimeout(timeoutRef.current), []);
 
   const active = available.find((t) => t.id === activeId) ?? available[0];
   const products = active?.products ?? [];
@@ -45,12 +50,13 @@ export default function ProductTabs({ tabs }: ProductTabsProps) {
 
   // auto-slide, paused while the user hovers or touches
   useEffect(() => {
-    if (paused || products.length <= visibleCount) return;
+ if (paused || fading || products.length <= visibleCount) return;
     const id = setInterval(() => {
       setCurrentIndex((prev) => (prev >= maxIndex ? 0 : prev + 1));
     }, 4000);
     return () => clearInterval(id);
-  }, [paused, products.length, visibleCount, maxIndex]);
+  }, [paused, fading, products.length, visibleCount, maxIndex]);
+  
 
   // move the track
   useEffect(() => {
@@ -64,11 +70,20 @@ export default function ProductTabs({ tabs }: ProductTabsProps) {
   useEffect(() => {
     setCurrentIndex((prev) => Math.min(prev, maxIndex));
   }, [maxIndex]);
+ 
 
-  const selectTab = (id: string) => {
-    setActiveId(id);
+ const selectTab = (id: string) => {
+  if (id === selectedId) return;
+  clearTimeout(timeoutRef.current);
+  setSelectedId(id);   // highlight moves immediately
+  setFading(true);     // fade current products out
+
+  timeoutRef.current = setTimeout(() => {
+    setActiveId(id);   // swap products while invisible
     setCurrentIndex(0);
-  };
+    setFading(false);  // fade new products in
+  }, 250);
+};
 
   // empty check comes AFTER all hooks
   if (!active) return null;
@@ -87,13 +102,15 @@ export default function ProductTabs({ tabs }: ProductTabsProps) {
                 key={tab.id}
                 type="button"
                 role="tab"
-                aria-selected={tab.id === active.id}
+              
                 onClick={() => selectTab(tab.id)}
-                className={`border-b-2 pb-1 font-serif text-2xl transition-colors md:text-3xl ${
-                  tab.id === active.id
-                    ? "border-pink text-charcoal"
-                    : "border-transparent text-charcoal/40 hover:text-charcoal/70"
-                }`}
+              
+                aria-selected={tab.id === selectedId}
+className={`border-b-2 pb-1 font-serif text-lg transition-all duration-300 md:text-3xl ${
+  tab.id === selectedId
+    ? " bg-charcoal px-5 py-1 text-ivory shadow-md  rounded-md"
+    : "border-transparent text-charcoal/40 hover:text-charcoal/70"
+}`}
               >
                 {tab.label}
               </button>
@@ -104,7 +121,11 @@ export default function ProductTabs({ tabs }: ProductTabsProps) {
             View all
           </Link>
         </div>
-
+<div
+  className={`transition-all duration-300 ease-in-out ${
+    fading ? "translate-y-2 opacity-0" : "translate-y-0 opacity-100"
+  }`}
+>
         {/* slider */}
         <div
           className="relative overflow-hidden"
@@ -165,6 +186,7 @@ export default function ProductTabs({ tabs }: ProductTabsProps) {
             ))}
           </div>
         )}
+        </div>
       </div>
     </section>
   );

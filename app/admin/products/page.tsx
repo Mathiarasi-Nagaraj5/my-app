@@ -8,6 +8,7 @@ import ProductTable, { AdminProduct } from "@/components/admin/ProductTable";
 import Pagination from "@/components/admin/Pagination";
 import { useModal } from "@/components/ui/ModalProvider";
 import RequireAdmin from "@/components/auth/RequireAdmin";
+import ExportButtons from "@/components/admin/ExportButton";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50];
 
@@ -72,66 +73,66 @@ export default function AdminProductsPage() {
   }, [search, pageSize]);
 
   return (
-      <RequireAdmin>
-    <div>
-      <div className="mb-5 flex items-center justify-between">
-        <div>
-          <h1 className="mb-1 text-2xl font-medium text-charcoal">Products</h1>
-          <p className="text-sm text-gray-500">
-            View and manage all products available in the store.
+    <RequireAdmin>
+      <div>
+        <div className="mb-5 flex items-center justify-between">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2 p-4">
+            <div>
+              <h1 className="mb-1 text-2xl font-medium text-charcoal">Products</h1>
+              <p className="mb-4 text-sm text-gray-500">
+                View and manage all products available in the store. You can add, edit, or delete products as needed.
+              </p>
+            </div>
+
+          </div>
+          <ExportButtons type="inventory" label="Export inventory" />
+        </div>
+
+
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 rounded border border-charcoal/15 px-3 py-2 max-w-xs w-full">
+            <Search size={18} className="text-charcoal" />
+            <input
+              type="text"
+              placeholder="Search Products..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full bg-transparent text-xl text-charcoal placeholder:text-charcoal/70 focus:outline-none"
+            />
+          </div>
+
+          <select
+            value={pageSize}
+            onChange={(e) => setPageSize(Number(e.target.value))}
+            className="h-9 rounded border border-charcoal/15 px-2 text-sm text-charcoal"
+          >
+            {PAGE_SIZE_OPTIONS.map((size) => (
+              <option key={size} value={size}>
+                {size} per page
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {loading ? (
+          <p className="text-sm text-charcoal/55">Loading products...</p>
+        ) : filtered.length === 0 ? (
+          <p className="text-sm text-charcoal/55">
+            {search ? `no products match "${search}".` : "no products yet."}
           </p>
-        </div>
-        <Link href="/admin/products/new">
-          <Button variant="primary" size="lg" icon={<Plus size={14} />}>
-            Add product
-          </Button>
-        </Link>
+        ) : (
+          <>
+            <ProductTable products={paginated} onDelete={handleDelete} />
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={filtered.length}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+            />
+          </>
+        )}
       </div>
-
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 rounded border border-charcoal/15 px-3 py-2 max-w-xs w-full">
-          <Search size={18} className="text-charcoal" />
-          <input
-            type="text"
-            placeholder="Search Products..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-transparent text-xl text-charcoal placeholder:text-charcoal/70 focus:outline-none"
-          />
-        </div>
-
-        <select
-          value={pageSize}
-          onChange={(e) => setPageSize(Number(e.target.value))}
-          className="h-9 rounded border border-charcoal/15 px-2 text-sm text-charcoal"
-        >
-          {PAGE_SIZE_OPTIONS.map((size) => (
-            <option key={size} value={size}>
-              {size} per page
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {loading ? (
-        <p className="text-sm text-charcoal/55">Loading products...</p>
-      ) : filtered.length === 0 ? (
-        <p className="text-sm text-charcoal/55">
-          {search ? `no products match "${search}".` : "no products yet."}
-        </p>
-      ) : (
-        <>
-          <ProductTable products={paginated} onDelete={handleDelete} />
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalItems={filtered.length}
-            pageSize={pageSize}
-            onPageChange={setCurrentPage}
-          />
-        </>
-      )}
-    </div>
     </RequireAdmin>
   );
 }

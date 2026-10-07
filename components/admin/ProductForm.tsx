@@ -54,27 +54,7 @@ interface ProductFormProps {
   submitLabel?: string;
 }
 
-// Auto-generates a SKU from category + product name + a short random
-// suffix (the suffix is what keeps it unique even for two products with
-// similar names — e.g. "Black Tee" and "Black Tee V2" would otherwise
-// collide on the readable part alone). Never regenerated once a product
-// already has one, so it stays stable across edits.
-function generateSku(name: string, category: string[]): string {
-  const catPart = (category?.[0] ?? "GEN")
-    .replace(/[^a-zA-Z0-9]/g, "")
-    .slice(0, 3)
-    .toUpperCase() || "GEN";
 
-  const namePart =
-    name
-      .replace(/[^a-zA-Z0-9]/g, "")
-      .slice(0, 6)
-      .toUpperCase() || "PROD";
-
-  const suffix = Math.random().toString(36).slice(2, 6).toUpperCase();
-
-  return `${catPart}-${namePart}-${suffix}`;
-}
 
 // Normalizes colors to a clean array regardless of what shape it arrives
 // in — a real array (current format), a legacy comma-separated string
@@ -167,14 +147,8 @@ export default function ProductForm({
     ...EMPTY_VALUES,
     ...initialValues,
     imageUrls: initialValues?.imageUrls ?? [],
-    // Normalized here too, not just in the effect below — this is what
-    // guarantees the very first render never sees a raw string.
     colors: normalizeColors(initialValues?.colors),
-    // Backfills a SKU for products saved before this field existed, so
-    // editing an old product never blocks on a missing SKU.
-    sku:
-      initialValues?.sku?.trim() ||
-      generateSku(initialValues?.name ?? "", initialValues?.category ?? EMPTY_VALUES.category),
+    sku: initialValues?.sku?.trim() ?? "",
   });
   const [categories, setCategories] = useState<Category[]>([]);
 
@@ -205,9 +179,7 @@ export default function ProductForm({
       ...initialValues,
       imageUrls: initialValues.imageUrls ?? [],
       colors: normalizeColors(initialValues.colors),
-      sku:
-        initialValues.sku?.trim() ||
-        generateSku(initialValues.name ?? "", initialValues.category ?? EMPTY_VALUES.category),
+      sku: initialValues.sku?.trim() ?? "",
     });
   }, [initialValues]);
 
@@ -232,8 +204,8 @@ export default function ProductForm({
     if (initialValues && !initialValues._id) {
       console.warn(
         "ProductForm: initialValues was given but has no _id — the form will " +
-          "treat this as creating a NEW product. Reviews added here will be " +
-          "staged locally and only flushed if onSubmit resolves with an _id."
+        "treat this as creating a NEW product. Reviews added here will be " +
+        "staged locally and only flushed if onSubmit resolves with an _id."
       );
     }
   }, [initialValues]);
@@ -283,11 +255,6 @@ export default function ProductForm({
           .replace(/[^a-z0-9]+/g, "-")
           .replace(/(^-|-$)/g, "")
       );
-    }
-    // Only regenerate for a product that doesn't already have a saved
-    // SKU — an existing product's SKU must stay stable across edits.
-    if (!initialValues?.sku) {
-      update("sku", generateSku(name, values.category));
     }
   };
 
@@ -372,9 +339,9 @@ export default function ProductForm({
     // last-resort fallback in case it somehow ended up empty. Built as a
     // local value rather than relying on `update()` + `values.sku`, since
     // setState hasn't re-rendered by the time onSubmit is called below.
-    const sku = values.sku.trim() || generateSku(values.name, values.category);
-    if (sku !== values.sku) update("sku", sku);
-    if (values.price <= 0)   { setError("Enter a valid price"); return; }
+    
+    
+    if (values.price <= 0) { setError("Enter a valid price"); return; }
     if (!values.stock || values.stock < 1) {
       setError("Stock must be at least 1");
       return;
@@ -384,8 +351,18 @@ export default function ProductForm({
       return;
     }
 
-    const submitValues = { ...values, sku };
+  
 
+    if (!values.name.trim()) { setError("Product name is required"); return; }
+if (!values.slug.trim()) { setError("Slug is required"); return; }
+
+const sku = values.sku.trim();
+if (!sku) { setError("SKU is required"); return; }
+
+if (values.price <= 0) { setError("Enter a valid price"); return; }
+// ...rest unchanged
+
+const submitValues = { ...values, sku };
     setSaving(true);
     setReviewFlushError("");
     try {
@@ -401,7 +378,7 @@ export default function ProductForm({
           // got an id to attach them to. Surface it instead of eating it.
           setReviewFlushError(
             "Product saved, but no product id was returned so the staged reviews couldn't be sent. " +
-              "Make sure onSubmit resolves with the created/updated product (including its _id)."
+            "Make sure onSubmit resolves with the created/updated product (including its _id)."
           );
         } else {
           const failures: string[] = [];
@@ -469,23 +446,18 @@ export default function ProductForm({
       {/* SKU + Category */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <div className="mb-1.5 flex items-center justify-between">
-            <label className="block text-sm font-medium text-charcoal">
-              SKU <span className="text-charcoal/50 font-normal">(auto-generated)</span>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-charcoal">
+              SKU <span className="text-red-500">*</span>
             </label>
-            <button
-              type="button"
-              onClick={() => update("sku", generateSku(values.name, values.category))}
-              className="text-xs text-brass hover:underline"
-            >
-              regenerate
-            </button>
+            <input
+              className="h-10 w-full rounded border border-charcoal bg-ivory px-3 text-sm uppercase text-charcoal focus:outline-none focus:ring-1 focus:ring-brass"
+              value={values.sku}
+              onChange={(e) => update("sku", e.target.value.toUpperCase())}
+              placeholder="e.g. TSH-BLK-001"
+            />
           </div>
-          <input
-            readOnly
-            className="h-10 w-full cursor-not-allowed rounded border border-charcoal bg-charcoal/5 px-3 text-sm text-charcoal/70 focus:outline-none"
-            value={values.sku}
-          />
+
         </div>
 
         <div>

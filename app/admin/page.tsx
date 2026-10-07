@@ -7,6 +7,7 @@ import TopCategoriesChart, { CategorySlice } from "@/components/admin/Topcategor
 import RecentOrdersList, { RecentOrderRow } from "@/components/admin/Recentorderslist";
 import ActivityFeed, { ActivityEvent } from "@/components/admin/Activityfeed";
 import RequireAdmin from "@/components/auth/RequireAdmin";
+import ExportButtons from "@/components/admin/ExportButton";
 
 
 
@@ -77,6 +78,7 @@ export default function AdminDashboardPage() {
         })}
       </p>
 
+
       {!stats && loading ? (
         <p className="text-sm text-charcoal/55">loading stats...</p>
       ) : !stats ? (
@@ -98,8 +100,16 @@ export default function AdminDashboardPage() {
             <StatsCard label="Total products" value={String(stats.totalProducts ?? 0)} />
           </div>
 
+<div className="mt-5 rounded border border-charcoal/15 bg-white p-4">
+  <h1>Download customer, order, and inventory data</h1>
+  <div className="mb-2 flex flex-wrap items-center justify-start gap-2 p-4">
+    <ExportButtons type="customers" label="Export customers" />
+    <ExportButtons type="orders" label="Export orders" />
+    <ExportButtons type="inventory" label="Export inventory" />
+  </div>
+</div>
           {/* range selector — controls both charts below */}
-          <div className="mt-5 flex flex-wrap items-center justify-end gap-2">
+          <div className="mt-2 flex flex-wrap items-center justify-end gap-2">
             {range === "custom" && (
               <div className="flex items-center gap-1.5 text-xs">
                 <input
@@ -152,6 +162,7 @@ export default function AdminDashboardPage() {
             <div className="min-w-0">
               <TopCategoriesChart data={stats.topCategories ?? []} />
             </div>
+            
           </div>
 
           <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-[1.6fr_1fr]">

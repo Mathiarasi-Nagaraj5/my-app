@@ -16,6 +16,12 @@ interface SiteContentValues {
   instagramPosts: IInstagramPost[];
   policy: string;
   home: HomeConfig;
+instagramName: string;
+instagramBio: string;
+instagramAvatar: string;
+instagramPostCount: string;
+instagramFollowers: string;
+instagramFollowing: string;
 }
 
 const EMPTY_SLIDE: IHeroSlide = {
@@ -45,6 +51,8 @@ export default function SiteContentEditor() {
     instagramPosts: [],
     policy: "",
     home: withHomeDefaults(undefined),
+    instagramName: "", instagramBio: "", instagramAvatar: "",
+instagramPostCount: "", instagramFollowers: "", instagramFollowing: "",
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -59,6 +67,13 @@ export default function SiteContentEditor() {
     instagramPosts: d.instagramPosts ?? [],
     policy: d.policy ?? "",
     home: withHomeDefaults(d.home),
+    instagramName: d.instagramName ?? "",
+    instagramBio: d.instagramBio ?? "",
+    instagramAvatar: d.instagramAvatar ?? "",
+    instagramPostCount: d.instagramPostCount ?? "",
+    instagramFollowers: d.instagramFollowers ?? "",
+    instagramFollowing: d.instagramFollowing ?? "",
+
   });
 
   useEffect(() => {
@@ -79,15 +94,21 @@ export default function SiteContentEditor() {
       const res = await fetch("/api/site-content", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          topBar: values.topBar,
-          marquee: values.marquee,
-          heroSlides: values.heroSlides,
-          instagramHandle: values.instagramHandle,
-          instagramPosts: values.instagramPosts,
-          policy: values.policy,
-          home: values.home,
-        }),
+       body: JSON.stringify({
+  topBar: values.topBar,
+  marquee: values.marquee,
+  heroSlides: values.heroSlides,
+  instagramHandle: values.instagramHandle,
+  instagramPosts: values.instagramPosts,
+  instagramName: values.instagramName,
+  instagramBio: values.instagramBio,
+  instagramAvatar: values.instagramAvatar,
+  instagramPostCount: values.instagramPostCount,
+  instagramFollowers: values.instagramFollowers,
+  instagramFollowing: values.instagramFollowing,
+  policy: values.policy,
+  home: values.home,
+}),
       });
 
       const data = await res.json();
@@ -416,7 +437,61 @@ export default function SiteContentEditor() {
             className={`${input} max-w-xs`}
           />
         </div>
+<div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+  {([
+    ["instagramPostCount", "Posts", "12"],
+    ["instagramFollowers", "Followers", "629"],
+    ["instagramFollowing", "Following", "8"],
+  ] as const).map(([key, label, ph]) => (
+    <div key={key}>
+      <label className="mb-1 block text-xs text-charcoal/60">{label}</label>
+      <input
+        value={values[key]}
+        onChange={(e) => setValues((v) => ({ ...v, [key]: e.target.value }))}
+        placeholder={ph}
+        className={input}
+      />
+    </div>
+  ))}
 
+  <div className="sm:col-span-3">
+    <label className="mb-1 block text-xs text-charcoal/60">Display name</label>
+    <input
+      value={values.instagramName}
+      onChange={(e) => setValues((v) => ({ ...v, instagramName: e.target.value }))}
+      placeholder="Elite Soul"
+      className={input}
+    />
+  </div>
+
+  <div className="sm:col-span-3">
+    <label className="mb-1 block text-xs text-charcoal/60">Bio</label>
+    <textarea
+      value={values.instagramBio}
+      onChange={(e) => setValues((v) => ({ ...v, instagramBio: e.target.value }))}
+      rows={2}
+      placeholder="Heavyweight comfort. Everyday style."
+      className="w-full rounded border border-charcoal/25 px-3 py-2 text-sm"
+    />
+  </div>
+
+  <div className="sm:col-span-3">
+    <label className="mb-1 block text-xs text-charcoal/60">Profile picture</label>
+    {values.instagramAvatar && (
+      <img src={values.instagramAvatar} alt="Avatar" className="mb-2 h-16 w-16 rounded-full border border-charcoal/15 object-cover" />
+    )}
+    <input
+      type="file"
+      accept="image/png,image/jpeg,image/webp"
+      onChange={(e) => {
+        const file = e.target.files?.[0];
+        if (file) uploadImage(file, (url) => setValues((v) => ({ ...v, instagramAvatar: url })));
+        e.target.value = "";
+      }}
+      className="block w-full rounded border border-charcoal/25 px-3 py-2 text-sm"
+    />
+  </div>
+</div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {values.instagramPosts.map((post, idx) => (
             <div key={idx} className="rounded border border-charcoal/20 p-4">
@@ -490,12 +565,13 @@ export default function SiteContentEditor() {
         />
       </section>
 
-      <div className="flex items-center gap-3 border-t border-charcoal/15 pt-4">
+      <div className="flex items-center gap-3 border-t border-charcoal/15 p-4 sticky bottom-0 bg-ivory
+      ">
         <button
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className="rounded bg-charcoal px-6 py-2.5 text-sm text-ivory hover:bg-charcoal/90 disabled:opacity-50"
+          className="rounded bg-charcoal px-6 py-2.5 text-lg text-ivory hover:bg-charcoal/90 disabled:opacity-50"
         >
           {saving ? "saving..." : "Save changes"}
         </button>

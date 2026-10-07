@@ -8,22 +8,29 @@ interface Props {
 
 export default function CategoryTiles({ title, items }: Props) {
   return (
-    <section className="bg-ivory px-6 py-12">
-      <div className="mx-auto max-w-7xl">
-        <h2 className="mb-8 text-center font-serif text-3xl text-charcoal">{title}</h2>
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+    <section className="bg-ivory px-6 py-10">
+      <div className="mx-auto max-w-5xl">
+        <h2 className="mb-6 text-center font-serif text-2xl text-charcoal md:text-3xl">{title}</h2>
+
+        <div className="flex flex-wrap justify-center gap-x-4 gap-y-5 md:gap-x-6">
           {items.map((c, i) => (
-            <Link key={i} href={c.href} className="group block">
-              <div className="relative aspect-[3/4] overflow-hidden rounded bg-charcoal/5">
+            <Link
+              key={i}
+              href={c.href}
+              className="group block w-[calc(33.333%-11px)] max-w-[140px] sm:w-[130px] md:w-[140px]"
+            >
+              <div className="relative aspect-square overflow-hidden rounded-full bg-charcoal/5 shadow-sm transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl">
                 <Image
                   src={c.image}
                   alt={c.name}
                   fill
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
-                  sizes="(max-width: 768px) 50vw, 33vw"
+                  className="object-cover transition-transform duration-500 group-hover:scale-110"
+                  sizes="140px"
                 />
               </div>
-              <p className="mt-3 text-center text-lg capitalize text-charcoal">{c.name}</p>
+              <p className="mt-2 text-center text-sm capitalize text-charcoal transition-colors duration-200 group-hover:text-pink">
+                {c.name}
+              </p>
             </Link>
           ))}
         </div>

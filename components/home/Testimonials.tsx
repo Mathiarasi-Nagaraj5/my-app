@@ -8,15 +8,20 @@ interface Review {
   createdAt: string;
 }
 
-// Server component — fetches at request time (or use revalidate for ISR)
-async function getFeaturedReviews(): Promise<Review[]> {
+interface TestimonialsProps {
+  title?: string;
+  minRating?: number;
+  limit?: number;
+}
+
+async function getFeaturedReviews(limit: number): Promise<Review[]> {
   try {
     const base =
       process.env.NEXT_PUBLIC_BASE_URL ??
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
 
-    const res = await fetch(`${base}/api/reviews?featured=true&limit=6`, {
-      next: { revalidate: 60 }, // revalidate every 60 s
+    const res = await fetch(`${base}/api/reviews?featured=true&limit=${limit}`, {
+      next: { revalidate: 60 },
     });
 
     if (!res.ok) return [];
@@ -28,7 +33,6 @@ async function getFeaturedReviews(): Promise<Review[]> {
   }
 }
 
-// Hardcoded fallback shown when DB has no reviews yet
 const FALLBACK: Review[] = [
   {
     _id: "fallback-1",
@@ -53,43 +57,50 @@ const FALLBACK: Review[] = [
   },
 ];
 
-export default async function Testimonials(title: string) {
-  const dbReviews = await getFeaturedReviews();
+export default async function Testimonials({
+  title = "What Our Customers Are Saying",
+  minRating = 0,
+  limit = 6,
+}: TestimonialsProps) {
+  const fetched = await getFeaturedReviews(limit);
+  const dbReviews = fetched.filter((r) => r.rating >= minRating);
   const reviews = dbReviews.length > 0 ? dbReviews : FALLBACK;
-
-  // Show 3 on homepage max
-  const shown = reviews.slice(0, 3);
+  const shown = reviews.slice(0, limit);
 
   return (
     <section className="bg-ivory px-6 py-14">
-      <h2 className="mb-2 text-center font-serif text-3xl font-medium text-charcoal">
-        What Our Customers Are Saying
+      <h2 className="animate-fade-up mb-2 text-center font-serif text-3xl font-medium text-charcoal">
+        {title}
       </h2>
-      {dbReviews.length > 0 && (
-        <p className="mb-8 text-center text-xs text-charcoal/40">
+      {dbReviews.length > 0 ? (
+        <p className="animate-fade-up mb-8 text-center text-xs text-charcoal/40">
           {dbReviews.length} verified review{dbReviews.length !== 1 ? "s" : ""}
         </p>
+      ) : (
+        <div className="mb-8" />
       )}
-      {dbReviews.length === 0 && <div className="mb-8" />}
 
       <div className="mx-auto grid max-w-6xl grid-cols-1 gap-5 md:grid-cols-3">
-        {shown.map((review) => (
-          <ReviewCard key={review._id} review={review} />
+        {shown.map((review, i) => (
+          <ReviewCard key={review._id} review={review} index={i} />
         ))}
       </div>
     </section>
   );
 }
 
-function ReviewCard({ review }: { review: Review }) {
+function ReviewCard({ review, index }: { review: Review; index: number }) {
   return (
-    <div className="rounded-card border border-charcoal/15 bg-white p-5 flex flex-col">
+    <div
+      style={{ animationDelay: `${index * 120}ms` }}
+      className="animate-fade-up flex flex-col rounded-card border border-charcoal/15 bg-white p-5 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:border-pink/40 hover:shadow-xl"
+    >
       <StarRating rating={review.rating} />
       <p className="mt-3 flex-1 text-sm leading-relaxed text-charcoal/80">
-        "{review.comment}"
+        &ldquo;{review.comment}&rdquo;
       </p>
-      <p className="mt-4 text-xs text-charcoal/50 bg-pink-300/10 text-pink-700">
-        {review.customerName} · <span className="font-medium">verified buyer</span>
+      <p className="mt-4 text-xs text-charcoal/50">
+        {review.customerName} · <span className="font-medium text-pink">verified buyer</span>
       </p>
     </div>
   );

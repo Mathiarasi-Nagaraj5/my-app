@@ -44,7 +44,8 @@ export async function PUT(req: Request) {
 
     const body = await req.json();
 
-const { topBar, marquee, heroSlides, contact, policy, instagramHandle, instagramPosts, home } = body;
+const { topBar, marquee, heroSlides, contact, policy, instagramHandle, instagramPosts, home,instagramName, instagramBio, instagramAvatar,
+        instagramPostCount, instagramFollowers, instagramFollowing  } = body;
 console.log("PUT BODY:", body);
     const update: Record<string, unknown> = {};
 
@@ -151,6 +152,19 @@ if (Array.isArray(instagramPosts)) {
     console.log("UPDATE OBJECT:", update);
     console.log("POLICY:", JSON.stringify(policy));
 
+    const short = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : undefined);
+
+const igFields = {
+  instagramName: short(instagramName, 60),
+  instagramBio: short(instagramBio, 200),
+  instagramAvatar: short(instagramAvatar, 500),
+  instagramPostCount: short(instagramPostCount, 10),
+  instagramFollowers: short(instagramFollowers, 10),
+  instagramFollowing: short(instagramFollowing, 10),
+};
+for (const [k, v] of Object.entries(igFields)) {
+  if (v !== undefined) update[k] = v;
+}
     let content = await SiteContent.findOne();
 
     if (!content) {

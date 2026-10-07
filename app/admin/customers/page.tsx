@@ -1,6 +1,7 @@
 "use client";
 
 import CustomerTable, { Customer } from "@/components/admin/CustomerTable";
+import ExportButtons from "@/components/admin/ExportButton";
 import RequireAdmin from "@/components/auth/RequireAdmin";
 import { useEffect, useState } from "react";
 
@@ -16,16 +17,19 @@ export default function CustomersPage() {
 
   return (
     <RequireAdmin>
-      <div >
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2 p-4">
+   
         <div className="mb-6">
           <h1 className="mb-1 text-2xl font-medium text-charcoal">Customers</h1>
           <p className="text-sm text-gray-500">
             View and manage all registered customers.
         </p>
       </div>
+      <ExportButtons type="customers" label="Export customers" />
+</div>
 
       <CustomerTable customers={customers} />
-    </div>
+  
     </RequireAdmin>
   );
 }

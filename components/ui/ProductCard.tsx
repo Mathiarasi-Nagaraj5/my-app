@@ -41,7 +41,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             alt={product.name}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
-            sizes="(max-width: 768px) 50vw, 25vw"
+            sizes="(max-width: 568px) 20vw, 15vw"
           />
 
           {/* top-left tag: only one of these should show at a time */}

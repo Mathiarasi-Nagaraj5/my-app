@@ -27,6 +27,12 @@ export interface ISiteContent extends Document {
   updatedAt: Date;
   policy: string; // Markdown content for the policy page
   home: Record<string, unknown>; // for future home page content
+  instagramName?: string;
+instagramBio?: string;
+instagramAvatar?: string;
+instagramPostCount?: string;
+instagramFollowers?: string;
+instagramFollowing?: string;
 }
 
 const HeroSlideSchema = new Schema<IHeroSlide>(
@@ -71,6 +77,12 @@ const SiteContentSchema = new Schema<ISiteContent>(
     },
     home: { type: Schema.Types.Mixed, default: {} },
     policy: { type: String, default: "" },
+ instagramName: { type: String, default: "", trim: true },
+instagramBio: { type: String, default: "", trim: true },
+instagramAvatar: { type: String, default: "" },
+instagramPostCount: { type: String, default: "", trim: true },
+instagramFollowers: { type: String, default: "", trim: true },
+instagramFollowing: { type: String, default: "", trim: true },
   },
   { timestamps: true }
 );

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import OrderTable, { AdminOrder } from "@/components/admin/OrderTable";
 import type { ReturnRecord } from "@/components/admin/ReturnsTable";
 import RequireAdmin from "@/components/auth/RequireAdmin";
+import ExportButtons from "@/components/admin/ExportButton";
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
@@ -43,13 +44,22 @@ export default function AdminOrdersPage() {
   return (
     <RequireAdmin>
       <div>
-        <h1 className="mb-1 text-2xl font-medium text-charcoal">Orders</h1>
+      
+   
+   <div className="mb-4 flex flex-wrap items-center justify-between gap-2 p-4">
+    <div>
+        <h1 className="mb-1 text-2xl font-medium text-charcoal">Products</h1>
         <p className="mb-4 text-sm text-gray-500">
-          View and manage all orders placed by customers.
+          View and manage all products available in the store.
         </p>
+    </div>
+                   <ExportButtons type="orders" label="Export orders" />   
+
+   </div>
         {loading ? (
           <p className="text-sm text-charcoal/55">loading orders...</p>
         ) : (
+          <>
           <OrderTable
             orders={orders}
             returns={returns}
@@ -57,6 +67,7 @@ export default function AdminOrdersPage() {
             onStatusChanged={handleStatusChanged}
             onShipped={handleShipped}
           />
+          </>
         )}
       </div>
     </RequireAdmin>
