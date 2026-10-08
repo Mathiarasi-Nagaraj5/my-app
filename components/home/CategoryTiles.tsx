@@ -19,7 +19,8 @@ export default function CategoryTiles({ title, items }: Props) {
               href={c.href}
               className="group block w-[calc(33.333%-11px)] max-w-[140px] sm:w-[130px] md:w-[140px]"
             >
-              <div className="relative aspect-square overflow-hidden rounded-full bg-charcoal/5 shadow-sm transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl">
+              <div className="relative aspect-square overflow-hidden rounded-full bg-charcoal/5 shadow-sm transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl shadow-pink/10">
+               <h1>grtr</h1>
                 <Image
                   src={c.image}
                   alt={c.name}
