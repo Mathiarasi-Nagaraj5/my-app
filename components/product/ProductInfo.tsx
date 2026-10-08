@@ -152,7 +152,6 @@ console.log(product, "product");
         </div>
       )}
 
-<ProductDescription product={product} />
       {/* size */}
       {product.sizes && product.sizes.length > 0 && (
         <div className="mt-6">
