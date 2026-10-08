@@ -12,6 +12,7 @@ import { Truck, Wallet } from "lucide-react";
 import { buildWhatsAppLink } from "@/app/lib/contact";
 import { getColorName } from "@/app/lib/colorNames"; // adjust path to wherever you put colorNames.ts
 import { ShoppingBag, Zap, MessageCircle } from "lucide-react";
+import ProductDescription from "./ProductDescription";
 const formatINR = (value: number) => `₹${value.toLocaleString("en-IN")}`;
 
 interface ProductInfoProps {
@@ -151,6 +152,7 @@ console.log(product, "product");
         </div>
       )}
 
+<ProductDescription product={product} />
       {/* size */}
       {product.sizes && product.sizes.length > 0 && (
         <div className="mt-6">
