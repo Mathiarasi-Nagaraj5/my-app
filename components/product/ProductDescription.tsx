@@ -20,7 +20,7 @@ export default function ProductDescription({ product }: { product: Product }) {
   return (
     <section className="bg-charcoal px-6 py-10">
       <div className="mx-auto max-w-4xl">
-        <h2 className="mb-5 font-serif text-lg font-medium text-ivory">Product Details</h2>
+        <h2 className="mb-5 font-serif text-xl font-medium text-pink">Product Details</h2>
 
         {highlights.length > 0 && (
           <ul className="mb-6 list-disc space-y-1.5 pl-5 text-sm text-ivory/75 marker:text-pink">
@@ -32,7 +32,7 @@ export default function ProductDescription({ product }: { product: Product }) {
           <dl className="grid grid-cols-1 gap-x-10 gap-y-3 sm:grid-cols-2">
             {specs.map(({ label, value }) => (
               <div key={label} className="flex justify-between border-b border-ivory/10 pb-2 text-sm">
-                <dt className="text-ivory/55">{label}</dt>
+                <dt className="text-ivory/70">{label}</dt>
                 <dd className="text-right text-ivory/90">{value}</dd>
               </div>
             ))}
