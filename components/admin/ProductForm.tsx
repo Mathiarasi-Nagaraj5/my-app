@@ -19,6 +19,18 @@ export interface ProductFormValues {
   isBestseller: boolean;
   sizes: string;
   colors: string[];
+  material: string;
+fit: string;
+neck: string;
+sleeveLength: string;
+pattern: string;
+occasion: string;
+packOf: number;
+washCare: string;
+sizeAndFit: string;
+highlights: string[];
+attributes: ProductAttribute[];
+
 }
 interface Category {
   _id?: string;
@@ -26,6 +38,13 @@ interface Category {
   slug: string;
 }
 
+const FIT_OPTIONS = ["Regular Fit", "Oversized", "Relaxed Fit", "Slim Fit"];
+const NECK_OPTIONS = ["Round Neck", "V-Neck", "Collared", "Hooded"];
+const SLEEVE_OPTIONS = ["Short Sleeves", "Long Sleeves", "Sleeveless", "Three-Quarter Sleeves"];
+const PATTERN_OPTIONS = ["Solid", "Typography", "Graphic", "Printed", "Striped"];
+const OCCASION_OPTIONS = ["Casual", "Lounge", "Sports", "Work"];
+
+interface ProductAttribute { label: string; value: string }
 const EMPTY_VALUES: ProductFormValues = {
   name: "",
   slug: "",
@@ -39,6 +58,17 @@ const EMPTY_VALUES: ProductFormValues = {
   isBestseller: false,
   sizes: "S, M, L, XL, XXL, 3XL, 4XL, 5XL",
   colors: [],
+  material: "",
+fit: "",
+neck: "",
+sleeveLength: "",
+pattern: "",
+occasion: "",
+packOf: 1,
+washCare: "",
+sizeAndFit: "",
+highlights: [],
+attributes: [],
 };
 
 interface ProductFormProps {
@@ -151,7 +181,9 @@ export default function ProductForm({
     sku: initialValues?.sku?.trim() ?? "",
   });
   const [categories, setCategories] = useState<Category[]>([]);
-
+const [highlightsText, setHighlightsText] = useState(
+  (initialValues?.highlights ?? []).join("\n")
+);
   useEffect(() => {
     fetch("/api/categories")
       .then((res) => res.json())
@@ -173,7 +205,7 @@ export default function ProductForm({
     if (recordId !== undefined && recordId === loadedRecordIdRef.current) return;
 
     loadedRecordIdRef.current = recordId;
-
+setHighlightsText((initialValues.highlights ?? []).join("\n"));
     setValues({
       ...EMPTY_VALUES,
       ...initialValues,
@@ -239,6 +271,17 @@ export default function ProductForm({
     if (values.colors.includes(colorInput)) return;
     update("colors", [...values.colors, colorInput]);
   };
+  const addAttribute = () =>
+  update("attributes", [...values.attributes, { label: "", value: "" }]);
+
+const updateAttribute = (i: number, key: "label" | "value", v: string) =>
+  update(
+    "attributes",
+    values.attributes.map((a, idx) => (idx === i ? { ...a, [key]: v } : a))
+  );
+
+const removeAttribute = (i: number) =>
+  update("attributes", values.attributes.filter((_, idx) => idx !== i));
 
   const removeColor = (color: string) => {
     update("colors", values.colors.filter((c) => c !== color));
@@ -361,8 +404,16 @@ if (!sku) { setError("SKU is required"); return; }
 
 if (values.price <= 0) { setError("Enter a valid price"); return; }
 // ...rest unchanged
+const submitValues = {
+  ...values,
+  sku,
+  highlights: highlightsText
+    .split("\n")
+    .map((h) => h.trim())
+    .filter(Boolean),
+  attributes: values.attributes.filter((a) => a.label.trim() && a.value.trim()),
+};
 
-const submitValues = { ...values, sku };
     setSaving(true);
     setReviewFlushError("");
     try {
@@ -495,6 +546,114 @@ const submitValues = { ...values, sku };
           placeholder="Fabric, fit, care instructions, etc."
         />
       </div>
+      {/* Specifications */}
+<div className="rounded border border-charcoal/15 p-4">
+  <p className="mb-3 text-sm font-medium text-charcoal">Specifications</p>
+
+  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+    {([
+      ["Fit", "fit", FIT_OPTIONS],
+      ["Neck", "neck", NECK_OPTIONS],
+      ["Sleeve", "sleeveLength", SLEEVE_OPTIONS],
+      ["Pattern", "pattern", PATTERN_OPTIONS],
+      ["Occasion", "occasion", OCCASION_OPTIONS],
+    ] as const).map(([label, key, options]) => (
+      <div key={key}>
+        <label className="mb-1.5 block text-sm text-charcoal">{label}</label>
+        <select
+          value={values[key]}
+          onChange={(e) => update(key, e.target.value)}
+          className="h-10 w-full rounded border border-charcoal bg-ivory px-3 text-sm text-charcoal focus:outline-none focus:ring-1 focus:ring-brass"
+        >
+          <option value="">—</option>
+          {options.map((o) => (
+            <option key={o} value={o}>{o}</option>
+          ))}
+        </select>
+      </div>
+    ))}
+
+    <div>
+      <label className="mb-1.5 block text-sm text-charcoal">Pack of</label>
+      <input
+        type="number"
+        min={1}
+        value={values.packOf}
+        onChange={(e) => update("packOf", Number(e.target.value) || 1)}
+        className="h-10 w-full rounded border border-charcoal bg-ivory px-3 text-sm text-charcoal focus:outline-none focus:ring-1 focus:ring-brass"
+      />
+    </div>
+  </div>
+
+  <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <div>
+      <label className="mb-1.5 block text-sm text-charcoal">Fabric</label>
+      <input
+        value={values.material}
+        onChange={(e) => update("material", e.target.value)}
+        placeholder="e.g. 100% cotton, 240 GSM"
+        className="h-10 w-full rounded border border-charcoal bg-ivory px-3 text-sm text-charcoal focus:outline-none focus:ring-1 focus:ring-brass"
+      />
+    </div>
+    <div>
+      <label className="mb-1.5 block text-sm text-charcoal">Wash care</label>
+      <input
+        value={values.washCare}
+        onChange={(e) => update("washCare", e.target.value)}
+        placeholder="e.g. Machine wash, do not bleach"
+        className="h-10 w-full rounded border border-charcoal bg-ivory px-3 text-sm text-charcoal focus:outline-none focus:ring-1 focus:ring-brass"
+      />
+    </div>
+  </div>
+
+  <div className="mt-4">
+    <label className="mb-1.5 block text-sm text-charcoal">Size &amp; fit note</label>
+    <input
+      value={values.sizeAndFit}
+      onChange={(e) => update("sizeAndFit", e.target.value)}
+      placeholder='e.g. Model is 5&apos;6" and wears size XL'
+      className="h-10 w-full rounded border border-charcoal bg-ivory px-3 text-sm text-charcoal focus:outline-none focus:ring-1 focus:ring-brass"
+    />
+  </div>
+
+  <div className="mt-4">
+    <label className="mb-1.5 block text-sm text-charcoal">
+      Highlights <span className="text-charcoal/50">(one per line)</span>
+    </label>
+    <textarea
+      rows={3}
+      value={highlightsText}
+      onChange={(e) => setHighlightsText(e.target.value)}
+      className="w-full rounded border border-charcoal bg-ivory px-3 py-2 text-sm text-charcoal focus:outline-none focus:ring-1 focus:ring-brass"
+    />
+  </div>
+
+  <div className="mt-4">
+    <div className="mb-1.5 flex items-center justify-between">
+      <label className="text-sm text-charcoal">Other details</label>
+      <button type="button" onClick={addAttribute} className="text-xs text-charcoal underline">
+        + add
+      </button>
+    </div>
+    {values.attributes.map((a, i) => (
+      <div key={i} className="mb-2 flex gap-2">
+        <input
+          value={a.label}
+          onChange={(e) => updateAttribute(i, "label", e.target.value)}
+          placeholder="Label (e.g. Length)"
+          className="h-10 flex-1 rounded border border-charcoal bg-ivory px-3 text-sm text-charcoal"
+        />
+        <input
+          value={a.value}
+          onChange={(e) => updateAttribute(i, "value", e.target.value)}
+          placeholder="Value (e.g. Regular)"
+          className="h-10 flex-1 rounded border border-charcoal bg-ivory px-3 text-sm text-charcoal"
+        />
+        <button type="button" onClick={() => removeAttribute(i)} className="text-charcoal/40 hover:text-red-600">×</button>
+      </div>
+    ))}
+  </div>
+</div>
 
       {/* Price + Original Price + Stock */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">

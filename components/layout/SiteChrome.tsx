@@ -21,7 +21,9 @@ export default function SiteChrome({
 
   return (
     <>
+    <div className="sticky top-0 z-50 w-full bg-ivory">
       <AnnouncementBar items={topBar} />
+      </div>
       <Navbar />
       <main>{children}</main>
       <Footer />

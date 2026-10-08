@@ -12,7 +12,25 @@ export interface Product {
   isBestseller?: boolean;
   colors?: string[]; // hex values, e.g. ["#1C1B19", "#6B5B45"]
   sizes?: ("S" | "M" | "L" | "XL" | "XXL")[];
+  fit?: string;
+neck?: string;
+sleeveLength?: string;
+pattern?: string;
+occasion?: string;
+packOf?: number;
+washCare?: string;
+sizeAndFit?: string;
+material?: string;
+highlights?: string[];
+attributes?: ProductAttribute[];
 }
+export interface ProductAttribute {
+  label: string;
+  value: string;
+}
+
+// inside Product:
+
 export interface ShopFilters {
   categories: string[]; // e.g. ["t-shirts", "hoodies"]
   maxPrice: number;
