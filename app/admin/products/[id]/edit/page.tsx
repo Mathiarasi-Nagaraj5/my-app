@@ -28,25 +28,34 @@ export default function EditProductPage() {
       .then((product) => {
 
 
-        setInitialValues({
-          // THE FIX: this object was picking out individual fields and
-          // silently dropping _id (and sku) in the process. ProductForm
-          // needs _id to know it's editing an existing product rather than
-          // staging reviews for one that doesn't exist yet.
-          _id: product._id,
-          name: product.name,
-          slug: product.slug,
-          sku: product.sku,
-          stock: product.stock,
-          category: product.category,
-          price: product.price,
-          originalPrice: product.originalPrice,
-          imageUrls: product.imageUrls ?? [],
-          isBestseller: product.isBestseller,
-          sizes: (product.sizes ?? []).join(", "),
-          colors: (product.colors ?? []).join(", "),
-          description: product.description,
-        });
+       setInitialValues({
+  _id: product._id,
+  name: product.name,
+  slug: product.slug,
+  sku: product.sku,
+  stock: product.stock,
+  category: product.category,
+  price: product.price,
+  originalPrice: product.originalPrice,
+  imageUrls: product.imageUrls ?? [],
+  isBestseller: product.isBestseller,
+  sizes: (product.sizes ?? []).join(", "),
+  colors: product.colors ?? [],
+  description: product.description,
+
+  // specifications
+  material: product.material ?? "",
+  fit: product.fit ?? "",
+  neck: product.neck ?? "",
+  sleeveLength: product.sleeveLength ?? "",
+  pattern: product.pattern ?? "",
+  occasion: product.occasion ?? "",
+  packOf: product.packOf ?? 1,
+  washCare: product.washCare ?? "",
+  sizeAndFit: product.sizeAndFit ?? "",
+  highlights: product.highlights ?? [],
+  attributes: product.attributes ?? [],
+});
       })
       .catch((err) => {
         console.error(err);
