@@ -44,7 +44,7 @@ export default async function ProductDetailPage({
       />
 
       <ProductDetailShell product={product} whatsappNumber={CONTACT_NUMBER} />
-      <ProductDescription product={product} />
+  
 
    
 

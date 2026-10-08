@@ -6,6 +6,7 @@ import Gallery from "./Gallery";
 import ProductInfo from "./ProductInfo";
 import SizeGuideModal from "./SizeGuideModal";
 import ProductReviews, { ReviewItem } from "./ProductReviews";
+import ProductDescription from "./ProductDescription";
 
 export default function ProductDetailShell({
   product,
@@ -55,6 +56,7 @@ export default function ProductDetailShell({
         open={sizeGuideOpen}
         onClose={() => setSizeGuideOpen(false)}
       />
+      <ProductDescription product={product} />
          <ProductReviews reviews={reviews} />
     </>
   );
