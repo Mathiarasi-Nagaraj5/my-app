@@ -48,7 +48,7 @@ export default function AdminOrdersPage() {
    
    <div className="mb-4 flex flex-wrap items-center justify-between gap-2 p-4">
     <div>
-        <h1 className="mb-1 text-2xl font-medium text-charcoal">Products</h1>
+        <h1 className="mb-1 text-2xl font-medium text-charcoal">Orders</h1>
         <p className="mb-4 text-sm text-gray-500">
           View and manage all products available in the store.
         </p>

@@ -8,7 +8,10 @@ export default function ProductDescription({ product }: { product: Product }) {
     { label: "Sleeve", value: product.sleeveLength },
     { label: "Pattern", value: product.pattern },
     { label: "Occasion", value: product.occasion },
-    { label: "Pack of", value: product.packOf && product.packOf > 1 ? String(product.packOf) : undefined },
+    {
+      label: "Pack of",
+      value: product.packOf && product.packOf > 1 ? String(product.packOf) : undefined,
+    },
     { label: "Wash care", value: product.washCare },
     ...(product.attributes ?? []),
   ].filter((s) => s.value);
@@ -18,30 +21,48 @@ export default function ProductDescription({ product }: { product: Product }) {
   if (specs.length === 0 && highlights.length === 0 && !product.sizeAndFit) return null;
 
   return (
-    <section className="bg-charcoal px-6 py-10">
+    <section className="bg-charcoal px-6 py-14">
       <div className="mx-auto max-w-4xl">
-        <h2 className="mb-5 font-serif text-xl font-medium text-pink">Product Details</h2>
+        {/* Heading + divider */}
+        <div className="mb-10 text-center">
+          <h2 className="font-serif text-2xl font-medium text-pink md:text-3xl">Product Details</h2>
+          <div className="mt-4 flex items-center justify-center gap-3" aria-hidden="true">
+            <span className="h-px w-16 bg-gradient-to-r from-transparent to-pink md:w-28" />
+            <span className="text-sm leading-none text-pink">✦</span>
+            <span className="h-px w-16 bg-gradient-to-l from-transparent to-pink md:w-28" />
+          </div>
+        </div>
 
         {highlights.length > 0 && (
-          <ul className="mb-6 list-disc space-y-1.5 pl-5 text-sm text-ivory/75 marker:text-pink">
-            {highlights.map((h) => <li key={h}>{h}</li>)}
+          <ul className="mb-8 grid grid-cols-1 gap-x-10 gap-y-3 sm:grid-cols-2">
+            {highlights.map((h) => (
+              <li key={h} className="flex items-start gap-3 text-sm leading-relaxed text-ivory/80">
+                <span aria-hidden="true" className="mt-0.5 text-xs text-pink">
+                  ✦
+                </span>
+                {h}
+              </li>
+            ))}
           </ul>
         )}
 
         {specs.length > 0 && (
-          <dl className="grid grid-cols-1 gap-x-10 gap-y-3 sm:grid-cols-2">
+          <dl className="grid grid-cols-1 gap-x-10 rounded-2xl border border-ivory/10 bg-ivory/5 px-6 py-3 sm:grid-cols-2">
             {specs.map(({ label, value }) => (
-              <div key={label} className="flex justify-between border-b border-ivory/10 pb-2 text-sm">
-                <dt className="text-ivory/70">{label}</dt>
-                <dd className="text-right text-ivory/90">{value}</dd>
+              <div
+                key={label}
+                className="flex justify-between gap-4 border-b border-ivory/10 py-3 text-sm"
+              >
+                <dt className="text-ivory/60">{label}</dt>
+                <dd className="text-right font-medium text-ivory/90">{value}</dd>
               </div>
             ))}
           </dl>
         )}
 
         {product.sizeAndFit && (
-          <p className="mt-6 text-sm text-ivory/65">
-            <span className="font-medium text-ivory/85">Size &amp; fit: </span>
+          <p className="mt-8 border-l-2 border-pink bg-ivory/5 px-5 py-4 text-sm leading-relaxed text-ivory/75">
+            <span className="font-medium text-pink">Size &amp; fit: </span>
             {product.sizeAndFit}
           </p>
         )}

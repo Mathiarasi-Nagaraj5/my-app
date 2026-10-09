@@ -35,29 +35,28 @@ export default function ProductDetailShell({
 
   const { rating, reviewCount } = useMemo(() => {
     const count = reviews.length;
-    const avg = count
-      ? reviews.reduce((sum, r) => sum + r.rating, 0) / count
-      : 0;
+    const avg = count ? reviews.reduce((sum, r) => sum + r.rating, 0) / count : 0;
     return { rating: Math.round(avg * 10) / 10, reviewCount: count };
   }, [reviews]);
 
   return (
     <>
-      <div className="mx-auto grid max-w-5xl grid-cols-1 gap-10 px-6 py-6 md:grid-cols-2">
-        <Gallery imageUrls={product.imageUrls} productName={product.name} />
+      <div className="mx-auto grid max-w-5xl grid-cols-1 gap-10 px-6 py-8 md:grid-cols-2 md:gap-14">
+        {/* gallery stays in view while the longer info column scrolls */}
+        <div className="md:sticky md:top-28 md:self-start">
+          <Gallery imageUrls={product.imageUrls} productName={product.name} />
+        </div>
+
         <ProductInfo
           product={{ ...product, rating, reviewCount }}
           whatsappNumber={whatsappNumber}
           onSizeGuideClick={() => setSizeGuideOpen(true)}
         />
-     
       </div>
-      <SizeGuideModal
-        open={sizeGuideOpen}
-        onClose={() => setSizeGuideOpen(false)}
-      />
+
+      <SizeGuideModal open={sizeGuideOpen} onClose={() => setSizeGuideOpen(false)} />
       <ProductDescription product={product} />
-         <ProductReviews reviews={reviews} />
+      <ProductReviews reviews={reviews} />
     </>
   );
 }

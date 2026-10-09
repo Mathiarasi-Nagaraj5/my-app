@@ -50,14 +50,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: "none of the selected orders are shipped yet" }, { status: 400 });
     }
 
-    // 2. one combined PDF link for printing all of them together
+        // 2. one combined PDF link for printing all of them together
     let combinedUrl: string | null = null;
-    try {
-      const combined = await generateLabel(shipmentIds);
-      if (combined.label_created && combined.label_url) combinedUrl = combined.label_url;
-    } catch {
-      // per-order labels are still saved even if the combined one fails
-    }
+if (shipmentIds.length === 1 && Object.values(labels).length === 1) {
+  combinedUrl = Object.values(labels)[0];
+} else {
+  try {
+    const combined = await generateLabel(shipmentIds);
+    if (combined.label_created && combined.label_url) combinedUrl = combined.label_url;
+  } catch {}
+}
+
+   
 
     return NextResponse.json({ success: true, labels, combinedUrl, failed });
   } catch (error) {

@@ -54,11 +54,7 @@ export interface AdminOrder {
 
 
 
-interface OrderTableProps {
-  orders: AdminOrder[];
-  onStatusChanged: (orderId: string, newStatus: OrderStatus) => void;
-  onShipped?: (orderId: string, shipment: AdminOrder["shipment"]) => void;
-}
+
 
 interface ShipResponse {
   error?: string;
@@ -76,13 +72,28 @@ const formatINR = (v: number): string => `₹${v.toLocaleString("en-IN")}`;
 const formatDate = (iso: string): string =>
   new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 
-function canShipOrder(order: AdminOrder): boolean {
-  return (
-    !order.shipment?.awbCode &&
-    (order.paymentStatus === "PAID" || order.paymentMethod === "cod") &&
-    order.status !== "Cancelled"
-  );
+type ShipState =
+  | { kind: "shipped" }
+  | { kind: "ready" }
+  | { kind: "blocked"; reason: string };
+
+function getShipState(order: AdminOrder): ShipState {
+  if (order.shipment?.awbCode) return { kind: "shipped" };
+
+  if (order.status === "Cancelled") return { kind: "blocked", reason: "Cancelled" };
+  if (order.status === "Delivered") return { kind: "blocked", reason: "Delivered" };
+  if (order.status === "Returned") return { kind: "blocked", reason: "Returned" };
+
+  if (order.paymentMethod === "cod" || order.paymentStatus === "PAID") {
+    return { kind: "ready" };
+  }
+  if (order.paymentStatus === "FAILED") return { kind: "blocked", reason: "Payment failed" };
+  if (order.paymentStatus === "REFUNDED") return { kind: "blocked", reason: "Refunded" };
+  return { kind: "blocked", reason: "Awaiting payment" };
 }
+
+const canShipOrder = (order: AdminOrder) => getShipState(order).kind === "ready";
+
 
 function paymentBadge(status?: AdminOrder["paymentStatus"]): string {
   switch (status) {
@@ -181,7 +192,44 @@ const counts = useMemo(() => {
   }
   return map;
 }, [orders, returnsByOrder]);
+const [labelRowId, setLabelRowId] = useState<string | null>(null);
 
+async function handleRowLabel(order: AdminOrder): Promise<void> {
+  if (order.shipment?.labelUrl) {
+    window.open(order.shipment.labelUrl, "_blank");
+    return;
+  }
+
+  setLabelRowId(order._id);
+  const win = window.open("", "_blank"); // before the await
+  try {
+    const res = await fetch("/api/shiprocket/bulk-label", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderIds: [order._id] }),
+    });
+    const data = await res.json();
+
+    const url: string | undefined = data.labels?.[order._id] ?? data.combinedUrl;
+    if (!res.ok || !data.success || !url) {
+      throw new Error(
+        data.failed?.[0]?.error ?? data.message ?? "Label isn't ready yet. Try again shortly."
+      );
+    }
+
+    onShipped?.(order._id, { ...order.shipment, labelUrl: url });
+    if (win) win.location.href = url;
+  } catch (e) {
+    win?.close();
+    await alert({
+      title: "Couldn't get label",
+      message: e instanceof Error ? e.message : "Something went wrong",
+      variant: "error",
+    });
+  } finally {
+    setLabelRowId(null);
+  }
+}
 const visible = useMemo(() => {
   const q = query.trim().toLowerCase();
   return orders.filter((o) => {
@@ -287,65 +335,7 @@ const labelEligible = selectedOrders.filter((o) => o.shipment?.awbCode);
     setBulkRunning(false);
     setSelected(new Set());
   }
-async function handleDownloadLabels(): Promise<void> {
-  if (labelsRunning || labelEligible.length === 0) return;
-  setLabelsRunning(true);
 
-  try {
-    // 1. generate labels that don't exist yet (one at a time, same as shipping)
-    for (const order of labelEligible) {
-      if (order.shipment?.labelUrl) continue;
-
-      // use the same endpoint your ShipmentPanel "generate label" button calls
-      const res = await fetch(`/api/admin/orders/${order._id}/label`, {
-        method: "POST",
-      });
-      const data = (await res.json()) as ShipResponse;
-      if (!res.ok) {
-        throw new Error(`#${order.orderNumber}: ${data.error ?? "label failed"}`);
-      }
-      onShipped?.(order._id, data.shipment); // updates labelUrl in parent state
-    }
-
-    // 2. download one merged PDF
-    const res = await fetch("/api/admin/orders/labels", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orderIds: labelEligible.map((o) => o._id) }),
-    });
-    if (!res.ok) {
-      const err = (await res.json().catch(() => null)) as { message?: string } | null;
-      throw new Error(err?.message ?? "Failed to download labels");
-    }
-
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `labels-${new Date().toISOString().slice(0, 10)}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-
-    const skipped = selectedOrders.length - labelEligible.length;
-    if (skipped > 0) {
-      await alert({
-        title: "Some orders skipped",
-        message: `${skipped} selected order(s) aren't shipped yet, so they have no label.`,
-        variant: "info", // use whichever variants your modal supports
-      });
-    }
-  } catch (e) {
-    await alert({
-      title: "Couldn't download labels",
-      message: e instanceof Error ? e.message : "Something went wrong",
-      variant: "error",
-    });
-  } finally {
-    setLabelsRunning(false);
-  }
-}
 
   function handleDownloadPayments(): void {
     downloadPaymentsCsv(selectedOrders.length > 0 ? selectedOrders : visible);
@@ -355,9 +345,13 @@ async function handleDownloadLabels(): Promise<void> {
     return <p className="text-sm text-charcoal/55">no orders yet.</p>;
   }
 
-  async function handlePrintLabels(): Promise<void> {
+async function handlePrintLabels(): Promise<void> {
   if (labelsRunning || labelSelected.length === 0) return;
   setLabelsRunning(true);
+
+  // open synchronously so the browser doesn't block it as a popup
+  const win = window.open("", "_blank");
+
   try {
     const res = await fetch("/api/shiprocket/bulk-label", {
       method: "POST",
@@ -365,11 +359,37 @@ async function handleDownloadLabels(): Promise<void> {
       body: JSON.stringify({ orderIds: labelSelected.map((o) => o._id) }),
     });
     const data = await res.json();
+
     if (!res.ok || !data.success) {
       throw new Error(data.message ?? "Failed to generate labels");
     }
-    window.open(data.labelUrl, "_blank");
+
+    // save newly created label URLs so rows show "View label" straight away
+    for (const o of labelSelected) {
+      const url = data.labels?.[o._id];
+      if (url) onShipped?.(o._id, { ...o.shipment, labelUrl: url });
+    }
+
+    const failedText = (data.failed ?? [])
+      .map((f: { orderNumber: string; error: string }) => `#${f.orderNumber}: ${f.error}`)
+      .join("\n");
+
+    if (!data.combinedUrl) {
+      throw new Error(failedText || "Labels aren't ready yet. Try again in a few seconds.");
+    }
+
+    if (win) win.location.href = data.combinedUrl;
+    else window.location.href = data.combinedUrl;
+
+    if (failedText) {
+      await alert({
+        title: "Some labels were skipped",
+        message: failedText,
+        variant: "error",
+      });
+    }
   } catch (e) {
+    win?.close();
     await alert({
       title: "Couldn't get labels",
       message: e instanceof Error ? e.message : "Something went wrong",
@@ -406,9 +426,7 @@ async function handleDownloadLabels(): Promise<void> {
             size={15}
             className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-charcoal/40"
           />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            <input value={query} onChange={(e) => { setQuery(e.target.value); setSelected(new Set()); }} 
             placeholder="Search order no or customer"
             className="w-full rounded-full border border-charcoal/15 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-pink"
           />
@@ -488,7 +506,7 @@ async function handleDownloadLabels(): Promise<void> {
               const isExpanded = expandedId === order._id;
               const isSelected = selected.has(order._id);
               const ret = returnsByOrder.get(order._id); 
-
+const shipState = getShipState(order);
             return (
               <div
                 key={order._id}
@@ -504,6 +522,7 @@ async function handleDownloadLabels(): Promise<void> {
                     aria-label={`Select order ${order.orderNumber}`}
                     className="h-4 w-4 accent-pink"
                   />
+                  
                   <span>#{order.orderNumber}</span>
                   <span className="truncate">{order.shippingAddress.fullName}</span>
                   <span>{formatDate(order.createdAt)}</span>
@@ -518,7 +537,9 @@ async function handleDownloadLabels(): Promise<void> {
                         order.paymentStatus
                       )}`}
                     >
-                      {order.paymentStatus ?? "PENDING"}
+                     {order.paymentMethod === "cod" && order.paymentStatus !== "PAID"
+  ? "COD · collect"
+  : order.paymentStatus ?? "PENDING"}
                     </span>
                   </span>
 
@@ -528,26 +549,42 @@ async function handleDownloadLabels(): Promise<void> {
                     onChanged={onStatusChanged}
                   />
 
-                  {order.shipment?.awbCode ? (
-                    <div className="flex items-center gap-2">
-                      <a
-                        href={order.shipment.trackingUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-brass hover:underline"
-                      >
-                        {order.shipment.courierName ?? "Track"}
-                        <ExternalLink size={11} />
-                      </a>
-                      <button
-                        type="button"
-                        onClick={() => setExpandedId(isExpanded ? null : order._id)}
-                        className="text-[11px] text-charcoal/40 hover:text-charcoal/60"
-                      >
-                        {isExpanded ? "hide" : "more"}
-                      </button>
-                    </div>
-                  ) : canShip ? (
+                {order.shipment?.awbCode ? (
+  <div className="flex flex-col items-start gap-1">
+    <a
+      href={order.shipment.trackingUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-1 text-brass hover:underline"
+    >
+      {order.shipment.courierName ?? "Track"}
+      <ExternalLink size={11} />
+    </a>
+
+    <div className="flex items-center gap-2 text-[11px]">
+      <button
+        type="button"
+        onClick={() => void handleRowLabel(order)}
+        disabled={labelRowId === order._id}
+        className="flex items-center gap-1 text-pink hover:underline disabled:opacity-50"
+      >
+        <Printer size={11} />
+        {labelRowId === order._id
+          ? "..."
+          : order.shipment.labelUrl
+          ? "View label"
+          : "Generate label"}
+      </button>
+      <button
+        type="button"
+        onClick={() => setExpandedId(isExpanded ? null : order._id)}
+        className="text-charcoal/40 hover:text-charcoal/60"
+      >
+        {isExpanded ? "hide" : "more"}
+      </button>
+    </div>
+  </div>
+) : canShip ? (
                     <button
                       type="button"
                       onClick={() => void handleShip(order)}
@@ -557,9 +594,9 @@ async function handleDownloadLabels(): Promise<void> {
                       <Truck size={12} />
                       {shippingId === order._id ? "shipping..." : "ship"}
                     </button>
-                   ) : (
-    <span className="text-charcoal/30">—</span>
-  )}
+                   )  : shipState.kind === "blocked" ? (
+  <span className="text-xs text-charcoal/50">{shipState.reason}</span>
+) : null}
 
   {/* NEW: return cell */}
   {ret ? (

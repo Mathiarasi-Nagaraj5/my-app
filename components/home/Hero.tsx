@@ -9,6 +9,8 @@ export interface HeroSlide {
   sub: string;
   ctaLabel: string;
   ctaHref: string;
+  ctaSecondaryLabel?: string;
+  ctaSecondaryHref?: string;
   image: string;
   accentColor: string;
 }
@@ -32,6 +34,7 @@ function ArrowLeft() {
       strokeWidth="1.8"
       strokeLinecap="round"
       strokeLinejoin="round"
+      aria-hidden="true"
     >
       <path d="M13 4l-6 6 6 6" />
     </svg>
@@ -49,11 +52,15 @@ function ArrowRight() {
       strokeWidth="1.8"
       strokeLinecap="round"
       strokeLinejoin="round"
+      aria-hidden="true"
     >
       <path d="M7 4l6 6-6 6" />
     </svg>
   );
 }
+
+const ARROW_BTN =
+  "absolute top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-charcoal/10 bg-white/80 text-charcoal shadow-md backdrop-blur-sm transition-all duration-300 hover:bg-pink hover:text-white hover:shadow-[0_6px_18px_rgba(236,72,153,0.45)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-pink";
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -80,13 +87,7 @@ export default function HeroSlider({ slides = [] }: HeroSliderProps) {
 
   const go = useCallback(
     (next: number, dir: "left" | "right") => {
-      if (
-        animating ||
-        next === current ||
-        slides.length === 0
-      ) {
-        return;
-      }
+      if (animating || next === current || slides.length === 0) return;
 
       setDirection(dir);
       setPrev(current);
@@ -98,17 +99,12 @@ export default function HeroSlider({ slides = [] }: HeroSliderProps) {
 
   const goNext = useCallback(() => {
     if (!slides.length) return;
-
     go((current + 1) % slides.length, "right");
   }, [current, go, slides.length]);
 
   const goPrev = useCallback(() => {
     if (!slides.length) return;
-
-    go(
-      (current - 1 + slides.length) % slides.length,
-      "left"
-    );
+    go((current - 1 + slides.length) % slides.length, "left");
   }, [current, go, slides.length]);
 
   // Autoplay
@@ -118,9 +114,7 @@ export default function HeroSlider({ slides = [] }: HeroSliderProps) {
     timerRef.current = setTimeout(goNext, AUTOPLAY_MS);
 
     return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
+      if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, [current, paused, goNext, slides.length]);
 
@@ -144,20 +138,15 @@ export default function HeroSlider({ slides = [] }: HeroSliderProps) {
     };
 
     window.addEventListener("keydown", onKey);
-
-    return () => {
-      window.removeEventListener("keydown", onKey);
-    };
+    return () => window.removeEventListener("keydown", onKey);
   }, [goNext, goPrev]);
 
   // No slides configured
-  if (!slides.length) {
-    return null;
-  }
+  if (!slides.length) return null;
 
   return (
     <section
-      className="relative h-[75vh] min-h-[520px] max-h-[800px] w-full overflow-hidden bg-charcoal select-none"
+      className="relative h-[75vh] max-h-[800px] min-h-[520px] w-full select-none overflow-hidden bg-charcoal"
       aria-label="Hero image slider"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
@@ -170,11 +159,8 @@ export default function HeroSlider({ slides = [] }: HeroSliderProps) {
 
         if (!isActive && !isPrev) return null;
 
-        const enterX =
-          direction === "right" ? "100%" : "-100%";
-
-        const exitX =
-          direction === "right" ? "-100%" : "100%";
+        const enterX = direction === "right" ? "100%" : "-100%";
+        const exitX = direction === "right" ? "-100%" : "100%";
 
         return (
           <div
@@ -189,121 +175,93 @@ export default function HeroSlider({ slides = [] }: HeroSliderProps) {
                 : isActive
                   ? "translateX(0)"
                   : `translateX(${enterX})`,
-
-              transition: animating
-                ? "transform 600ms cubic-bezier(0.77,0,0.18,1)"
-                : "none",
-
+              transition: animating ? "transform 600ms cubic-bezier(0.77,0,0.18,1)" : "none",
               willChange: "transform",
               zIndex: isActive ? 2 : 1,
             }}
           >
-            {/* ─────────────── BACKGROUND ─────────────── */}
-
+            {/* Background: warm base with a soft pink wash on the image side */}
             <div
               className="absolute inset-0"
               style={{
-                backgroundColor: "#EDE7DD",
+                background:
+                  "radial-gradient(ellipse at 75% 60%, rgba(236,72,153,0.18) 0%, rgba(236,72,153,0) 55%), #EDE7DD",
               }}
             />
 
-            {/* ─────────────── LEFT GRADIENT ─────────────── */}
-
+            {/* Soft pink circle behind the model */}
             <div
-              className="absolute inset-0 pointer-events-none"
+              aria-hidden="true"
+              className="pointer-events-none absolute -bottom-24 right-[10%] hidden aspect-square h-[85%] rounded-full bg-pink/20 blur-2xl sm:block"
+            />
+
+            {/* Left fade so text stays readable */}
+            <div
+              className="pointer-events-none absolute inset-0"
               style={{
-                background: `
-                  linear-gradient(
-                    90deg,
-                    #EDE7DD 0%,
-                    #EDE7DD 38%,
-                    transparent 72%
-                  )
-                `,
+                background:
+                  "linear-gradient(90deg, #EDE7DD 0%, #EDE7DD 34%, rgba(237,231,221,0) 70%)",
               }}
             />
 
-            {/* ─────────────── IMAGE ───────────────
-                Rendered AFTER the background + gradient layers so it
-                paints on top of them instead of being covered by the
-                opaque background div. This was the bug: the image used
-                to render first, then the solid #EDE7DD div painted
-                directly over it. */}
-
+            {/* Image (paints above the background layers) */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={slide.image}
               alt=""
               aria-hidden="true"
               draggable={false}
-              className="
-                hidden
-                sm:block
-                absolute
-                bottom-0
-                right-[6%]
-                h-[98%]
-                w-auto
-                max-w-[68%]
-                object-contain
-                object-bottom
-              "
+              className="absolute bottom-0 right-[6%] hidden h-[98%] w-auto max-w-[68%] object-contain object-bottom drop-shadow-[0_20px_30px_rgba(0,0,0,0.18)] sm:block"
             />
 
-            {/* ─────────────── CONTENT ─────────────── */}
-
+            {/* Content */}
             <div className="relative z-[3] flex h-full items-center px-8 sm:px-12 lg:px-20">
-              <div className="max-w-xl">
-
+              <div
+                className="animate-fade-up max-w-xl"
+                style={{ animationDelay: "200ms" }}
+              >
                 <p
-                  className="mb-4 text-xs font-semibold uppercase tracking-[0.25em]"
-                  style={{
-                    color: slide.accentColor,
-                  }}
+                  className="mb-5 inline-flex items-center gap-2 rounded-full border border-current px-4 py-1 text-xs font-medium tracking-wide"
+                  style={{ color: slide.accentColor }}
                 >
+                  <span aria-hidden="true">✦</span>
                   {slide.eyebrow}
                 </p>
 
-                <h1
-                  className="
-                    whitespace-pre-line
-                    text-4xl
-                    font-light
-                    leading-[1.05]
-                    tracking-tight
-                    text-charcoal
-                    sm:text-5xl
-                    lg:text-6xl
-                  "
-                >
+                <h1 className="whitespace-pre-line font-serif text-4xl font-medium leading-[1.1] tracking-tight text-charcoal sm:text-5xl lg:text-6xl">
                   {slide.headline}
                 </h1>
 
-                <p className="mt-6 max-w-md text-sm leading-6 text-charcoal/70 sm:text-base">
+                {/* divider */}
+                <div className="mt-5 flex items-center gap-3" aria-hidden="true">
+                  <span className="h-px w-16 bg-gradient-to-r from-pink to-transparent md:w-24" />
+                  <span className="text-xs leading-none text-pink">✦</span>
+                </div>
+
+                <p className="mt-5 max-w-md text-sm leading-6 text-charcoal/70 sm:text-base">
                   {slide.sub}
                 </p>
 
-                <Link
-                  href={slide.ctaHref}
-                  className="
-                    mt-8
-                    inline-flex
-                    items-center
-                    border
-                    border-charcoal
-                    bg-charcoal
-                    px-7
-                    py-3
-                    text-sm
-                    font-medium
-                    text-ivory
-                    transition
-                    hover:bg-transparent
-                    hover:text-charcoal
-                  "
-                >
-                  {slide.ctaLabel}
-                </Link>
+                <div className="mt-8 flex flex-wrap items-center gap-3">
+                  <Link
+                    href={slide.ctaHref}
+                    className="group inline-flex items-center gap-2 border border-pink bg-charcoal px-8 py-3 text-sm font-semibold text-white shadow-md shadow-pink/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(236,72,153,0.5)]"
+                  >
+                    {slide.ctaLabel}
+                    <span className="transition-transform duration-300 group-hover:translate-x-1">
+                      →
+                    </span>
+                  </Link>
 
+                  {slide.ctaSecondaryLabel && slide.ctaSecondaryHref && (
+                    <Link
+                      href={slide.ctaSecondaryHref}
+                      className="inline-flex items-center border border-charcoal px-8 py-3 text-sm font-semibold text-charcoal transition-all duration-300 hover:-translate-y-0.5 hover:bg-charcoal hover:text-ivory"
+                    >
+                      {slide.ctaSecondaryLabel}
+                    </Link>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -314,59 +272,11 @@ export default function HeroSlider({ slides = [] }: HeroSliderProps) {
 
       {slides.length > 1 && (
         <>
-          <button
-            onClick={goPrev}
-            aria-label="Previous slide"
-            className="
-              absolute
-              left-4
-              top-1/2
-              -translate-y-1/2
-              z-10
-              flex
-              h-10
-              w-10
-              items-center
-              justify-center
-              rounded-full
-              bg-charcoal/40
-              text-ivory
-              backdrop-blur-sm
-              transition
-              hover:bg-charcoal/70
-              focus-visible:outline
-              focus-visible:outline-2
-              focus-visible:outline-ivory
-            "
-          >
+          <button onClick={goPrev} aria-label="Previous slide" className={`${ARROW_BTN} left-4`}>
             <ArrowLeft />
           </button>
 
-          <button
-            onClick={goNext}
-            aria-label="Next slide"
-            className="
-              absolute
-              right-4
-              top-1/2
-              -translate-y-1/2
-              z-10
-              flex
-              h-10
-              w-10
-              items-center
-              justify-center
-              rounded-full
-              bg-charcoal/40
-              text-ivory
-              backdrop-blur-sm
-              transition
-              hover:bg-charcoal/70
-              focus-visible:outline
-              focus-visible:outline-2
-              focus-visible:outline-ivory
-            "
-          >
+          <button onClick={goNext} aria-label="Next slide" className={`${ARROW_BTN} right-4`}>
             <ArrowRight />
           </button>
         </>
@@ -381,16 +291,9 @@ export default function HeroSlider({ slides = [] }: HeroSliderProps) {
               key={idx}
               onClick={() => go(idx, idx > current ? "right" : "left")}
               aria-label={`Go to slide ${idx + 1}`}
-              className={`
-                h-2
-                rounded-full
-                transition-all
-                ${
-                  idx === current
-                    ? "w-8 bg-charcoal"
-                    : "w-2 bg-charcoal/30"
-                }
-              `}
+              className={`h-2 rounded-full transition-all duration-300 ${
+                idx === current ? "w-8 bg-charcoal" : "w-2 bg-charcoal/25 hover:bg-charcoal/50"
+              }`}
             />
           ))}
         </div>
@@ -399,9 +302,11 @@ export default function HeroSlider({ slides = [] }: HeroSliderProps) {
       {/* ── Slide counter ─────────────────────────────────────────────────── */}
 
       {slides.length > 1 && (
-        <div className="absolute bottom-8 right-6 z-10 font-mono text-xs tabular-nums tracking-widest text-charcoal/40 sm:right-12">
-          {String(current + 1).padStart(2, "0")} /{" "}
-          {String(slides.length).padStart(2, "0")}
+        <div className="absolute bottom-7 right-6 z-10 font-serif text-sm tabular-nums text-charcoal/50 sm:right-12">
+          <span className="text-base font-medium text-charcoal">
+            {String(current + 1).padStart(2, "0")}
+          </span>{" "}
+          / {String(slides.length).padStart(2, "0")}
         </div>
       )}
     </section>

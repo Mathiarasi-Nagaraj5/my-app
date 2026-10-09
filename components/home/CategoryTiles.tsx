@@ -8,28 +8,40 @@ interface Props {
 
 export default function CategoryTiles({ title, items }: Props) {
   return (
-    <section className="bg-ivory px-6 py-10">
+    <section className="bg-ivory px-6 py-12">
       <div className="mx-auto max-w-5xl">
-        <h2 className="mb-6 text-center font-serif text-2xl text-charcoal md:text-3xl">{title}</h2>
+        {/* Heading + decorative divider */}
+        <div className="mb-10 text-center">
+          <h2 className="font-serif text-2xl text-charcoal md:text-3xl">
+            {title}
+          </h2>
 
-        <div className="flex flex-wrap justify-center gap-x-4 gap-y-5 md:gap-x-6">
-          {items.map((c, i) => (
+          <div className="mt-3 flex items-center justify-center gap-3">
+            <span className="h-px w-16 bg-gradient-to-r from-transparent to-pink md:w-24" />
+            <span className="text-pink text-sm leading-none">✦</span>
+            <span className="h-px w-16 bg-gradient-to-l from-transparent to-pink md:w-24" />
+          </div>
+        </div>
+
+        {/* Round category tiles */}
+        <div className="flex flex-wrap justify-center gap-x-4 gap-y-8 md:gap-x-8">
+          {items.map((c) => (
             <Link
-              key={i}
+              key={c.href}
               href={c.href}
-              className="group block w-[calc(33.333%-11px)] max-w-[140px] sm:w-[130px] md:w-[140px]"
+              className="group block w-[calc(33.333%-11px)] max-w-[160px] sm:w-[140px] md:w-[160px]"
             >
-              <div className="relative aspect-square overflow-hidden rounded-full bg-charcoal/5 shadow-sm transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl shadow-pink/10">
-               <h1>grtr</h1>
+              <div className="relative aspect-square overflow-hidden rounded-full bg-charcoal/5 ring-2 ring-transparent ring-offset-4 ring-offset-ivory shadow-md shadow-pink/10 transition-all duration-300 group-hover:-translate-y-1 group-hover:ring-pink group-hover:shadow-xl">
                 <Image
                   src={c.image}
                   alt={c.name}
                   fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-110"
-                  sizes="140px"
+                  className="object-cover object-top transition-transform duration-500 group-hover:scale-110"
+                  sizes="160px"
                 />
               </div>
-              <p className="mt-2 text-center text-sm capitalize text-charcoal transition-colors duration-200 group-hover:text-pink">
+
+              <p className="mt-4 text-center text-sm font-medium capitalize tracking-wide text-charcoal transition-colors duration-200 group-hover:text-pink">
                 {c.name}
               </p>
             </Link>

@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import connectDB from "@/app/lib/mongodb";
 import Order from "@/app/models/Order";
 import { requestPickup } from "@/app/lib/shiprocket/client";
-
 export async function POST(req: Request) {
   try {
     await connectDB();
