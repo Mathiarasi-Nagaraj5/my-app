@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import AnnouncementBar from "./AnnouncementBar";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import ChatWidget from "../ui/ChatWidget";
 
 interface SiteChromeProps {
   children: ReactNode;
@@ -23,6 +24,7 @@ export default function SiteChrome({ children, topBar = [] }: SiteChromeProps) {
       <AnnouncementBar items={topBar} />
       <Navbar />
       <main>{children}</main>
+         <ChatWidget /> 
       <Footer />
     </>
   );

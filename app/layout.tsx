@@ -34,7 +34,7 @@ export default async function RootLayout({
             <WishlistProvider>
               <ModalProvider>
                 <SiteChrome topBar={siteContent.topBar}>{children}</SiteChrome>
-                {/* <ChatWidget /> NEW */}
+             
               </ModalProvider>
             </WishlistProvider>
           </CartProvider>
