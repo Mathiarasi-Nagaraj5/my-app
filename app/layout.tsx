@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import SiteChrome from "@/components/layout/SiteChrome";
-import ChatWidget from "@/components/ui/ChatWidget"; // NEW
+import ChatWidget from "@/components/ui/ChatWidget";
 import { CartProvider } from "./lib/context/CartContext";
 import { WishlistProvider } from "./lib/context/WishlistContext";
 import { AuthProvider } from "./lib/context/AuthContext";
@@ -34,13 +34,10 @@ export default async function RootLayout({
             <WishlistProvider>
               <ModalProvider>
                 <SiteChrome topBar={siteContent.topBar}>{children}</SiteChrome>
-             
               </ModalProvider>
             </WishlistProvider>
           </CartProvider>
         </AuthProvider>
-
-        
       </body>
     </html>
   );

@@ -2,26 +2,18 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
-import { MessageSquareText, X } from 'lucide-react';
-import { matchIntent, BotReply } from "../chat/botTrain";   // adjust path
-import { buildWhatsAppLink } from "@/app/lib/contact";
-import { CONTACT_NUMBER } from "@/app/lib/contact";
+import { MessageSquareText, X } from "lucide-react";
 import { usePathname } from "next/navigation";
-interface ChatMessage {
-  role: Role;
-  content: string;
-  link?: { label: string; href: string };
-  suggestions?: string[];
-}
+import { matchIntent, BotReply } from "../chat/botTrain"; // adjust path
+import { buildWhatsAppLink, CONTACT_NUMBER } from "@/app/lib/contact";
+
 type Role = "user" | "assistant";
 
 interface ChatMessage {
   role: Role;
   content: string;
-}
-
-interface ChatResponse {
-  text: string;
+  link?: { label: string; href: string };
+  suggestions?: string[];
 }
 
 const QUICK_REPLIES: string[] = [
@@ -30,6 +22,9 @@ const QUICK_REPLIES: string[] = [
   "Return policy",
   "Delivery time",
 ];
+
+// Routes where the widget should not appear
+const HIDDEN_ON: string[] = ["/admin", "/checkout", "/login"];
 
 const WELCOME: ChatMessage = {
   role: "assistant",
@@ -57,6 +52,7 @@ function renderText(text: string): ReactNode[] {
 }
 
 export default function ChatWidget() {
+  // ---------- ALL HOOKS FIRST (never put a return above these) ----------
   const [open, setOpen] = useState<boolean>(false);
   const [messages, setMessages] = useState<ChatMessage[]>([WELCOME]);
   const [input, setInput] = useState<string>("");
@@ -64,12 +60,8 @@ export default function ChatWidget() {
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-    const pathname = usePathname();
-  // Hide on admin pages (must come after all hooks)
-  if (pathname?.startsWith("/admin")) return null;
-const HIDDEN_ON = ["/admin", "/checkout", "/login"];
+  const pathname = usePathname();
 
-if (HIDDEN_ON.some((p) => pathname?.startsWith(p))) return null;
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading, open]);
@@ -78,6 +70,7 @@ if (HIDDEN_ON.some((p) => pathname?.startsWith(p))) return null;
     if (open) inputRef.current?.focus();
   }, [open]);
 
+  // ---------- Handlers (plain functions, not hooks) ----------
   async function send(text?: string): Promise<void> {
     const content = (text ?? input).trim();
     if (!content || loading) return;
@@ -106,9 +99,16 @@ if (HIDDEN_ON.some((p) => pathname?.startsWith(p))) return null;
         role: "assistant",
         content: reply.text,
         suggestions: reply.suggestions,
-        link: reply.link ??
+        link:
+          reply.link ??
           (needsWhatsApp
-            ? { label: "Chat on WhatsApp", href: buildWhatsAppLink("Hi! I need help with my order/product.", CONTACT_NUMBER) }
+            ? {
+                label: "Chat on WhatsApp",
+                href: buildWhatsAppLink(
+                  "Hi! I need help with my order/product.",
+                  CONTACT_NUMBER
+                ),
+              }
             : undefined),
       },
     ]);
@@ -130,15 +130,25 @@ if (HIDDEN_ON.some((p) => pathname?.startsWith(p))) return null;
       );
 
       if (matches.length === 0) {
-        return { text: "I couldn't find that product. You can browse everything in our shop.", link: { label: "Browse shop", href: "/shop" } };
+        return {
+          text: "I couldn't find that product. You can browse everything in our shop.",
+          link: { label: "Browse shop", href: "/shop" },
+        };
       }
       const p = matches[0];
       return {
-        text: `${p.name} is ₹${p.price}${p.originalPrice ? ` (was ₹${p.originalPrice})` : ""}. Sizes: ${(p.sizes ?? []).join(", ")}.${p.stock > 0 ? "" : " Currently out of stock."}`,
+        text: `${p.name} is ₹${p.price}${
+          p.originalPrice ? ` (was ₹${p.originalPrice})` : ""
+        }. Sizes: ${(p.sizes ?? []).join(", ")}.${
+          p.stock > 0 ? "" : " Currently out of stock."
+        }`,
         link: { label: "View product", href: `/product/${p.slug}` },
       };
     } catch {
-      return { text: "I couldn't check that right now. Please try the shop page.", link: { label: "Browse shop", href: "/shop" } };
+      return {
+        text: "I couldn't check that right now. Please try the shop page.",
+        link: { label: "Browse shop", href: "/shop" },
+      };
     }
   }
 
@@ -147,7 +157,9 @@ if (HIDDEN_ON.some((p) => pathname?.startsWith(p))) return null;
     void send();
   }
 
-  
+  // ---------- Early return ONLY after every hook has run ----------
+  if (HIDDEN_ON.some((p) => pathname?.startsWith(p))) return null;
+
   return (
     <>
       {open && (
@@ -179,7 +191,14 @@ if (HIDDEN_ON.some((p) => pathname?.startsWith(p))) return null;
           {/* Messages */}
           <div className="flex flex-1 flex-col gap-2 overflow-y-auto bg-ivory p-3.5">
             {messages.map((m, i) => (
-              <div key={i} className={m.role === "user" ? "self-end max-w-[82%]" : "self-start max-w-[82%]"}>
+              <div
+                key={i}
+                className={
+                  m.role === "user"
+                    ? "self-end max-w-[82%]"
+                    : "self-start max-w-[82%]"
+                }
+              >
                 <div
                   className={
                     m.role === "user"
@@ -201,20 +220,22 @@ if (HIDDEN_ON.some((p) => pathname?.startsWith(p))) return null;
                   </a>
                 )}
 
-                {m.role === "assistant" && m.suggestions && i === messages.length - 1 && (
-                  <div className="mt-1.5 flex flex-wrap gap-1.5">
-                    {m.suggestions.map((s) => (
-                      <button
-                        key={s}
-                        type="button"
-                        onClick={() => void send(s)}
-                        className="rounded-full border border-charcoal/20 bg-white px-3 py-1.5 text-[13px] text-charcoal hover:border-pink hover:text-pink"
-                      >
-                        {s}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                {m.role === "assistant" &&
+                  m.suggestions &&
+                  i === messages.length - 1 && (
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {m.suggestions.map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => void send(s)}
+                          className="rounded-full border border-charcoal/20 bg-white px-3 py-1.5 text-[13px] text-charcoal hover:border-pink hover:text-pink"
+                        >
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  )}
               </div>
             ))}
 
@@ -275,7 +296,6 @@ if (HIDDEN_ON.some((p) => pathname?.startsWith(p))) return null;
         </div>
       )}
 
-
       {/* Floating button */}
       <button
         type="button"
@@ -288,17 +308,22 @@ if (HIDDEN_ON.some((p) => pathname?.startsWith(p))) return null;
           <>
             <span
               aria-hidden="true"
-              className="pointer-events-none absolute inset-0 rounded-full bg-pink/70 border-2 border-ivory animate-[ping_2.8s_cubic-bezier(0,0,0.2,1)_infinite]"
+              className="pointer-events-none absolute inset-0 rounded-full border-2 border-ivory bg-pink/70 animate-[ping_2.8s_cubic-bezier(0,0,0.2,1)_infinite]"
             />
             <span
               aria-hidden="true"
-              className="pointer-events-none absolute inset-0 rounded-full bg-pink  animate-[ping_2.8s_cubic-bezier(0,0,0.2,1)_1.4s_infinite]"
+              className="pointer-events-none absolute inset-0 rounded-full bg-pink animate-[ping_2.8s_cubic-bezier(0,0,0.2,1)_1.4s_infinite]"
             />
           </>
         )}
 
         {/* Icon */}
-        {open ? (<X className="h-6 w-6" />) : (<MessageSquareText className="h-6 w-6 text-white" />)}
+        {open ? (
+          <X className="h-6 w-6" />
+        ) : (
+          <MessageSquareText className="h-6 w-6 text-white" />
+        )}
+
         {/* Online dot */}
         {!open && (
           <span

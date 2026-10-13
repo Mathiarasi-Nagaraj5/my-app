@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface HeroSlide {
   eyebrow: string;
@@ -19,295 +21,300 @@ interface HeroSliderProps {
   slides?: HeroSlide[];
 }
 
-const AUTOPLAY_MS = 5000;
+// ─── Config ───────────────────────────────────────────────────────────────────
 
-// ─── Arrow icons ──────────────────────────────────────────────────────────────
+const AUTOPLAY_MS = 5500;
+const FADE_MS = 700;
 
-function ArrowLeft() {
+const INK = "#1F1F1F";
+const PINK = "#E0609A";
+
+/** Soft background tints, one per slide (cycles). All stay in the site's beige / blush family. */
+const TINTS = ["#EDE7DD", "#F1E0E0", "#E8E2D6"];
+
+/** Photo shape per slide (cycles): echoes the circles in "Shop by Category". */
+const SHAPES = ["circle", "arch", "frame"] as const;
+type Shape = (typeof SHAPES)[number];
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/** Uses your own line breaks, otherwise splits the words into at most two balanced lines. */
+function splitLines(text: string): string[] {
+  if (text.includes("\n")) return text.split("\n").map((l) => l.trim()).filter(Boolean);
+  const words = text.split(" ").filter(Boolean);
+  if (words.length < 2) return words;
+  const mid = Math.ceil(words.length / 2);
+  return [words.slice(0, mid).join(" "), words.slice(mid).join(" ")];
+}
+
+function Photo({ src }: { src: string }) {
   return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 20 20"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M13 4l-6 6 6 6" />
-    </svg>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={src} alt="" draggable={false} className="h-full w-full object-cover object-top" />
   );
 }
 
-function ArrowRight() {
+// ─── Photo shapes ─────────────────────────────────────────────────────────────
+
+function PhotoShape({ shape, src, active }: { shape: Shape; src: string; active: boolean }) {
+  if (shape === "circle") {
+    return (
+      <div className="relative aspect-square h-full max-h-full md:h-[86%]">
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 rounded-full border border-[#E0609A]/50"
+          style={{ transform: "scale(1.08)" }}
+        />
+        <div className="absolute inset-0 overflow-hidden rounded-full border-[6px] border-white bg-[#F7F1E8] shadow-[0_18px_40px_rgba(0,0,0,0.15)]">
+          <Photo src={src} />
+        </div>
+      </div>
+    );
+  }
+
+  if (shape === "arch") {
+    return (
+      <div className="relative aspect-[4/5] h-full max-h-full md:h-[92%]">
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 translate-x-3 -translate-y-3 rounded-t-[999px] border border-[#E0609A]"
+        />
+        <div className="absolute inset-0 overflow-hidden rounded-t-[999px] bg-[#F7F1E8] shadow-[0_18px_40px_rgba(0,0,0,0.15)]">
+          <Photo src={src} />
+        </div>
+      </div>
+    );
+  }
+
+  // frame: white photo frame over a pink card
   return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 20 20"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M7 4l6 6-6 6" />
-    </svg>
+    <div className="relative aspect-[4/5] h-full max-h-full md:h-[90%]">
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 rounded-sm transition-transform duration-700"
+        style={{
+          backgroundColor: PINK,
+          opacity: 0.85,
+          transform: active ? "translate(14px,10px) rotate(5deg)" : "none",
+        }}
+      />
+      <div
+        className="absolute inset-0 rounded-sm bg-white pb-[14%] pl-[5%] pr-[5%] pt-[5%] shadow-[0_18px_40px_rgba(0,0,0,0.18)] transition-transform duration-700"
+        style={{ transform: active ? "rotate(-3deg)" : "rotate(-8deg) translateY(24px)" }}
+      >
+        <Photo src={src} />
+      </div>
+    </div>
   );
 }
 
-const ARROW_BTN =
-  "absolute top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-charcoal/10 bg-white/80 text-charcoal shadow-md backdrop-blur-sm transition-all duration-300 hover:bg-pink hover:text-white hover:shadow-[0_6px_18px_rgba(236,72,153,0.45)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-pink";
+// ─── Single slide ─────────────────────────────────────────────────────────────
 
-// ─── Component ────────────────────────────────────────────────────────────────
+function Slide({ slide, idx, active }: { slide: HeroSlide; idx: number; active: boolean }) {
+  const tint = TINTS[idx % TINTS.length];
+  const shape = SHAPES[idx % SHAPES.length];
+  const lines = splitLines(slide.headline);
+
+  return (
+    <>
+      {/* Background: soft tint with a pink wash on the photo side */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: `radial-gradient(ellipse at 75% 55%, rgba(224,96,154,0.20) 0%, rgba(224,96,154,0) 55%), ${tint}`,
+        }}
+      />
+
+      <div className="relative z-[2] mx-auto grid h-full max-w-[1400px] grid-rows-[auto_1fr] gap-6 px-6 pb-24 pt-8 md:grid-cols-[1.1fr_0.9fr] md:grid-rows-1 md:items-center md:gap-8 md:px-12 md:pt-6 lg:px-20">
+        {/* Text */}
+        <div
+          className="flex flex-col items-start"
+          style={{
+            transform: active ? "translateY(0)" : "translateY(24px)",
+            transition: `transform ${FADE_MS}ms cubic-bezier(0.2,0.8,0.2,1)`,
+          }}
+        >
+          <p
+            className="mb-5 inline-flex items-center gap-2 rounded-full border px-4 py-1 text-xs font-medium tracking-wide"
+            style={{ color: slide.accentColor || PINK, borderColor: "currentColor" }}
+          >
+            <span aria-hidden="true">✦</span>
+            {slide.eyebrow}
+          </p>
+
+          <h1 className="font-serif text-[clamp(2.5rem,min(6.5vw,10vh),5rem)] font-medium leading-[1.05] tracking-tight text-[#1F1F1F]">
+            {lines.map((line, i) => (
+              <span
+                key={i}
+                className={`block ${lines.length > 1 && i === lines.length - 1 ? "italic" : ""}`}
+                style={lines.length > 1 && i === lines.length - 1 ? { color: PINK } : undefined}
+              >
+                {line}
+              </span>
+            ))}
+          </h1>
+
+          <div className="mt-5 flex items-center gap-3" aria-hidden="true">
+            <span className="h-px w-16 bg-gradient-to-r from-[#E0609A] to-transparent md:w-24" />
+            <span className="text-xs leading-none" style={{ color: PINK }}>✦</span>
+          </div>
+
+          <p className="mt-5 max-w-md text-sm leading-6 text-[#1F1F1F]/70 sm:text-base">{slide.sub}</p>
+
+          <div className="mt-8 flex flex-wrap items-center gap-3">
+            <Link
+              href={slide.ctaHref}
+              className="group inline-flex items-center gap-2 border bg-[#1F1F1F] px-8 py-3 text-sm font-semibold text-white shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(224,96,154,0.45)]"
+              style={{ borderColor: PINK, boxShadow: "0 6px 16px rgba(224,96,154,0.25)" }}
+            >
+              {slide.ctaLabel}
+              <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+            </Link>
+
+            {slide.ctaSecondaryLabel && slide.ctaSecondaryHref && (
+              <Link
+                href={slide.ctaSecondaryHref}
+                className="inline-flex items-center border border-[#1F1F1F] px-8 py-3 text-sm font-semibold text-[#1F1F1F] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#1F1F1F] hover:text-white"
+              >
+                {slide.ctaSecondaryLabel}
+              </Link>
+            )}
+          </div>
+        </div>
+
+        {/* Photo */}
+        <div className="flex min-h-0 items-center justify-center md:h-full">
+          <PhotoShape shape={shape} src={slide.image} active={active} />
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ─── Slider ───────────────────────────────────────────────────────────────────
 
 export default function HeroSlider({ slides = [] }: HeroSliderProps) {
   const [current, setCurrent] = useState(0);
   const [prev, setPrev] = useState<number | null>(null);
-  const [direction, setDirection] = useState<"left" | "right">("right");
-  const [animating, setAnimating] = useState(false);
   const [paused, setPaused] = useState(false);
+  const count = slides.length;
 
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Prevent invalid current index if slides change
   useEffect(() => {
-    if (slides.length === 0) {
-      setCurrent(0);
-      return;
-    }
-
-    if (current >= slides.length) {
-      setCurrent(0);
-    }
-  }, [slides.length, current]);
+    if (count > 0 && current >= count) setCurrent(0);
+  }, [count, current]);
 
   const go = useCallback(
-    (next: number, dir: "left" | "right") => {
-      if (animating || next === current || slides.length === 0) return;
-
-      setDirection(dir);
+    (next: number) => {
+      if (next === current || !count) return;
       setPrev(current);
       setCurrent(next);
-      setAnimating(true);
     },
-    [animating, current, slides.length]
+    [current, count]
   );
 
-  const goNext = useCallback(() => {
-    if (!slides.length) return;
-    go((current + 1) % slides.length, "right");
-  }, [current, go, slides.length]);
+  const goNext = useCallback(() => go((current + 1) % count), [go, current, count]);
+  const goPrev = useCallback(() => go((current - 1 + count) % count), [go, current, count]);
 
-  const goPrev = useCallback(() => {
-    if (!slides.length) return;
-    go((current - 1 + slides.length) % slides.length, "left");
-  }, [current, go, slides.length]);
+  // Keep the outgoing slide underneath until the fade finishes
+  useEffect(() => {
+    if (prev === null) return;
+    const t = setTimeout(() => setPrev(null), FADE_MS);
+    return () => clearTimeout(t);
+  }, [prev]);
 
   // Autoplay
   useEffect(() => {
-    if (paused || slides.length <= 1) return;
-
-    timerRef.current = setTimeout(goNext, AUTOPLAY_MS);
-
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, [current, paused, goNext, slides.length]);
-
-  // End animation
-  useEffect(() => {
-    if (!animating) return;
-
-    const t = setTimeout(() => {
-      setAnimating(false);
-      setPrev(null);
-    }, 600);
-
+    if (paused || count <= 1) return;
+    const t = setTimeout(goNext, AUTOPLAY_MS);
     return () => clearTimeout(t);
-  }, [animating]);
+  }, [current, paused, goNext, count]);
 
-  // Keyboard navigation
+  // Keyboard
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "ArrowLeft") goPrev();
       if (e.key === "ArrowRight") goNext();
     };
-
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [goNext, goPrev]);
 
-  // No slides configured
-  if (!slides.length) return null;
+  if (!count) return null;
 
   return (
     <section
-      className="relative h-[75vh] max-h-[800px] min-h-[520px] w-full select-none overflow-hidden bg-charcoal"
-      aria-label="Hero image slider"
+      className="relative h-[720px] w-full select-none overflow-hidden bg-[#EDE7DD] md:h-[75vh] md:max-h-[820px] md:min-h-[580px]"
+      aria-label="Hero slider"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      {/* ── Slides ──────────────────────────────────────────────────────────── */}
+      <style>{`
+        @keyframes heroFill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+        @media (prefers-reduced-motion: reduce) { .hero-fill { animation: none !important; transform: scaleX(1); } }
+      `}</style>
 
       {slides.map((slide, idx) => {
-        const isActive = idx === current;
-        const isPrev = idx === prev;
-
-        if (!isActive && !isPrev) return null;
-
-        const enterX = direction === "right" ? "100%" : "-100%";
-        const exitX = direction === "right" ? "-100%" : "100%";
+        const active = idx === current;
+        const visible = active || idx === prev;
 
         return (
           <div
             key={`${slide.image}-${idx}`}
-            aria-hidden={!isActive}
-            className="absolute inset-0 overflow-hidden"
+            aria-hidden={!active}
+            className="absolute inset-0"
             style={{
-              transform: animating
-                ? isActive
-                  ? "translateX(0)"
-                  : `translateX(${exitX})`
-                : isActive
-                  ? "translateX(0)"
-                  : `translateX(${enterX})`,
-              transition: animating ? "transform 600ms cubic-bezier(0.77,0,0.18,1)" : "none",
-              willChange: "transform",
-              zIndex: isActive ? 2 : 1,
+              opacity: visible ? 1 : 0,
+              zIndex: active ? 2 : visible ? 1 : 0,
+              pointerEvents: active ? "auto" : "none",
+              transition: `opacity ${FADE_MS}ms ease`,
             }}
           >
-            {/* Background: warm base with a soft pink wash on the image side */}
-            <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  "radial-gradient(ellipse at 75% 60%, rgba(236,72,153,0.18) 0%, rgba(236,72,153,0) 55%), #EDE7DD",
-              }}
-            />
-
-            {/* Soft pink circle behind the model */}
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute -bottom-24 right-[10%] hidden aspect-square h-[85%] rounded-full bg-pink/20 blur-2xl sm:block"
-            />
-
-            {/* Left fade so text stays readable */}
-            <div
-              className="pointer-events-none absolute inset-0"
-              style={{
-                background:
-                  "linear-gradient(90deg, #EDE7DD 0%, #EDE7DD 34%, rgba(237,231,221,0) 70%)",
-              }}
-            />
-
-            {/* Image (paints above the background layers) */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={slide.image}
-              alt=""
-              aria-hidden="true"
-              draggable={false}
-              className="absolute bottom-0 right-[6%] hidden h-[98%] w-auto max-w-[68%] object-contain object-bottom drop-shadow-[0_20px_30px_rgba(0,0,0,0.18)] sm:block"
-            />
-
-            {/* Content */}
-            <div className="relative z-[3] flex h-full items-center px-8 sm:px-12 lg:px-20">
-              <div
-                className="animate-fade-up max-w-xl"
-                style={{ animationDelay: "200ms" }}
-              >
-                <p
-                  className="mb-5 inline-flex items-center gap-2 rounded-full border border-current px-4 py-1 text-xs font-medium tracking-wide"
-                  style={{ color: slide.accentColor }}
-                >
-                  <span aria-hidden="true">✦</span>
-                  {slide.eyebrow}
-                </p>
-
-                <h1 className="whitespace-pre-line font-serif text-4xl font-medium leading-[1.1] tracking-tight text-charcoal sm:text-5xl lg:text-6xl">
-                  {slide.headline}
-                </h1>
-
-                {/* divider */}
-                <div className="mt-5 flex items-center gap-3" aria-hidden="true">
-                  <span className="h-px w-16 bg-gradient-to-r from-pink to-transparent md:w-24" />
-                  <span className="text-xs leading-none text-pink">✦</span>
-                </div>
-
-                <p className="mt-5 max-w-md text-sm leading-6 text-charcoal/70 sm:text-base">
-                  {slide.sub}
-                </p>
-
-                <div className="mt-8 flex flex-wrap items-center gap-3">
-                  <Link
-                    href={slide.ctaHref}
-                    className="group inline-flex items-center gap-2 border border-pink bg-charcoal px-8 py-3 text-sm font-semibold text-white shadow-md shadow-pink/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(236,72,153,0.5)]"
-                  >
-                    {slide.ctaLabel}
-                    <span className="transition-transform duration-300 group-hover:translate-x-1">
-                      →
-                    </span>
-                  </Link>
-
-                  {slide.ctaSecondaryLabel && slide.ctaSecondaryHref && (
-                    <Link
-                      href={slide.ctaSecondaryHref}
-                      className="inline-flex items-center border border-charcoal px-8 py-3 text-sm font-semibold text-charcoal transition-all duration-300 hover:-translate-y-0.5 hover:bg-charcoal hover:text-ivory"
-                    >
-                      {slide.ctaSecondaryLabel}
-                    </Link>
-                  )}
-                </div>
-              </div>
-            </div>
+            <Slide slide={slide} idx={idx} active={active} />
           </div>
         );
       })}
 
-      {/* ── Prev / Next arrows ─────────────────────────────────────────────── */}
-
-      {slides.length > 1 && (
+      {count > 1 && (
         <>
-          <button onClick={goPrev} aria-label="Previous slide" className={`${ARROW_BTN} left-4`}>
-            <ArrowLeft />
+          <button
+            onClick={goPrev}
+            aria-label="Previous slide"
+            className="absolute left-4 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#1F1F1F]/10 bg-white/80 text-[#1F1F1F] shadow-md backdrop-blur-sm transition-all duration-300 hover:bg-[#E0609A] hover:text-white md:flex"
+          >
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M13 4l-6 6 6 6" /></svg>
+          </button>
+          <button
+            onClick={goNext}
+            aria-label="Next slide"
+            className="absolute right-4 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#1F1F1F]/10 bg-white/80 text-[#1F1F1F] shadow-md backdrop-blur-sm transition-all duration-300 hover:bg-[#E0609A] hover:text-white md:flex"
+          >
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 4l6 6-6 6" /></svg>
           </button>
 
-          <button onClick={goNext} aria-label="Next slide" className={`${ARROW_BTN} right-4`}>
-            <ArrowRight />
-          </button>
+          {/* Progress */}
+          <div className="absolute bottom-6 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2">
+            {slides.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => go(idx)}
+                aria-label={`Go to slide ${idx + 1}`}
+                aria-current={idx === current}
+                className="relative h-1.5 w-8 overflow-hidden rounded-full bg-[#1F1F1F]/20 sm:w-12"
+              >
+                {idx === current && (
+                  <span
+                    key={`fill-${current}`}
+                    className="hero-fill absolute inset-0 origin-left rounded-full bg-[#1F1F1F]"
+                    style={{
+                      animation: `heroFill ${AUTOPLAY_MS}ms linear forwards`,
+                      animationPlayState: paused ? "paused" : "running",
+                    }}
+                  />
+                )}
+              </button>
+            ))}
+          </div>
         </>
-      )}
-
-      {/* ── Dots ───────────────────────────────────────────────────────────── */}
-
-      {slides.length > 1 && (
-        <div className="absolute bottom-8 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2.5">
-          {slides.map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => go(idx, idx > current ? "right" : "left")}
-              aria-label={`Go to slide ${idx + 1}`}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                idx === current ? "w-8 bg-charcoal" : "w-2 bg-charcoal/25 hover:bg-charcoal/50"
-              }`}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* ── Slide counter ─────────────────────────────────────────────────── */}
-
-      {slides.length > 1 && (
-        <div className="absolute bottom-7 right-6 z-10 font-serif text-sm tabular-nums text-charcoal/50 sm:right-12">
-          <span className="text-base font-medium text-charcoal">
-            {String(current + 1).padStart(2, "0")}
-          </span>{" "}
-          / {String(slides.length).padStart(2, "0")}
-        </div>
       )}
     </section>
   );

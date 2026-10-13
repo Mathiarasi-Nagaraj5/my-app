@@ -14,6 +14,10 @@
   --radius-DEFAULT: 4px;
   --radius-card: 8px;
 }
+@theme {
+  --font-display: var(--font-fredoka), ui-rounded, sans-serif;
+  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+}
  
 /* No unlayered body background/color rule here on purpose — Tailwind
    utilities (bg-ivory, text-charcoal on <body> in layout.tsx) would always
@@ -85,4 +89,17 @@ body {
     transform: none;
     transition: none;
   }
+}
+.hero-title {
+  font-family: 'Fredoka', 'Comic Sans MS', sans-serif;
+  font-weight: 700;
+  font-size: clamp(3rem, 7vw, 5.5rem);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: #1a1a1a;
+}
+.hero-title span { color: #e0609a; } /* highlight one word in pink */
+
+.hero-subtext {
+  font-family: 'DM Sans', sans-serif;
 }
