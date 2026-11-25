@@ -58,9 +58,11 @@ export async function POST(req: Request) {
       });
     }
 
+if (order.shipment) {
   order.shipment.currentStatus = body.current_status;
-order.shipment.statusHistory = history;
-order.markModified("shipment");
+  order.shipment.statusHistory = history;
+  order.markModified("shipment");
+}
 
     const mappedStatus = mapShiprocketStatusToOrderStatus(body.current_status);
   const RANK: Record<string, number> = { Confirmed: 0, Shipped: 1, "Out for Delivery": 2, Delivered: 3 };
