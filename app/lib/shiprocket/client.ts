@@ -165,7 +165,7 @@ export function assignAwb(params: { shipmentId: number; courierId: number }): Pr
     body: { shipment_id: params.shipmentId, courier_id: params.courierId },
   });
 }
-p
+
 export function generateLabel(shipmentIds: number[]): Promise<GenerateLabelResponse> {
   return shiprocketFetch<GenerateLabelResponse>("/courier/generate/label", {
     method: "POST",
