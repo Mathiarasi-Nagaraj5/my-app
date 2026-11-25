@@ -3,6 +3,7 @@ import connectDB from "@/app/lib/mongodb";
 import Order from "@/app/models/Order";
 import { checkServiceability, createForwardOrder, assignAwb } from "@/app/lib/shiprocket/client";
 import { computePackageWeightKg, DEFAULT_PACKAGE_DIMENSIONS_CM } from "@/app/lib/shiprocket/pricing";
+import { schedulePickupForOrder } from "@/app/lib/shiprocket/pickup";
 
 import { buildForwardOrderPayload } from "@/app/lib/shiprocket/buildOrderPayload";
 interface Params {
@@ -60,37 +61,20 @@ export async function POST(req: Request, { params }: Params) {
     const cheapest = [...couriers].sort((a, b) => a.rate - b.rate)[0];
     const chosenCourierId = serviceability.data.recommended_courier_id ?? cheapest.courier_company_id;
 
-    let shiprocketOrderId = order.shipment?.shiprocketOrderId;
+       let shiprocketOrderId = order.shipment?.shiprocketOrderId;
     let shiprocketShipmentId = order.shipment?.shiprocketShipmentId;
 
     if (!shiprocketShipmentId) {
-     const payload = await buildForwardOrderPayload(order, pickupLocation, weightKg);
+      const payload = await buildForwardOrderPayload(order, pickupLocation, weightKg);
+      const created = await createForwardOrder(payload);
+      console.log("SHIPROCKET CREATE ORDER:", created);
 
-  const created = await createForwardOrder(payload);
+      if (!created.order_id || !created.shipment_id) {
+        throw new Error(`Shiprocket did not return valid IDs: ${JSON.stringify(created)}`);
+      }
 
-console.log("SHIPROCKET CREATE ORDER:", created);
-
-if (!created.order_id || !created.shipment_id) {
-  throw new Error(
-    `Shiprocket did not return valid IDs: ${JSON.stringify(created)}`
-  );
-}
-
-shiprocketOrderId = created.order_id;
-shiprocketShipmentId = created.shipment_id;
-
-console.log("SHIPROCKET CREATE ORDER:", created);
-
-if (!created.order_id || !created.shipment_id) {
-  throw new Error(
-    `Shiprocket did not return valid IDs: ${JSON.stringify(created)}`
-  );
-}
-
-shiprocketOrderId = created.order_id;
-shiprocketShipmentId = created.shipment_id;
-
-     
+      shiprocketOrderId = created.order_id;
+      shiprocketShipmentId = created.shipment_id;
 
       order.shipment = {
         ...order.shipment,
@@ -100,6 +84,7 @@ shiprocketShipmentId = created.shipment_id;
       };
       await order.save();
 
+      // Shiprocket sometimes auto-assigns a courier at creation time
       if (created.awb_code) {
         const now = new Date();
         order.shipment.awbCode = created.awb_code;
@@ -112,40 +97,38 @@ shiprocketShipmentId = created.shipment_id;
           ...(order.shipment.statusHistory ?? []),
           { status: "AWB Assigned", activity: `Auto-assigned to ${created.courier_name}`, statusDate: now },
         ];
-        order.status = "Out for Delivery";
+        order.status = "Shipped";
         await order.save();
 
-        return NextResponse.json({ shipment: order.shipment });
+        const pickup = await schedulePickupForOrder(order);
+        return NextResponse.json({
+          shipment: order.shipment,
+          pickupScheduled: pickup.ok,
+          pickupError: pickup.ok ? undefined : pickup.message,
+        });
       }
     }
 
-    
-   console.log("AWB Assignment Input:", {
-  shiprocketOrderId,
-  shiprocketShipmentId,
-  chosenCourierId,
-});
+    if (!shiprocketShipmentId) {
+      throw new Error("Shiprocket shipment ID is missing");
+    }
 
-if (!shiprocketShipmentId) {
-  throw new Error("Shiprocket shipment ID is missing");
-}
+    const assigned = await assignAwb({
+      shipmentId: shiprocketShipmentId,
+      courierId: chosenCourierId,
+    });
 
-const assigned = await assignAwb({
-  shipmentId: shiprocketShipmentId,
-  courierId: chosenCourierId,
-});
-
- if (assigned.awb_assign_status !== 1) {
-  console.error("AWB assignment rejected:", JSON.stringify(assigned, null, 2));
-  const reason =
-    (assigned as any)?.response?.data?.awb_assign_error ||
-    (assigned as any)?.message ||
-    JSON.stringify(assigned);
-  return NextResponse.json(
-    { error: `courier failed to accept the assignment: ${reason}` },
-    { status: 502 }
-  );
-}
+    if (assigned.awb_assign_status !== 1) {
+      console.error("AWB assignment rejected:", JSON.stringify(assigned, null, 2));
+      const reason =
+        (assigned as any)?.response?.data?.awb_assign_error ||
+        (assigned as any)?.message ||
+        JSON.stringify(assigned);
+      return NextResponse.json(
+        { error: `courier failed to accept the assignment: ${reason}` },
+        { status: 502 }
+      );
+    }
 
     const { awb_code, courier_name, courier_company_id } = assigned.response.data;
     const now = new Date();
@@ -165,13 +148,21 @@ const assigned = await assignAwb({
         { status: "AWB Assigned", activity: `Assigned to ${courier_name}`, statusDate: now },
       ],
     };
-    order.status = "Out for Delivery";
+    order.status = "Shipped";
     await order.save();
 
-    return NextResponse.json({ shipment: order.shipment });
-  }  catch (error) {
+    // Automatic pickup request (replaces the manual "Schedule Pickup" click)
+    const pickup = await schedulePickupForOrder(order);
+
+    return NextResponse.json({
+      shipment: order.shipment,
+      pickupScheduled: pickup.ok,
+      pickupError: pickup.ok ? undefined : pickup.message,
+    });
+  } catch (error) {
     console.error("Ship Order Error:", error);
     const message = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ error: `failed to ship order, ${message}` }, { status: 500 });
+  }
 }
-}
+

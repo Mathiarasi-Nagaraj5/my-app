@@ -10,7 +10,12 @@ import type { ReturnRecord } from "./ReturnsTable";
 
 type OrderStatus = AdminOrder["status"];
 type TabKey = "All" | OrderStatus | "Return Requests";
-
+interface ShipResponse {
+  error?: string;
+  shipment?: AdminOrder["shipment"];
+  pickupScheduled?: boolean;
+  pickupError?: string;
+}
 interface OrderTableProps {
   orders: AdminOrder[];
   returns: ReturnRecord[];                       // NEW
@@ -20,7 +25,7 @@ interface OrderTableProps {
 }
 
 const TABS: TabKey[] = [
-  "All", "Confirmed", "Out for Delivery", "Delivered",
+  "All", "Confirmed", "Shipped", "Out for Delivery", "Delivered",
   "Cancelled", "Returned", "Return Requests",
 ];
 
@@ -38,8 +43,7 @@ export interface AdminOrder {
   orderNumber: string;
   shippingAddress: { fullName: string };
   total: number;
-  status: "Confirmed" | "Out for Delivery" | "Delivered" | "Cancelled" | "Returned";
-  createdAt: string;
+  status: "Confirmed" | "Shipped" | "Out for Delivery" | "Delivered" | "Cancelled" | "Returned";  createdAt: string;
   paymentMethod?: "upi" | "card" | "cod";
   paymentStatus?: "PENDING" | "PAID" | "FAILED" | "REFUNDED";
   shipment?: {
@@ -183,9 +187,9 @@ const [labelsRunning, setLabelsRunning] = useState<boolean>(false);
   const selectAllRef = useRef<HTMLInputElement>(null);
 const counts = useMemo(() => {
   const map: Record<TabKey, number> = {
-    All: orders.length, Confirmed: 0, "Out for Delivery": 0,
-    Delivered: 0, Cancelled: 0, Returned: 0, "Return Requests": 0,
-  };
+  All: orders.length, Confirmed: 0, Shipped: 0, "Out for Delivery": 0,
+  Delivered: 0, Cancelled: 0, Returned: 0, "Return Requests": 0,
+};
   for (const o of orders) {
     map[o.status] += 1;
     if (returnsByOrder.has(o._id)) map["Return Requests"] += 1;
@@ -228,6 +232,34 @@ async function handleRowLabel(order: AdminOrder): Promise<void> {
     });
   } finally {
     setLabelRowId(null);
+  }
+}
+const [pickupRowId, setPickupRowId] = useState<string | null>(null);
+
+async function handleRetryPickup(order: AdminOrder): Promise<void> {
+  setPickupRowId(order._id);
+  try {
+    const res = await fetch("/api/shiprocket/schedule-pickup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderId: order._id }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.message ?? "Couldn't schedule pickup");
+    }
+    onShipped?.(order._id, {
+      ...order.shipment,
+      pickupScheduledAt: data.pickupScheduledAt,
+    });
+  } catch (e) {
+    await alert({
+      title: "Pickup not scheduled",
+      message: e instanceof Error ? e.message : "Something went wrong",
+      variant: "error",
+    });
+  } finally {
+    setPickupRowId(null);
   }
 }
 const visible = useMemo(() => {
@@ -280,20 +312,20 @@ const labelEligible = selectedOrders.filter((o) => o.shipment?.awbCode);
     setSelected(allVisibleSelected ? new Set() : new Set(visible.map((o) => o._id)));
   }
 
-  async function shipOne(order: AdminOrder): Promise<string | null> {
-    try {
-      const res = await fetch(`/api/admin/orders/${order._id}/ship`, {
-        method: "POST",
-      });
-      const data = (await res.json()) as ShipResponse;
-      if (!res.ok) return data.error ?? "Failed to ship order";
-      onShipped?.(order._id, data.shipment);
-      onStatusChanged(order._id, "Out for Delivery");
-      return null;
-    } catch {
-      return "Network error";
-    }
+ async function shipOne(order: AdminOrder): Promise<string | null> {
+  try {
+    const res = await fetch(`/api/admin/orders/${order._id}/ship`, {
+      method: "POST",
+    });
+    const data = (await res.json()) as ShipResponse;
+    if (!res.ok) return data.error ?? "Failed to ship order";
+    onShipped?.(order._id, data.shipment);
+    onStatusChanged(order._id, "Shipped"); // was "Out for Delivery"
+    return null;
+  } catch {
+    return "Network error";
   }
+}
 
   async function handleShip(order: AdminOrder): Promise<void> {
     setShippingId(order._id);
@@ -583,6 +615,16 @@ const shipState = getShipState(order);
         {isExpanded ? "hide" : "more"}
       </button>
     </div>
+    {order.status === "Shipped" && !order.shipment.pickupScheduledAt && (
+  <button
+    type="button"
+    onClick={() => void handleRetryPickup(order)}
+    disabled={pickupRowId === order._id}
+    className="text-[11px] text-amber-700 hover:underline disabled:opacity-50"
+  >
+    {pickupRowId === order._id ? "scheduling..." : "Pickup pending · retry"}
+  </button>
+)}
   </div>
 ) : canShip ? (
                     <button

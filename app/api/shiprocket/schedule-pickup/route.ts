@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import connectDB from "@/app/lib/mongodb";
 import Order from "@/app/models/Order";
 import { requestPickup } from "@/app/lib/shiprocket/client";
+import { schedulePickupForOrder } from "@/app/lib/shiprocket/pickup";
 export async function POST(req: Request) {
   try {
     await connectDB();
@@ -18,27 +19,11 @@ export async function POST(req: Request) {
     if (!order.shipment?.shiprocketShipmentId) {
       return NextResponse.json({ success: false, message: "this order hasn't been shipped yet" }, { status: 400 });
     }
-    if (order.shipment.pickupScheduledAt) {
-      return NextResponse.json(
-        { success: false, message: `pickup already scheduled for ${order.shipment.pickupScheduledAt.toLocaleDateString()}` },
-        { status: 400 }
-      );
+        const result = await schedulePickupForOrder(order);
+    if (!result.ok) {
+      return NextResponse.json({ success: false, message: result.message }, { status: 502 });
     }
-
-    const result = await requestPickup([order.shipment.shiprocketShipmentId]);
-
-    if (result.pickup_status !== 1) {
-      return NextResponse.json({ success: false, message: "courier could not schedule pickup" }, { status: 502 });
-    }
-
-    const scheduledDate = result.response.pickup_scheduled_date
-      ? new Date(result.response.pickup_scheduled_date)
-      : new Date();
-
-    order.shipment.pickupScheduledAt = scheduledDate;
-    await order.save();
-
-    return NextResponse.json({ success: true, pickupScheduledAt: scheduledDate });
+    return NextResponse.json({ success: true, pickupScheduledAt: result.pickupScheduledAt });
   } catch (error) {
     console.error("Schedule Pickup Error:", error);
     return NextResponse.json({ success: false, message: "failed to schedule pickup" }, { status: 500 });

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-type OrderStatus = "Confirmed" | "Out for Delivery" | "Delivered" | "Cancelled" | "Returned";
+type OrderStatus = "Confirmed" | "Out for Delivery" | "Delivered" | "Cancelled" | "Returned" | "Shipped";
 
 const STATUS_COLORS: Record<OrderStatus, string> = {
   Confirmed: "border-charcoal/40 text-charcoal",
@@ -10,6 +10,7 @@ const STATUS_COLORS: Record<OrderStatus, string> = {
   Delivered: "border-green-600 text-green-700",
   Cancelled: "border-red-600 text-red-700",
   Returned: "border-purple-600 text-purple-700",
+  Shipped: "border-blue-600 text-blue-700",
 };
 
 interface OrderStatusSelectProps {
@@ -58,6 +59,7 @@ export default function OrderStatusSelect({
       <option value="Out for Delivery">Out for Delivery</option>
       <option value="Delivered">Delivered</option>
       <option value="Cancelled">Cancelled</option>
+      <option value="Shipped">Shipped</option>
     </select>
   );
 }

@@ -10,6 +10,7 @@ import {
   restoreStock,
 } from "@/app/lib/inventory/stock";
 import { sendOrderConfirmationEmail } from "@/app/lib/email/send";
+import { sendOrderConfirmation } from "@/app/lib/whatsapp/orderMessages";
 
 // ─────────────────────────────────────────────────────────────
 // GET /api/orders?userId=xxxxx
@@ -311,6 +312,9 @@ const total = Math.max(subtotal + delivery + COD_FEE - discount, 0);
       "Order created:",
       order
     );
+
+    // WhatsApp confirmation (COD orders are confirmed immediately)
+    await sendOrderConfirmation(order);
 
     // ─────────────────────────────────────────────
     // Send confirmation email

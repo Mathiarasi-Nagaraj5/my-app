@@ -58,18 +58,18 @@ export async function POST(req: Request) {
       });
     }
 
-    order.shipment = {
-      ...order.shipment,
-      currentStatus: body.current_status,
-      statusHistory: history,
-    };
+  order.shipment.currentStatus = body.current_status;
+order.shipment.statusHistory = history;
+order.markModified("shipment");
 
     const mappedStatus = mapShiprocketStatusToOrderStatus(body.current_status);
+  const RANK: Record<string, number> = { Confirmed: 0, Shipped: 1, "Out for Delivery": 2, Delivered: 3 };
+
     if (mappedStatus) {
-      order.status = mappedStatus;
-      if (mappedStatus === "Delivered" && !order.deliveredAt) {
-        order.deliveredAt = eventDate;
-      }
+      
+     const current = RANK[order.status] ?? -1;
+  const next = RANK[mappedStatus] ?? 99; // Cancelled/Returned always apply
+  if (next >= current) order.status = mappedStatus;
       // COD cash is collected at delivery — mark paid, same fix as the
       // admin PATCH route.
       if (mappedStatus === "Delivered" && order.paymentMethod === "cod" && order.paymentStatus === "PENDING") {

@@ -1,16 +1,21 @@
-export type OrderStatus = "Confirmed" | "Out for Delivery" | "Delivered" | "Cancelled" | "Returned";
+export type OrderStatus =
+  "Confirmed" | "Shipped" | "Out for Delivery" | "Delivered" | "Cancelled" | "Returned";
 
-const IN_TRANSIT_STATUSES = new Set([
-  "SHIPPED", "Out for Delivery", "OUT FOR DELIVERY", "OUT FOR PICKUP", "PICKED UP", "REACHED AT DESTINATION HUB",
+const SHIPPED = new Set([
+  "PICKUP SCHEDULED", "PICKUP GENERATED", "OUT FOR PICKUP", "PICKED UP",
+  "SHIPPED", "IN TRANSIT", "REACHED AT DESTINATION HUB",
 ]);
-const DELIVERED_STATUSES = new Set(["DELIVERED"]);
-const CANCELLED_STATUSES = new Set(["CANCELLED", "CANCELED"]);
-const RTO_STATUSES = new Set(["RTO INITIATED", "RTO Out for Delivery", "RTO DELIVERED"]);
+const OUT_FOR_DELIVERY = new Set(["OUT FOR DELIVERY"]);
+const DELIVERED = new Set(["DELIVERED"]);
+const CANCELLED = new Set(["CANCELLED", "CANCELED"]);
+const RTO = new Set(["RTO INITIATED", "RTO IN TRANSIT", "RTO OUT FOR DELIVERY", "RTO DELIVERED"]);
 
-export function mapShiprocketStatusToOrderStatus(rawStatus: string): OrderStatus | null {
-  const normalized = rawStatus.trim().toUpperCase();
-  if (DELIVERED_STATUSES.has(normalized)) return "Delivered";
-  if (IN_TRANSIT_STATUSES.has(normalized)) return "Out for Delivery";
-  if (CANCELLED_STATUSES.has(normalized) || RTO_STATUSES.has(normalized)) return "Cancelled";
+export function mapShiprocketStatusToOrderStatus(raw: string): OrderStatus | null {
+  const s = raw.trim().toUpperCase();
+  if (DELIVERED.has(s)) return "Delivered";
+  if (OUT_FOR_DELIVERY.has(s)) return "Out for Delivery";
+  if (SHIPPED.has(s)) return "Shipped";
+  if (CANCELLED.has(s)) return "Cancelled";
+  if (RTO.has(s)) return "Returned";
   return null;
 }
