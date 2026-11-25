@@ -66,11 +66,31 @@ export async function POST(req: Request, { params }: Params) {
     if (!shiprocketShipmentId) {
      const payload = await buildForwardOrderPayload(order, pickupLocation, weightKg);
 
-   
+  const created = await createForwardOrder(payload);
 
-      const created = await createForwardOrder(payload);
-      shiprocketOrderId = created.order_id;
-      shiprocketShipmentId = created.shipment_id;
+console.log("SHIPROCKET CREATE ORDER:", created);
+
+if (!created.order_id || !created.shipment_id) {
+  throw new Error(
+    `Shiprocket did not return valid IDs: ${JSON.stringify(created)}`
+  );
+}
+
+shiprocketOrderId = created.order_id;
+shiprocketShipmentId = created.shipment_id;
+
+console.log("SHIPROCKET CREATE ORDER:", created);
+
+if (!created.order_id || !created.shipment_id) {
+  throw new Error(
+    `Shiprocket did not return valid IDs: ${JSON.stringify(created)}`
+  );
+}
+
+shiprocketOrderId = created.order_id;
+shiprocketShipmentId = created.shipment_id;
+
+     
 
       order.shipment = {
         ...order.shipment,
@@ -99,10 +119,21 @@ export async function POST(req: Request, { params }: Params) {
       }
     }
 
-    const assigned = await assignAwb({
-      shipmentId: shiprocketShipmentId!,
-      courierId: chosenCourierId,
-    });
+    
+   console.log("AWB Assignment Input:", {
+  shiprocketOrderId,
+  shiprocketShipmentId,
+  chosenCourierId,
+});
+
+if (!shiprocketShipmentId) {
+  throw new Error("Shiprocket shipment ID is missing");
+}
+
+const assigned = await assignAwb({
+  shipmentId: shiprocketShipmentId,
+  courierId: chosenCourierId,
+});
 
  if (assigned.awb_assign_status !== 1) {
   console.error("AWB assignment rejected:", JSON.stringify(assigned, null, 2));

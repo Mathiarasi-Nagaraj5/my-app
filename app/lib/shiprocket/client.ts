@@ -113,14 +113,24 @@ async function shiprocketFetch<T>(path: string, opts: ShiprocketFetchOptions = {
     return shiprocketFetch<T>(path, { ...opts, _retried: true });
   }
 
+ 
+
   const data = await res.json();
 
-  if (!res.ok) {
-    const message = data?.message || data?.errors ? JSON.stringify(data) : `Shiprocket API error (${res.status})`;
-    throw new Error(message);
-  }
+if (!res.ok) {
+  console.error("Shiprocket API Error:", {
+    endpoint: path,
+    status: res.status,
+    requestBody: opts.body,
+    response: data,
+  });
 
-  return data as T;
+  throw new Error(
+    `Shiprocket API error (${res.status}): ${JSON.stringify(data)}`
+  );
+}
+
+return data as T;
 }
 
 // ---- Public API -----------------------------------------------------
@@ -148,13 +158,14 @@ export function createForwardOrder(payload: CreateForwardOrderPayload): Promise<
   });
 }
 
+
 export function assignAwb(params: { shipmentId: number; courierId: number }): Promise<AssignAwbResponse> {
   return shiprocketFetch<AssignAwbResponse>("/courier/assign/awb", {
     method: "POST",
     body: { shipment_id: params.shipmentId, courier_id: params.courierId },
   });
 }
-
+p
 export function generateLabel(shipmentIds: number[]): Promise<GenerateLabelResponse> {
   return shiprocketFetch<GenerateLabelResponse>("/courier/generate/label", {
     method: "POST",

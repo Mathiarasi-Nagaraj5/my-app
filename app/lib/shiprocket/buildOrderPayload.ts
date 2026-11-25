@@ -61,7 +61,7 @@ export async function buildForwardOrderPayload(
       };
     }),
     payment_method: order.paymentMethod === "cod" ? "COD" : "Prepaid",
-    sub_total: order.total,
+    sub_total: itemsTotal,
     ...(diff > 0 ? { shipping_charges: diff } : {}),
     ...(diff < 0 ? { total_discount: -diff } : {}),
     length: DEFAULT_PACKAGE_DIMENSIONS_CM.length,
