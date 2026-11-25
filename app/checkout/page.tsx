@@ -160,7 +160,7 @@ export default function CheckoutSteps() {
 
   const cartItemsForApi = () =>
     items.map((i) => ({
-      productId: i.id,
+      productId: i.productId,
       quantity: i.quantity,
       size: (i as any).size,
       color: (i as any).color,
